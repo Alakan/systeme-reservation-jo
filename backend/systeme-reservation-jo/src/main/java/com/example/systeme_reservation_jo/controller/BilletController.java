@@ -2,6 +2,7 @@ package com.example.systeme_reservation_jo.controller;
 
 import com.example.systeme_reservation_jo.model.Billet;
 import com.example.systeme_reservation_jo.model.Evenement;
+import com.example.systeme_reservation_jo.model.TypeBillet; // Importez l'enum TypeBillet
 import com.example.systeme_reservation_jo.model.Utilisateur;
 import com.example.systeme_reservation_jo.service.BilletService;
 import com.example.systeme_reservation_jo.service.EvenementService;
@@ -15,18 +16,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/billets")
 public class BilletController {
 
-    @Autowired
-    private BilletService billetService;
-    @Autowired
-    private EvenementService evenementService; // Injecte EvenementService
-    @Autowired
-    private UtilisateurService utilisateurService;
+    private final BilletService billetService;
+    private final EvenementService evenementService;
+    private final UtilisateurService utilisateurService;
 
+    @Autowired
+    public BilletController(BilletService billetService, EvenementService evenementService, UtilisateurService utilisateurService) {
+        this.billetService = billetService;
+        this.evenementService = evenementService;
+        this.utilisateurService = utilisateurService;
+    }
 
     @GetMapping
     public List<Billet> getAllBillets() {
@@ -34,7 +39,7 @@ public class BilletController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Billet> getBilletById(@PathVariable Long id) {
+    public ResponseEntity<Billet> getBilletById(@PathVariable Integer id) { // Integer ici
         return billetService.getBilletById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -47,35 +52,46 @@ public class BilletController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Billet> updateBillet(@PathVariable Long id, @Valid @RequestBody Billet billetDetails) {
-        Billet updatedBillet = billetService.updateBillet(id, billetDetails);
+    public ResponseEntity<Billet> updateBillet(@PathVariable Integer id, @Valid @RequestBody Billet billetDetails) { // Integer ici
+        Billet updatedBillet = billetService.updateBillet(id, billetDetails); // Integer
         return ResponseEntity.ok(updatedBillet);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBillet(@PathVariable Long id) {
-        billetService.deleteBillet(id);
+    public ResponseEntity<Void> deleteBillet(@PathVariable Integer id) { // Integer ici
+        billetService.deleteBillet(id); // Integer
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/evenement/{evenementId}")
-    public ResponseEntity<List<Billet>> getBilletsByEvenement(@PathVariable Long evenementId) {
-        Evenement evenement = evenementService.getEvenementById(evenementId)
-                .orElseThrow(() -> new RuntimeException("Événement non trouvé avec l'id : " + evenementId)); // Gérer le cas où l'événement n'existe pas
-        List<Billet> billets = billetService.getBilletsByEvenement(evenement);
-        return ResponseEntity.ok(billets);
+    public ResponseEntity<List<Billet>> getBilletsByEvenement(@PathVariable Integer evenementId) { // Integer ici
+        Optional<Evenement> evenementOptional = evenementService.getEvenementById(evenementId); // Integer
+        return evenementOptional.map(evenement -> ResponseEntity.ok(billetService.getBilletsByEvenement(evenement)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+
     @GetMapping("/utilisateur/{utilisateurId}")
-    public ResponseEntity<List<Billet>> getBilletsByUtilisateur(@PathVariable Long utilisateurId) {
-        Utilisateur utilisateur = utilisateurService.getUtilisateurById(utilisateurId)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec l'id : " + utilisateurId));
-        List<Billet> billets = billetService.getBilletsByUtilisateur(utilisateur);
-        return ResponseEntity.ok(billets);
+    public ResponseEntity<List<Billet>> getBilletsByUtilisateur(@PathVariable Integer utilisateurId) { // Integer ici (si Utilisateur utilise Integer pour ID)
+        Optional<Utilisateur> utilisateurOptional = utilisateurService.getUtilisateurById(utilisateurId);// Integer
+        if(utilisateurOptional.isPresent()){
+            Utilisateur utilisateur = utilisateurOptional.get();
+            List<Billet> billets = billetService.getBilletsByUtilisateur(utilisateur);
+            return ResponseEntity.ok(billets);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
+
     @GetMapping("/statut/{statut}")
-    public  ResponseEntity<List<Billet>> getBilletByStatut(@PathVariable String statut){
-        List<Billet> billets = billetService.getBilletsByStatut(statut);
-        return ResponseEntity.ok(billets);
+    public ResponseEntity<List<Billet>> getBilletByStatut(@PathVariable String statut) {
+        try {
+            TypeBillet typeBillet = TypeBillet.valueOf(statut.toUpperCase()); // Convertit la String en enum (insensible à la casse)
+            List<Billet> billets = billetService.getBilletsByStatut(typeBillet);
+            return ResponseEntity.ok(billets);
+        } catch (IllegalArgumentException e) {
+            // Gérer le cas où la String ne correspond pas à une valeur de l'enum
+            return ResponseEntity.badRequest().body(null); // Ou un message d'erreur plus spécifique
+        }
     }
 }

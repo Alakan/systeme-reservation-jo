@@ -3,15 +3,14 @@ package com.example.systeme_reservation_jo.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 import java.util.HashSet;
-
+import java.util.Set;
 
 @Entity
 @Table(name = "reservations")
@@ -39,12 +38,15 @@ public class Reservation {
     @Column(nullable = false)
     private int nombreBillets;
 
-
     @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Billet> billets = new HashSet<>();
 
+    @NotNull(message = "Le statut de la réservation ne peut pas être nul") // Changement: NotBlank -> NotNull car c'est un enum
     @Column(nullable = false)
-    private String statut; // "EN_ATTENTE", "CONFIRMEE", "ANNULEE"
+    private StatutReservation statut; // Type modifié pour utiliser l'enum
+
+    @OneToOne(mappedBy = "reservation", fetch = FetchType.LAZY)
+    private Paiement paiement;
 
     // Méthodes utilitaires pour gérer la relation bi-directionnelle avec Billet
     public void addBillet(Billet billet) {

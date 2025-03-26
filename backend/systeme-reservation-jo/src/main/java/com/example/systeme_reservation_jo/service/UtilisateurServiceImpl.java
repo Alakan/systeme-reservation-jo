@@ -27,12 +27,12 @@ public class UtilisateurServiceImpl implements UtilisateurService {
     }
 
     @Override
-    public Optional<Utilisateur> getUtilisateurById(Long id) {
+    public Optional<Utilisateur> getUtilisateurById(Integer id) {
         return utilisateurRepository.findById(id);
     }
 
     @Override
-    public Utilisateur updateUtilisateur(Long id, Utilisateur utilisateurDetails) {
+    public Utilisateur updateUtilisateur(Integer id, Utilisateur utilisateurDetails) {
         Utilisateur utilisateur = utilisateurRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec l'id : " + id)); // Gère le cas où l'utilisateur n'existe pas
 
@@ -45,7 +45,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
     }
 
     @Override
-    public void deleteUtilisateur(Long id) {
+    public void deleteUtilisateur(Integer id) {
         utilisateurRepository.deleteById(id);
     }
     @Override

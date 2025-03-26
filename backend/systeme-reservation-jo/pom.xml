@@ -5,7 +5,9 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.2.1</version> <relativePath/> </parent>
+		<version>3.2.1</version>
+		<relativePath/>
+	</parent>
 	<groupId>com.example</groupId>
 	<artifactId>systeme-reservation-jo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
@@ -67,6 +69,11 @@
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

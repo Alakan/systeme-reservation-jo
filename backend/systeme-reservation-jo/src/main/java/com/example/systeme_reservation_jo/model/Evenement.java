@@ -13,7 +13,6 @@ import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 
-
 @Entity
 @Table(name = "evenements")
 @Getter
@@ -24,20 +23,18 @@ public class Evenement {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
-    @NotBlank(message = "Le nom de l'événement ne peut pas être vide")
-    @Column(nullable = false)
-    private String nom;
+    @NotBlank(message = "Le titre de l'événement ne peut pas être vide") // Message corrigé
+    private String titre;
 
     private String description;
 
     @NotNull(message = "La date et l'heure de l'événement ne peuvent pas être nulles")
     @Column(nullable = false)
-    private LocalDateTime dateHeure;
+    private LocalDateTime dateEvenement; // On garde uniquement ce champ
 
     @NotBlank(message = "Le lieu de l'événement ne peut pas être vide")
-    @Column(nullable = false)
     private String lieu;
 
     @NotNull(message = "La capacité totale ne peut pas être nulle")
@@ -45,9 +42,10 @@ public class Evenement {
     @Column(nullable = false)
     private int capaciteTotale;
 
+    //On garde pour le moment, mais il faudra le gérer correctement plus tard.
     @NotNull(message = "Le nombre de places restantes ne peut pas être nul")
     @Column(nullable = false)
-    private int placesRestantes; // Peut être calculé, ou mis à jour via un trigger/une procédure stockée
+    private int placesRestantes;
 
     private String categorie;
 
@@ -55,7 +53,5 @@ public class Evenement {
     @DecimalMin(value = "0.0", inclusive = false, message = "Le prix doit être supérieur à 0")
     @Column(nullable = false)
     private BigDecimal prix;
-
-    //Pas de relation OneToMany avec Billet ici, car un billet est lié à un seul événement.
-
 }
+

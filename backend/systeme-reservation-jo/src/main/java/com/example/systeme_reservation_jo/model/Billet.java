@@ -3,10 +3,10 @@ package com.example.systeme_reservation_jo.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -20,7 +20,7 @@ public class Billet {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @NotNull(message = "Le billet doit être associé à un événement")
     @ManyToOne(fetch = FetchType.LAZY) // LAZY pour optimiser les performances
@@ -44,4 +44,7 @@ public class Billet {
     @Column(nullable = false)
     private String statut; // "RESERVE", "ANNULE", "UTILISE", etc.
 
+    @NotNull(message = "Le type de billet ne peut pas être nul") // Ajout du champ type
+    @Column(nullable = false)
+    private TypeBillet type; // Nouveau champ pour le type de billet
 }

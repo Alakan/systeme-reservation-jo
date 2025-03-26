@@ -24,7 +24,7 @@ public class UtilisateurController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Utilisateur> getUtilisateurById(@PathVariable Long id) {
+    public ResponseEntity<Utilisateur> getUtilisateurById(@PathVariable Integer id) {
         Optional<Utilisateur> utilisateur = utilisateurService.getUtilisateurById(id);
         return utilisateur.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -36,14 +36,14 @@ public class UtilisateurController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Utilisateur> updateUtilisateur(@PathVariable Long id, @Valid @RequestBody Utilisateur utilisateur) {
+    public ResponseEntity<Utilisateur> updateUtilisateur(@PathVariable Integer id, @Valid @RequestBody Utilisateur utilisateur) {
         Utilisateur utilisateurModifie = utilisateurService.updateUtilisateur(id, utilisateur);
         return ResponseEntity.ok(utilisateurModifie);
 
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUtilisateur(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUtilisateur(@PathVariable Integer id) {
         utilisateurService.deleteUtilisateur(id);
         return ResponseEntity.noContent().build();
     }

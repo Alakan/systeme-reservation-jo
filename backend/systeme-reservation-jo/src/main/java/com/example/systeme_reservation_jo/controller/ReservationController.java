@@ -54,7 +54,7 @@ public class ReservationController {
     }
 
     @GetMapping("/utilisateur/{utilisateurId}")
-    public ResponseEntity<List<Reservation>> getReservationsByUtilisateur(@PathVariable Long utilisateurId) {
+    public ResponseEntity<List<Reservation>> getReservationsByUtilisateur(@PathVariable Integer utilisateurId) {
         Utilisateur utilisateur = utilisateurService.getUtilisateurById(utilisateurId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec l'id : " + utilisateurId)); //On gère si l'utilisateur n'existe pas.
         List<Reservation> reservations = reservationService.getReservationsByUtilisateur(utilisateur);

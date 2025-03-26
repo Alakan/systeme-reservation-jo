@@ -2,6 +2,7 @@ package com.example.systeme_reservation_jo.service;
 
 import com.example.systeme_reservation_jo.model.Billet;
 import com.example.systeme_reservation_jo.model.Evenement;
+import com.example.systeme_reservation_jo.model.TypeBillet; // Importez l'enum TypeBillet
 import com.example.systeme_reservation_jo.model.Utilisateur;
 import com.example.systeme_reservation_jo.repository.BilletRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,12 +30,12 @@ public class BilletServiceImpl implements BilletService {
     }
 
     @Override
-    public Optional<Billet> getBilletById(Long id) {
+    public Optional<Billet> getBilletById(Integer id) { // Integer ici
         return billetRepository.findById(id);
     }
 
     @Override
-    public Billet updateBillet(Long id, Billet billetDetails) {
+    public Billet updateBillet(Integer id, Billet billetDetails) { // Integer ici
         Billet billet = billetRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Billet non trouvé avec l'id : " + id));
 
@@ -43,14 +44,15 @@ public class BilletServiceImpl implements BilletService {
         billet.setDateReservation(billetDetails.getDateReservation());
         billet.setNumeroBillet(billetDetails.getNumeroBillet());
         billet.setStatut(billetDetails.getStatut());
+        billet.setType(billetDetails.getType()); // Assurez-vous que le setter pour type existe
         billet.setReservation(billetDetails.getReservation());
 
         return billetRepository.save(billet);
     }
 
     @Override
-    public void deleteBillet(Long id) {
-        billetRepository.deleteById(id);
+    public void deleteBillet(Integer id) { // Integer ici
+        billetRepository.deleteById(id); // Integer
     }
 
     @Override
@@ -62,7 +64,7 @@ public class BilletServiceImpl implements BilletService {
         return billetRepository.findByUtilisateur(utilisateur);
     }
     @Override
-    public List<Billet> getBilletsByStatut(String statut){
+    public List<Billet> getBilletsByStatut(TypeBillet statut){ // Type modifié pour utiliser l'enum
         return  billetRepository.findByStatut(statut);
     }
 }

@@ -1,13 +1,14 @@
 package com.example.systeme_reservation_jo.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.DecimalMin;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -37,9 +38,9 @@ public class Paiement {
     @Column(nullable = false)
     private LocalDateTime datePaiement;
 
-    @NotBlank(message = "La méthode de paiement ne peut pas être vide")
+    @NotNull(message = "La méthode de paiement ne peut pas être nulle") // Changement: NotBlank -> NotNull car c'est un enum
     @Column(nullable = false)
-    private String methodePaiement;
+    private ModePaiement methodePaiement; // Type modifié pour utiliser l'enum
 
     private String transactionId; // Optionnel, peut être null
 
