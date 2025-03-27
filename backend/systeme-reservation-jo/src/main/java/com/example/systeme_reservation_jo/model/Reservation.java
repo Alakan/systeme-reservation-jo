@@ -29,6 +29,10 @@ public class Reservation {
     @JoinColumn(name = "utilisateur_id", nullable = false)
     private Utilisateur utilisateur;
 
+    @NotNull(message = "L'ID de l'événement ne peut pas être nul")
+    @Column(nullable = false)
+    private Integer evenementId; // Ajout de l'ID de l'événement
+
     @NotNull(message = "La date de réservation ne peut pas être nulle")
     @Column(nullable = false)
     private LocalDateTime dateReservation;
@@ -41,9 +45,9 @@ public class Reservation {
     @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Billet> billets = new HashSet<>();
 
-    @NotNull(message = "Le statut de la réservation ne peut pas être nul") // Changement: NotBlank -> NotNull car c'est un enum
+    @NotNull(message = "Le statut de la réservation ne peut pas être nul")
     @Column(nullable = false)
-    private StatutReservation statut; // Type modifié pour utiliser l'enum
+    private StatutReservation statut;
 
     @OneToOne(mappedBy = "reservation", fetch = FetchType.LAZY)
     private Paiement paiement;

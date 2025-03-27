@@ -4,14 +4,16 @@ import com.example.systeme_reservation_jo.model.Reservation;
 import com.example.systeme_reservation_jo.model.Utilisateur;
 import com.example.systeme_reservation_jo.service.ReservationService;
 import com.example.systeme_reservation_jo.service.UtilisateurService;
-
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/reservations")
@@ -49,6 +51,10 @@ public class ReservationController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReservation(@PathVariable Long id) {
+        Optional<Reservation> existingReservation = reservationService.getReservationById(id);
+        if (existingReservation.isEmpty()) {
+            return ResponseEntity.notFound().build(); // Retourner 404 si la réservation n'existe pas
+        }
         reservationService.deleteReservation(id);
         return ResponseEntity.noContent().build();
     }
@@ -56,8 +62,18 @@ public class ReservationController {
     @GetMapping("/utilisateur/{utilisateurId}")
     public ResponseEntity<List<Reservation>> getReservationsByUtilisateur(@PathVariable Integer utilisateurId) {
         Utilisateur utilisateur = utilisateurService.getUtilisateurById(utilisateurId)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec l'id : " + utilisateurId)); //On gère si l'utilisateur n'existe pas.
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec l'id : " + utilisateurId));
         List<Reservation> reservations = reservationService.getReservationsByUtilisateur(utilisateur);
         return ResponseEntity.ok(reservations);
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<String> handleIllegalStateException(IllegalStateException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }
