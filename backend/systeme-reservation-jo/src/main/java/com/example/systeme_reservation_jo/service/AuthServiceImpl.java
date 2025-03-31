@@ -1,10 +1,12 @@
 package com.example.systeme_reservation_jo.service;
 
 // IMPORTS CORRECTS (selon vos informations)
+import com.example.systeme_reservation_jo.model.Role;
+import com.example.systeme_reservation_jo.model.Utilisateur;
 import com.example.systeme_reservation_jo.payload.request.LoginRequest;
 import com.example.systeme_reservation_jo.payload.request.SignupRequest; // Utilisez SignupRequest, car RegisterRequest n'existe pas
 import com.example.systeme_reservation_jo.payload.response.JwtAuthenticationResponse;
-// import com.example.systeme_reservation_jo.payload.response.MessageResponse; //  Importez si vous en avez besoin dans la méthode register
+import com.example.systeme_reservation_jo.payload.response.MessageResponse;
 
 import com.example.systeme_reservation_jo.repository.UtilisateurRepository;
 import com.example.systeme_reservation_jo.security.JwtTokenProvider;
@@ -17,6 +19,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -50,10 +55,31 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ResponseEntity<?> register(SignupRequest signupRequest) { // Utilisez SignupRequest
-        // REMPLACEZ CECI par votre code. Utilisez SignupRequest.
-        // Vous devrez probablement retourner un ResponseEntity.
-        //Exemple :
-        return ResponseEntity.ok().body("Inscription réussie !"); // Simple exemple - Adaptez à votre logique
+    public ResponseEntity<?> register(SignupRequest signupRequest) {
+        if (utilisateurRepository.existsByUsername(signupRequest.getUsername())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(new MessageResponse("Erreur: Le nom d'utilisateur est déjà pris!"));
+        }
+
+        if (utilisateurRepository.existsByEmail(signupRequest.getEmail())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(new MessageResponse("Erreur: L'email est déjà utilisé!"));
+        }
+
+        // Créer un nouvel utilisateur
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setUsername(signupRequest.getUsername());
+        utilisateur.setPassword(passwordEncoder.encode(signupRequest.getPassword())); // Encoder le mot de passe
+        utilisateur.setEmail(signupRequest.getEmail());
+
+        Set<Role> roles = new HashSet<>();
+        roles.add(Role.UTILISATEUR); // Attribuer le rôle utilisateur par défaut
+        utilisateur.setRoles(roles);
+
+        utilisateurRepository.save(utilisateur);
+
+        return ResponseEntity.ok(new MessageResponse("Utilisateur enregistré avec succès!"));
     }
 }

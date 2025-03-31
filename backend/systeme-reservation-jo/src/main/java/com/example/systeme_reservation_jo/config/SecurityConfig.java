@@ -47,7 +47,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/api/auth/**").permitAll() // Autoriser les requêtes OPTIONS pour le CORS
+                        .requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
 
                         // Exemple de configuration pour les événements (à adapter selon vos besoins)
