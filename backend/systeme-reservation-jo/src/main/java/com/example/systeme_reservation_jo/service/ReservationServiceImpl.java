@@ -75,14 +75,13 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public Reservation updateReservation(Long id, Reservation reservationDetails) {
         Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Reservation non trouvé avec l'id : " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Reservation non trouvée avec l'id : " + id));
 
         reservation.setUtilisateur(reservationDetails.getUtilisateur());
-        reservation.setEvenementId(reservationDetails.getEvenementId());
-        // Attention à la gestion des billets!
         reservation.setDateReservation(reservationDetails.getDateReservation());
         reservation.setNombreBillets(reservationDetails.getNombreBillets());
         reservation.setStatut(reservationDetails.getStatut());
+
         return reservationRepository.save(reservation);
     }
 

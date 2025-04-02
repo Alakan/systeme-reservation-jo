@@ -161,4 +161,41 @@ public class ReservationControllerTest {
                 .andExpect(MockMvcResultMatchers.status().isNotFound());
     }
 
+    @Test
+    void updateReservation_ValidReservation_ReturnsUpdatedReservation() throws Exception {
+        // Créer une réservation existante
+        Reservation existingReservation = createValidReservation();
+        long reservationId = 1L;
+        existingReservation.setId(reservationId);
+        Mockito.when(reservationService.getReservationById(reservationId)).thenReturn(Optional.of(existingReservation));
+
+        // Créer les détails de la mise à jour
+        Reservation updatedDetails = createValidReservation();
+        updatedDetails.setNombreBillets(3);
+        updatedDetails.setStatut(StatutReservation.CONFIRMEE);
+        Mockito.when(reservationService.updateReservation(Mockito.eq(reservationId), Mockito.any(Reservation.class))).thenReturn(updatedDetails);
+
+        // Effectuer la requête PUT
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/reservations/" + reservationId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updatedDetails)))
+                .andExpect(MockMvcResultMatchers.status().isOk()) // Vérifier le statut 200 OK
+                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.nombreBillets").value(3)) // Vérifier un champ mis à jour
+                .andExpect(MockMvcResultMatchers.jsonPath("$.statut").value("CONFIRMEE")); // Vérifier un autre champ mis à jour
+    }
+
+    @Test
+    void updateReservation_NonExistingId_ReturnsNotFound() throws Exception {
+        long reservationId = 2L;
+        Mockito.when(reservationService.getReservationById(reservationId)).thenReturn(Optional.empty());
+
+        Reservation updatedDetails = createValidReservation();
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/reservations/" + reservationId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updatedDetails)))
+                .andExpect(MockMvcResultMatchers.status().isNotFound()); // Vérifier le statut 404 Not Found
+    }
+
 }

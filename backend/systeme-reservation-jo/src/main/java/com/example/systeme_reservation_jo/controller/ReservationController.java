@@ -45,6 +45,10 @@ public class ReservationController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Reservation> updateReservation(@PathVariable Long id, @Valid @RequestBody Reservation reservationDetails) {
+        Optional<Reservation> existingReservation = reservationService.getReservationById(id);
+        if (existingReservation.isEmpty()) {
+            return ResponseEntity.notFound().build(); // Retourner 404 si la réservation n'existe pas
+        }
         Reservation updatedReservation = reservationService.updateReservation(id, reservationDetails);
         return ResponseEntity.ok(updatedReservation);
     }
