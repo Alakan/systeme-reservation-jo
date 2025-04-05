@@ -11,7 +11,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,8 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Configuration
-@EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity // Activer les annotations comme @PreAuthorize
 @Profile("!test")
 public class SecurityConfig {
 
@@ -45,20 +43,14 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/api/auth/**").permitAll() // Autoriser les requêtes OPTIONS pour le CORS
-                        .requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/api/auth/**").permitAll()
+                        .requestMatchers("/api/utilisateurs/admin").hasRole("ADMINISTRATEUR") // Accès réservé aux administrateurs
+                        .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
-
-                        // Exemple de configuration pour les événements (à adapter selon vos besoins)
                         .requestMatchers(HttpMethod.GET, "/api/evenements").permitAll() // Autoriser la lecture à tous
                         .requestMatchers("/api/evenements/**").authenticated() // Nécessiter une authentification pour les autres opérations sur les événements
-
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/utilisateurs/**").hasRole("UTILISATEUR") // Nécessiter le rôle utilisateur pour les autres endpoints utilisateurs
+                        .anyRequest().denyAll() // Par défaut, tout est refusé
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -78,7 +70,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*")); // À MODIFIER EN PRODUCTION pour limiter aux domaines de votre frontend
+        configuration.setAllowedOrigins(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
         configuration.setAllowCredentials(true);

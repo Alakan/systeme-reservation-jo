@@ -17,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.TestingAuthenticationProvider;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -171,5 +172,23 @@ public class EvenementControllerTest {
                 .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.jsonPath("$").isArray())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(2));
+    }
+
+    @Test
+    void createEvenement_AdminUser_ReturnsCreated() throws Exception {
+        // Simuler un utilisateur avec le rôle ADMINISTRATEUR
+        org.springframework.security.core.userdetails.User adminUser =
+                new org.springframework.security.core.userdetails.User("admin", "password", Collections.singletonList(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMINISTRATEUR")));
+        org.springframework.security.core.Authentication authentication =
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(adminUser, adminUser.getPassword(), adminUser.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        Evenement evenement = createValidEvenement();
+        Mockito.when(evenementService.createEvenement(Mockito.any(Evenement.class))).thenReturn(evenement);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/evenements")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(evenement)))
+                .andExpect(MockMvcResultMatchers.status().isCreated()); // Vérifier le statut 201 Created
     }
 }

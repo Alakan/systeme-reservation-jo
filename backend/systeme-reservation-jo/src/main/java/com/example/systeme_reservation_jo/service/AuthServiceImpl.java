@@ -75,7 +75,7 @@ public class AuthServiceImpl implements AuthService {
         utilisateur.setEmail(signupRequest.getEmail());
 
         Set<Role> roles = new HashSet<>();
-        roles.add(Role.UTILISATEUR); // Attribuer le rôle utilisateur par défaut
+        roles.add(Role.ROLE_UTILISATEUR); // Attribuer le rôle utilisateur par défaut
         utilisateur.setRoles(roles);
 
         utilisateurRepository.save(utilisateur);

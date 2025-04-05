@@ -23,7 +23,7 @@ public class UtilisateurDetailsServiceImpl implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé avec l'email : " + email));
 
         List<SimpleGrantedAuthority> authorities = utilisateur.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.name())) // Utilisez role.name() pour obtenir le nom de l'enum
+                .map(role -> new SimpleGrantedAuthority(role.name())) // role.name() retourne déjà la valeur de l'enum (avec le préfixe ROLE_)
                 .collect(Collectors.toList());
 
         return new org.springframework.security.core.userdetails.User(

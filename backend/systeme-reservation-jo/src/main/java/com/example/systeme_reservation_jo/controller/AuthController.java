@@ -3,7 +3,6 @@ package com.example.systeme_reservation_jo.controller;
 import com.example.systeme_reservation_jo.payload.request.LoginRequest;
 import com.example.systeme_reservation_jo.payload.request.SignupRequest;
 import com.example.systeme_reservation_jo.payload.response.JwtAuthenticationResponse;
-import com.example.systeme_reservation_jo.payload.response.MessageResponse;
 import com.example.systeme_reservation_jo.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.*;
-
-
+import org.springframework.security.authentication.BadCredentialsException;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -27,8 +25,12 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<JwtAuthenticationResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-        JwtAuthenticationResponse jwtResponse = authService.login(loginRequest);
-        return ResponseEntity.ok(jwtResponse); // Retourne le JWT avec un code 200 OK
+        try {
+            JwtAuthenticationResponse jwtResponse = authService.login(loginRequest);
+            return ResponseEntity.ok(jwtResponse); // Retourne le JWT avec un code 200 OK
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // Retourne 401 en cas d'échec d'authentification
+        }
     }
 
     @PostMapping("/register")
