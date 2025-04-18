@@ -25,10 +25,16 @@ public class JwtTokenProvider {
     @Value("${app.jwtExpirationInMs}")
     private int jwtExpirationInMs;
 
-    private SecretKey getSigningKey() {
+   /* private SecretKey getSigningKey() {
         byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
+    } */
+
+    private SecretKey getSigningKey() {
+        return Keys.secretKeyFor(SignatureAlgorithm.HS512); // Génère une clé sécurisée
     }
+
+
 
     public String generateToken(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();

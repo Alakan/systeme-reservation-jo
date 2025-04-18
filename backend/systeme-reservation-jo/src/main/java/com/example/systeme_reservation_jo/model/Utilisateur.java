@@ -4,11 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -19,7 +15,7 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder // Permet de créer des objets Utilisateur avec un style fluide
+@Builder
 public class Utilisateur {
 
     @Id
@@ -41,8 +37,9 @@ public class Utilisateur {
     @Column(unique = true, nullable = false)
     private String email;
 
+    // Correction : Stocker les rôles en `String` au lieu d'un Enum
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "utilisateur_roles", joinColumns = @JoinColumn(name = "utilisateur_id"))
     @Column(name = "role")
-    private Set<Role> roles = new HashSet<>();
+    private Set<String> roles = new HashSet<>();
 }

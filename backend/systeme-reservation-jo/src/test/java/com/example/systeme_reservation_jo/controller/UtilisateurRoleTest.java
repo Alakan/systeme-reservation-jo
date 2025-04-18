@@ -84,7 +84,7 @@ public class UtilisateurRoleTest {
                 .username("updatableUser")
                 .password("securePassword")
                 .email("updatable@example.com")
-                .roles(Set.of(Role.ROLE_UTILISATEUR))
+                .roles(Set.of("ROLE_UTILISATEUR"))
                 .build();
 
         Mockito.when(utilisateurService.getUtilisateurById(1))
@@ -94,7 +94,7 @@ public class UtilisateurRoleTest {
                 .username("updatableUser")
                 .password("securePassword")
                 .email("updatable@example.com")
-                .roles(Set.of(Role.ROLE_ADMINISTRATEUR))
+                .roles(Set.of("ROLE_ADMINISTRATEUR"))
                 .build();
 
         Mockito.when(utilisateurService.updateUtilisateur(Mockito.anyInt(), Mockito.any(Utilisateur.class)))

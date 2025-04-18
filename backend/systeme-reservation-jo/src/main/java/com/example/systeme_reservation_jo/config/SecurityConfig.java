@@ -44,13 +44,18 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/utilisateurs/admin").hasRole("ADMINISTRATEUR") // Accès réservé aux administrateurs
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/public/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/evenements").permitAll() // Autoriser la lecture à tous
-                        .requestMatchers("/api/evenements/**").authenticated() // Nécessiter une authentification pour les autres opérations sur les événements
-                        .requestMatchers("/api/utilisateurs/**").hasRole("UTILISATEUR") // Nécessiter le rôle utilisateur pour les autres endpoints utilisateurs
-                        .anyRequest().denyAll() // Par défaut, tout est refusé
+                        // Autoriser Swagger et les endpoints OpenAPI
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll() //  Autorisé pour l'authentification
+                        .requestMatchers("/api/public/**").permitAll() //  Endpoints publics
+
+                        .requestMatchers(HttpMethod.GET, "/api/evenements").authenticated() //  Exige un token même en lecture
+                        .requestMatchers("/api/evenements/**").authenticated() // Sécurité renforcée
+
+                        .requestMatchers("/api/utilisateurs/admin").hasRole("ADMINISTRATEUR") // Réservé aux admins
+                        .requestMatchers("/api/utilisateurs/**").hasRole("UTILISATEUR") // Réservé aux utilisateurs
+
+                        .anyRequest().denyAll() //  Par défaut, tout est interdit
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
