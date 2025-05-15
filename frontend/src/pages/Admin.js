@@ -5,7 +5,6 @@ function Admin() {
     const [offres, setOffres] = useState([]);
 
     useEffect(() => {
-        // Récupérer les offres existantes
         api.get('/admin/offres')
             .then(response => setOffres(response.data))
             .catch(error => console.error("Erreur lors de la récupération des offres :", error));
@@ -20,9 +19,15 @@ function Admin() {
             .catch(error => console.error("Erreur lors de la suppression :", error));
     };
 
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        window.location.href = "/login";
+    };
+
     return (
         <div>
             <h1>Espace Administrateur</h1>
+            <button onClick={handleLogout}>Déconnexion</button>
             <ul>
                 {offres.map(offre => (
                     <li key={offre.id}>
