@@ -1,7 +1,12 @@
 package com.example.systeme_reservation_jo.service;
 
+import com.example.systeme_reservation_jo.model.Billet;
 import com.example.systeme_reservation_jo.model.Evenement;
+import com.example.systeme_reservation_jo.model.Reservation;
+import com.example.systeme_reservation_jo.repository.BilletRepository;
 import com.example.systeme_reservation_jo.repository.EvenementRepository;
+import com.example.systeme_reservation_jo.repository.PaiementRepository;
+import com.example.systeme_reservation_jo.repository.ReservationRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,10 +21,16 @@ import java.util.Optional;
 public class EvenementServiceImpl implements EvenementService {
 
     private final EvenementRepository evenementRepository;
+    private final BilletRepository billetRepository;
+    private final PaiementRepository paiementRepository;
+    private final ReservationRepository reservationRepository;
 
     @Autowired
-    public EvenementServiceImpl(EvenementRepository evenementRepository) {
+    public EvenementServiceImpl(EvenementRepository evenementRepository, BilletRepository billetRepository, PaiementRepository paiementRepository, ReservationRepository reservationRepository) {
         this.evenementRepository = evenementRepository;
+        this.billetRepository = billetRepository;
+        this.paiementRepository = paiementRepository;
+        this.reservationRepository = reservationRepository;
     }
 
     @Override
@@ -27,17 +38,16 @@ public class EvenementServiceImpl implements EvenementService {
     public List<Evenement> getAllEvenements() {
         return evenementRepository.findAll();
     }
-/*
+
     @Override
     @Transactional(readOnly = true)
-    public Evenement findEvenement(int id) {
-        return evenementRepository.findById(id).orElse(null);
-    } */
+    public Optional<Evenement> getEvenementById(Long id) {
+        return evenementRepository.findById(id);
+    }
 
     @Override
     @Transactional
     public Evenement createEvenement(Evenement evenement) {
-        // Validations (peuvent être externalisées dans une classe de validation séparée)
         if (evenement.getDateEvenement() == null || evenement.getDateEvenement().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("La date de l'événement doit être dans le futur.");
         }
@@ -47,30 +57,15 @@ public class EvenementServiceImpl implements EvenementService {
         if (evenement.getCapaciteTotale() <= 0) {
             throw new IllegalArgumentException("La capacité totale doit être supérieure à zéro.");
         }
-        // Enregistre l'événement dans la base de données
         return evenementRepository.save(evenement);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Evenement> findEvenementsBetweenDates(LocalDateTime start, LocalDateTime end) {
-        return evenementRepository.findEvenementsBetweenDates(start, end);
-    }
-
-
-    @Override
-    @Transactional(readOnly = true)
-    public Optional<Evenement> getEvenementById(Integer id) {
-        return evenementRepository.findById(id);
-    }
-
-    @Override
     @Transactional
-    public Evenement updateEvenement(Integer id, Evenement evenementDetails) {
+    public Evenement updateEvenement(Long id, Evenement evenementDetails) {
         Evenement evenement = evenementRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Événement non trouvé avec l'id : " + id));
 
-        //Validations
         if (evenementDetails.getDateEvenement() == null || evenementDetails.getDateEvenement().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("La date de l'événement doit être dans le futur.");
         }
@@ -80,57 +75,57 @@ public class EvenementServiceImpl implements EvenementService {
         if (evenementDetails.getCapaciteTotale() <= 0) {
             throw new IllegalArgumentException("La capacité totale doit être supérieure à zéro.");
         }
-        // Mettre à jour l'entité existante
+
         evenement.setTitre(evenementDetails.getTitre());
         evenement.setDescription(evenementDetails.getDescription());
         evenement.setDateEvenement(evenementDetails.getDateEvenement());
         evenement.setLieu(evenementDetails.getLieu());
         evenement.setCapaciteTotale(evenementDetails.getCapaciteTotale());
-        evenement.setPlacesRestantes(evenementDetails.getPlacesRestantes()); // Assurez-vous que cette logique est correcte
+        evenement.setPlacesRestantes(evenementDetails.getPlacesRestantes());
         evenement.setCategorie(evenementDetails.getCategorie());
         evenement.setPrix(evenementDetails.getPrix());
 
         return evenementRepository.save(evenement);
     }
 
-
-
     @Override
     @Transactional(readOnly = true)
     public List<Evenement> searchEvenements(String motCle) {
         return evenementRepository.findByTitreContainingIgnoreCaseOrDescriptionContainingIgnoreCase(motCle, motCle);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Evenement> findEvenementsBetweenDates(LocalDateTime start, LocalDateTime end) {
+        return evenementRepository.findEvenementsBetweenDates(start, end);
     }
 
     @Override
     @Transactional
-    public void deleteEvenement(Integer id) {
-        // Récupère l'événement ou lance une exception s'il n'est pas trouvé
+    public void deleteEvenement(Long id) {
         Evenement evenement = evenementRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Événement non trouvé avec l'id : " + id));
-        // Supprime l'événement de la base de données
+
+        // Vérifier s'il y a des paiements actifs pour cet événement
+        if (paiementRepository.existsByReservation_Evenement_IdAndStatut(id, "EN_ATTENTE")) {
+            throw new IllegalStateException("Impossible de supprimer l'événement : des paiements en attente existent.");
+        }
+
+        // Supprimer la référence à l'événement dans les réservations sans les supprimer
+        List<Reservation> reservations = reservationRepository.findByEvenement_Id(id);
+        for (Reservation reservation : reservations) {
+            reservation.setEvenement(null); // 🔹 Supprime la référence à l'événement
+            reservationRepository.save(reservation);
+        }
+
+        // Supprimer la référence à l'événement dans les billets sans les supprimer
+        List<Billet> billets = billetRepository.findByEvenement_Id(id);
+        for (Billet billet : billets) {
+            billet.setEvenement(null); // 🔹 Supprime la référence à l'événement
+            billetRepository.save(billet);
+        }
+
+        // Supprimer l'événement
         evenementRepository.delete(evenement);
     }
-/*
-    @Override
-    @Transactional(readOnly = true)
-    public List<Evenement> searchEvenements(String motCle) {
-        return evenementRepository.findByTitreContainingIgnoreCaseOrDescriptionContainingIgnoreCase(motCle, motCle);
-    }
-    @Override
-    @Transactional(readOnly = true)
-    public List<Evenement> findByTitre(String titre) {
-        return  evenementRepository.findByTitre(titre);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public  List<Evenement> searchEvenementsByTitre(String motCle) {
-        return evenementRepository.findByTitreContainingIgnoreCase(motCle);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public  List<Evenement> searchEvenementsByDescription(String motCle) {
-        return evenementRepository.findByDescriptionContainingIgnoreCase(motCle);
-    } */
 }

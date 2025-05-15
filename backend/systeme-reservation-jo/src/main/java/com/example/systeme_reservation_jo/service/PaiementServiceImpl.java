@@ -1,8 +1,8 @@
 package com.example.systeme_reservation_jo.service;
 
 import com.example.systeme_reservation_jo.model.Paiement;
-import com.example.systeme_reservation_jo.repository.PaiementRepository;
 import com.example.systeme_reservation_jo.model.Reservation;
+import com.example.systeme_reservation_jo.repository.PaiementRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,10 +49,18 @@ public class PaiementServiceImpl implements PaiementService {
 
     @Override
     public void deletePaiement(Long id) {
+        Paiement paiement = paiementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Paiement non trouvé avec l'id : " + id));
+
+        if (paiementRepository.existsByReservationId(paiement.getReservation().getId())) {
+            throw new IllegalStateException("Impossible de supprimer le paiement : il est lié à une réservation.");
+        }
+
         paiementRepository.deleteById(id);
     }
+
     @Override
-    public Optional<Paiement> getPaiementByReservation(Reservation reservation){
+    public List<Paiement> getPaiementsByReservation(Reservation reservation) {
         return paiementRepository.findByReservation(reservation);
-    };
+    }
 }

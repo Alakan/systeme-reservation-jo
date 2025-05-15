@@ -49,15 +49,11 @@ public class PaiementController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePaiement(@PathVariable Long id) {
-        paiementService.deletePaiement(id);
-        return ResponseEntity.noContent().build();
-    }
-    @GetMapping("/reservation/{reservationId}")
-    public ResponseEntity<Paiement> getPaiementByReservation(@PathVariable Long reservationId) {
-        Reservation reservation = reservationService.getReservationById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Reservation non trouvé avec l'id : " + reservationId)); //On gère le cas si la reservation n'existe pas.
-        return paiementService.getPaiementByReservation(reservation)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        try {
+            paiementService.deletePaiement(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
     }
 }

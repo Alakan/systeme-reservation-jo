@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Configuration
-@EnableMethodSecurity // Activer les annotations comme @PreAuthorize
+@EnableMethodSecurity
 @Profile("!test")
 public class SecurityConfig {
 
@@ -40,22 +40,25 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .csrf(csrf -> csrf.disable()) // Désactive CSRF pour les API REST
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Configuration CORS
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT Stateless
                 .authorizeHttpRequests(auth -> auth
-                        // Autoriser Swagger et les endpoints OpenAPI
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll() //  Autorisé pour l'authentification
-                        .requestMatchers("/api/public/**").permitAll() //  Endpoints publics
-
-                        .requestMatchers(HttpMethod.GET, "/api/evenements").authenticated() //  Exige un token même en lecture
-                        .requestMatchers("/api/evenements/**").authenticated() // Sécurité renforcée
-
-                        .requestMatchers("/api/utilisateurs/admin").hasRole("ADMINISTRATEUR") // Réservé aux admins
-                        .requestMatchers("/api/utilisateurs/**").hasRole("UTILISATEUR") // Réservé aux utilisateurs
-
-                        .anyRequest().denyAll() //  Par défaut, tout est interdit
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/evenements/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/evenements/**").hasRole("ADMINISTRATEUR")
+                        .requestMatchers(HttpMethod.PUT, "/api/evenements/**").hasRole("ADMINISTRATEUR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/evenements/**").hasRole("ADMINISTRATEUR")
+                        .requestMatchers(HttpMethod.GET, "/api/utilisateurs/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/utilisateurs/**").hasRole("ADMINISTRATEUR") // ✅ Autorisation pour PUT
+                        .requestMatchers(HttpMethod.DELETE, "/api/utilisateurs/**").hasRole("ADMINISTRATEUR") // ✅ Ajout pour autoriser DELETE
+                        .requestMatchers(HttpMethod.GET, "/api/reservations/**").hasAnyRole("ADMINISTRATEUR", "UTILISATEUR")
+                        .requestMatchers(HttpMethod.POST, "/api/reservations/**").hasAnyRole("ADMINISTRATEUR", "UTILISATEUR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/reservations/**").hasAnyRole("ADMINISTRATEUR", "UTILISATEUR")
+                        .requestMatchers(HttpMethod.POST, "/api/billets/**").hasAnyRole("ADMINISTRATEUR", "UTILISATEUR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/billets/**").hasAnyRole("ADMINISTRATEUR", "UTILISATEUR")
+                        .anyRequest().denyAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -75,7 +78,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*"));
+        configuration.setAllowedOrigins(List.of("*")); // 🔹 Autorise toutes les origines (à adapter en prod)
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
         configuration.setAllowCredentials(true);

@@ -1,7 +1,8 @@
 package com.example.systeme_reservation_jo.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,35 +17,38 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Billet {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
-    @NotNull(message = "Le billet doit être associé à un événement")
-    @ManyToOne(fetch = FetchType.LAZY) // LAZY pour optimiser les performances
-    @JoinColumn(name = "evenement_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "evenement_id", nullable = true) // ✅ Permet NULL pour éviter l'erreur
     private Evenement evenement;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "utilisateur_id") // Peut être null si le billet n'est pas encore réservé
+    @JoinColumn(name = "utilisateur_id")
     private Utilisateur utilisateur;
 
+    @NotNull(message = "Le billet doit être lié à une réservation")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reservation_id")
+    @JoinColumn(name = "reservation_id", nullable = false)
     private Reservation reservation;
 
     private LocalDateTime dateReservation;
 
-    @Column(unique = true) // Assure l'unicité, mais peut être null si pas encore attribué
+    @Column(unique = true)
     private String numeroBillet;
 
-    @NotBlank(message = "Le statut du billet ne peut pas être vide")
+    @NotNull(message = "Le statut du billet ne peut pas être nul")
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String statut; // "RESERVE", "ANNULE", "UTILISE", etc.
+    private StatutBillet statut;
 
-    @NotNull(message = "Le type de billet ne peut pas être nul") // Ajout du champ type
+    @NotNull(message = "Le type de billet ne peut pas être nul")
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TypeBillet type; // Nouveau champ pour le type de billet
+    private TypeBillet type;
 }

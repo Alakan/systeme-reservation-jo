@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface EvenementRepository extends JpaRepository<Evenement, Integer> {
+public interface EvenementRepository extends JpaRepository<Evenement, Long> {
 
     // Recherche par titre (méthode query method)
     List<Evenement> findByTitre(String titre);

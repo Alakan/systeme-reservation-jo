@@ -1,5 +1,9 @@
 package com.example.systeme_reservation_jo.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,6 +17,11 @@ import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 
+/**
+ * Représente un événement du système de réservation.
+ */
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // ✅ Évite les erreurs de proxy Hibernate
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @Entity
 @Table(name = "evenements")
 @Getter
@@ -23,16 +32,17 @@ public class Evenement {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id; // ✅ Correction Integer → Long
 
-    @NotBlank(message = "Le titre de l'événement ne peut pas être vide") // Message corrigé
+    @NotBlank(message = "Le titre de l'événement ne peut pas être vide")
     private String titre;
 
     private String description;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @NotNull(message = "La date et l'heure de l'événement ne peuvent pas être nulles")
     @Column(nullable = false)
-    private LocalDateTime dateEvenement; // On garde uniquement ce champ
+    private LocalDateTime dateEvenement;
 
     @NotBlank(message = "Le lieu de l'événement ne peut pas être vide")
     private String lieu;
@@ -42,7 +52,6 @@ public class Evenement {
     @Column(nullable = false)
     private int capaciteTotale;
 
-    //On garde pour le moment, mais il faudra le gérer correctement plus tard.
     @NotNull(message = "Le nombre de places restantes ne peut pas être nul")
     @Column(nullable = false)
     private int placesRestantes;
@@ -54,4 +63,3 @@ public class Evenement {
     @Column(nullable = false)
     private BigDecimal prix;
 }
-

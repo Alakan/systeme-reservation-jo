@@ -1,97 +1,95 @@
 package com.example.systeme_reservation_jo.controller;
 
 import com.example.systeme_reservation_jo.model.Billet;
-import com.example.systeme_reservation_jo.model.Evenement;
-import com.example.systeme_reservation_jo.model.TypeBillet; // Importez l'enum TypeBillet
-import com.example.systeme_reservation_jo.model.Utilisateur;
 import com.example.systeme_reservation_jo.service.BilletService;
-import com.example.systeme_reservation_jo.service.EvenementService;
-import com.example.systeme_reservation_jo.service.UtilisateurService;
-
 import jakarta.validation.Valid;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
+/**
+ * Contrôleur REST pour gérer les billets.
+ */
 @RestController
 @RequestMapping("/api/billets")
 public class BilletController {
 
+    private static final Logger logger = LoggerFactory.getLogger(BilletController.class); // Logger pour suivre les actions
+
     private final BilletService billetService;
-    private final EvenementService evenementService;
-    private final UtilisateurService utilisateurService;
 
     @Autowired
-    public BilletController(BilletService billetService, EvenementService evenementService, UtilisateurService utilisateurService) {
+    public BilletController(BilletService billetService) {
         this.billetService = billetService;
-        this.evenementService = evenementService;
-        this.utilisateurService = utilisateurService;
     }
 
+    /**
+     * Récupère tous les billets.
+     *
+     * @return Liste de tous les billets
+     */
     @GetMapping
     public List<Billet> getAllBillets() {
+        logger.info("Récupération de tous les billets");
         return billetService.getAllBillets();
     }
 
+    /**
+     * Récupère un billet spécifique par son ID.
+     *
+     * @param id ID du billet
+     * @return Billet correspondant ou 404 Not Found
+     */
     @GetMapping("/{id}")
-    public ResponseEntity<Billet> getBilletById(@PathVariable Integer id) { // Integer ici
+    public ResponseEntity<Billet> getBilletById(@PathVariable Long id) {
+        logger.info("Récupération du billet avec ID : {}", id);
         return billetService.getBilletById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    /**
+     * Crée un nouveau billet.
+     *
+     * @param billet Données du billet à créer
+     * @return Billet créé avec un statut 201 Created
+     */
     @PostMapping
     public ResponseEntity<Billet> createBillet(@Valid @RequestBody Billet billet) {
+        logger.info("Création d'un billet avec les données : {}", billet);
         Billet savedBillet = billetService.saveBillet(billet);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedBillet);
     }
 
+    /**
+     * Met à jour un billet existant.
+     *
+     * @param id ID du billet à mettre à jour
+     * @param billetDetails Nouvelles données du billet
+     * @return Billet mis à jour
+     */
     @PutMapping("/{id}")
-    public ResponseEntity<Billet> updateBillet(@PathVariable Integer id, @Valid @RequestBody Billet billetDetails) { // Integer ici
-        Billet updatedBillet = billetService.updateBillet(id, billetDetails); // Integer
+    public ResponseEntity<Billet> updateBillet(@PathVariable Long id, @Valid @RequestBody Billet billetDetails) {
+        logger.info("Mise à jour du billet avec ID : {}", id);
+        Billet updatedBillet = billetService.updateBillet(id, billetDetails);
         return ResponseEntity.ok(updatedBillet);
     }
 
+    /**
+     * Supprime un billet spécifique.
+     *
+     * @param id ID du billet à supprimer
+     * @return Réponse vide avec un statut 204 No Content
+     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBillet(@PathVariable Integer id) { // Integer ici
-        billetService.deleteBillet(id); // Integer
+    public ResponseEntity<Void> deleteBillet(@PathVariable Long id) {
+        logger.info("Suppression du billet avec ID : {}", id);
+        billetService.deleteBillet(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/evenement/{evenementId}")
-    public ResponseEntity<List<Billet>> getBilletsByEvenement(@PathVariable Integer evenementId) { // Integer ici
-        Optional<Evenement> evenementOptional = evenementService.getEvenementById(evenementId); // Integer
-        return evenementOptional.map(evenement -> ResponseEntity.ok(billetService.getBilletsByEvenement(evenement)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-
-    @GetMapping("/utilisateur/{utilisateurId}")
-    public ResponseEntity<List<Billet>> getBilletsByUtilisateur(@PathVariable Integer utilisateurId) { // Integer ici (si Utilisateur utilise Integer pour ID)
-        Optional<Utilisateur> utilisateurOptional = utilisateurService.getUtilisateurById(utilisateurId);// Integer
-        if(utilisateurOptional.isPresent()){
-            Utilisateur utilisateur = utilisateurOptional.get();
-            List<Billet> billets = billetService.getBilletsByUtilisateur(utilisateur);
-            return ResponseEntity.ok(billets);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @GetMapping("/statut/{statut}")
-    public ResponseEntity<List<Billet>> getBilletByStatut(@PathVariable String statut) {
-        try {
-            TypeBillet typeBillet = TypeBillet.valueOf(statut.toUpperCase()); // Convertit la String en enum (insensible à la casse)
-            List<Billet> billets = billetService.getBilletsByStatut(typeBillet);
-            return ResponseEntity.ok(billets);
-        } catch (IllegalArgumentException e) {
-            // Gérer le cas où la String ne correspond pas à une valeur de l'enum
-            return ResponseEntity.badRequest().body(null); // Ou un message d'erreur plus spécifique
-        }
     }
 }

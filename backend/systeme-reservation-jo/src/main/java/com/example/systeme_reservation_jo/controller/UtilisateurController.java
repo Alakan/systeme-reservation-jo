@@ -20,25 +20,18 @@ public class UtilisateurController {
     @Autowired
     private UtilisateurService utilisateurService;
 
-    // Récupération de tous les utilisateurs (avec possibilité future de paginer les résultats)
     @GetMapping
     public ResponseEntity<List<Utilisateur>> getAllUtilisateurs() {
-        List<Utilisateur> utilisateurs = utilisateurService.getAllUtilisateurs();
-        return ResponseEntity.ok(utilisateurs);
+        return ResponseEntity.ok(utilisateurService.getAllUtilisateurs());
     }
 
-    // Récupération d'un utilisateur par ID avec gestion des erreurs
     @GetMapping("/{id}")
-    public ResponseEntity<Utilisateur> getUtilisateurById(@PathVariable Integer id) {
+    public ResponseEntity<Utilisateur> getUtilisateurById(@PathVariable Long id) {
         Optional<Utilisateur> utilisateur = utilisateurService.getUtilisateurById(id);
-        if (utilisateur.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(null); // Pas trouvé
-        }
-        return ResponseEntity.ok(utilisateur.get());
+        return utilisateur.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // Création d'un nouvel utilisateur avec vérification de l'existence de l'email
     @PostMapping
     public ResponseEntity<?> saveUtilisateur(@Valid @RequestBody Utilisateur utilisateur) {
         if (utilisateurService.existsByEmail(utilisateur.getEmail())) {
@@ -49,9 +42,8 @@ public class UtilisateurController {
         return ResponseEntity.status(HttpStatus.CREATED).body(nouvelUtilisateur);
     }
 
-    // Mise à jour des informations d'un utilisateur avec gestion des erreurs
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateUtilisateur(@PathVariable Integer id, @Valid @RequestBody Utilisateur utilisateurDetails) {
+    public ResponseEntity<?> updateUtilisateur(@PathVariable Long id, @Valid @RequestBody Utilisateur utilisateurDetails) {
         Optional<Utilisateur> utilisateurOptional = utilisateurService.getUtilisateurById(id);
         if (utilisateurOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -61,9 +53,8 @@ public class UtilisateurController {
         return ResponseEntity.ok(utilisateurModifie);
     }
 
-    // Suppression d'un utilisateur par ID avec gestion des erreurs
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUtilisateur(@PathVariable Integer id) {
+    public ResponseEntity<?> deleteUtilisateur(@PathVariable Long id) {
         Optional<Utilisateur> utilisateurOptional = utilisateurService.getUtilisateurById(id);
         if (utilisateurOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -73,10 +64,12 @@ public class UtilisateurController {
         return ResponseEntity.noContent().build();
     }
 
-    // Endpoint protégé accessible uniquement aux administrateurs
+    // ✅ Correction du endpoint pour restreindre l'accès aux administrateurs
     @GetMapping("/admin")
-    @PreAuthorize("hasRole('ADMINISTRATEUR')") // Protection basée sur le rôle ADMINISTRATEUR
-    public ResponseEntity<String> getAdminResource() {
-        return ResponseEntity.ok("Bienvenue, Administrateur !");
+    @PreAuthorize("hasAuthority('ROLE_ADMINISTRATEUR')") // ✅ Protection correcte
+    public ResponseEntity<List<Utilisateur>> getAdminUsers() {
+        List<Utilisateur> admins = utilisateurService.getAllAdminUsers();
+        return ResponseEntity.ok(admins);
     }
+
 }

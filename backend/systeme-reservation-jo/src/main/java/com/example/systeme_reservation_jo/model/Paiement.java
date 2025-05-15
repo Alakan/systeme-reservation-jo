@@ -25,7 +25,7 @@ public class Paiement {
     private Long id;
 
     @NotNull(message = "Le paiement doit être associé à une réservation")
-    @OneToOne(fetch = FetchType.LAZY) // Relation OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reservation_id", nullable = false)
     private Reservation reservation;
 
@@ -38,9 +38,10 @@ public class Paiement {
     @Column(nullable = false)
     private LocalDateTime datePaiement;
 
-    @NotNull(message = "La méthode de paiement ne peut pas être nulle") // Changement: NotBlank -> NotNull car c'est un enum
+    @NotNull(message = "La méthode de paiement ne peut pas être nulle")
+    @Enumerated(EnumType.ORDINAL) // ✅ Stocke l'enum sous forme d'un entier (smallint)
     @Column(nullable = false)
-    private ModePaiement methodePaiement; // Type modifié pour utiliser l'enum
+    private ModePaiement methodePaiement;
 
     private String transactionId; // Optionnel, peut être null
 

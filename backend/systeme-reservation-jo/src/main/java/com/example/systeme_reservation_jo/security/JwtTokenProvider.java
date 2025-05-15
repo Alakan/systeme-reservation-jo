@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
-import io.jsonwebtoken.security.SignatureException;
 
 @Component
 public class JwtTokenProvider {
@@ -25,17 +24,21 @@ public class JwtTokenProvider {
     @Value("${app.jwtExpirationInMs}")
     private int jwtExpirationInMs;
 
-   /* private SecretKey getSigningKey() {
-        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
-        return Keys.hmacShaKeyFor(keyBytes);
-    } */
-
+    /**
+     * Retourne une clé de signature sécurisée pour l'algorithme HS512.
+     */
     private SecretKey getSigningKey() {
-        return Keys.secretKeyFor(SignatureAlgorithm.HS512); // Génère une clé sécurisée
+        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length * 8 < 512) { // Vérifie la taille en bits
+            logger.warn("La clé définie dans jwtSecret est trop courte pour HS512. Taille actuelle : " + keyBytes.length * 8 + " bits");
+            throw new IllegalStateException("Clé JWT non conforme pour HS512");
+        }
+        return Keys.hmacShaKeyFor(keyBytes); // Crée une clé conforme
     }
 
-
-
+    /**
+     * Génère un token JWT à partir de l'authentification utilisateur.
+     */
     public String generateToken(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
@@ -43,14 +46,17 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 
         return Jwts.builder()
-                .setSubject(userDetails.getUsername()) // On utilise getUsername() (qui renvoie l'email)
-                .setIssuedAt(new Date())
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();
     }
 
-    public String getUsernameFromJWT(String token) { // Renvoie en fait l'email
+    /**
+     * Extrait l'email (username) à partir du token JWT.
+     */
+    public String getUsernameFromJWT(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
@@ -60,20 +66,27 @@ public class JwtTokenProvider {
         return claims.getSubject();
     }
 
-    public boolean validateToken(String authToken) { // Breakpoint
+    /**
+     * Valide le token JWT pour vérifier sa signature et sa validité.
+     */
+    public boolean validateToken(String authToken) {
         try {
-            Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(authToken);
+            logger.info("Validation du token brut : " + authToken);
+            Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(authToken);
             return true;
         } catch (SignatureException ex) {
-            logger.error("Signature JWT invalide");
+            logger.error("Signature JWT invalide : ", ex);
         } catch (MalformedJwtException ex) {
-            logger.error("JWT invalide");
+            logger.error("JWT malformé : ", ex);
         } catch (ExpiredJwtException ex) {
-            logger.error("JWT expiré");
+            logger.error("JWT expiré : ", ex);
         } catch (UnsupportedJwtException ex) {
-            logger.error("JWT non supporté");
+            logger.error("JWT non supporté : ", ex);
         } catch (IllegalArgumentException ex) {
-            logger.error("La chaîne de claims JWT est vide");
+            logger.error("Claims JWT vides : ", ex);
         }
         return false;
     }

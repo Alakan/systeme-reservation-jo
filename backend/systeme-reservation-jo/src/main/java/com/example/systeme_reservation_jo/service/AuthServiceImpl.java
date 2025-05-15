@@ -1,11 +1,13 @@
 package com.example.systeme_reservation_jo.service;
 
+import com.example.systeme_reservation_jo.model.Role;
 import com.example.systeme_reservation_jo.model.Utilisateur;
 import com.example.systeme_reservation_jo.payload.request.LoginRequest;
 import com.example.systeme_reservation_jo.payload.request.SignupRequest;
 import com.example.systeme_reservation_jo.payload.response.JwtAuthenticationResponse;
 import com.example.systeme_reservation_jo.payload.response.MessageResponse;
 import com.example.systeme_reservation_jo.repository.UtilisateurRepository;
+import com.example.systeme_reservation_jo.repository.RoleRepository;
 import com.example.systeme_reservation_jo.security.JwtTokenProvider;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -31,6 +34,9 @@ public class AuthServiceImpl implements AuthService {
     private UtilisateurRepository utilisateurRepository;
 
     @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -38,10 +44,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public JwtAuthenticationResponse login(LoginRequest loginRequest) {
-
-        System.out.println("Tentative de connexion avec l'email : " + loginRequest.getEmail());
-        System.out.println("Mot de passe reçu : " + loginRequest.getPassword());
-
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getEmail(),
@@ -64,18 +66,21 @@ public class AuthServiceImpl implements AuthService {
             return ResponseEntity.badRequest().body(new MessageResponse("Erreur: L'email est déjà utilisé!"));
         }
 
-        // Créer un nouvel utilisateur
         Utilisateur utilisateur = new Utilisateur();
         utilisateur.setUsername(signupRequest.getUsername());
         utilisateur.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
         utilisateur.setEmail(signupRequest.getEmail());
 
-        // 🔥 Correction : Attribuer `ROLE_UTILISATEUR` sous forme de texte
-        Set<String> roles = new HashSet<>();
-        roles.add("ROLE_UTILISATEUR");
-        utilisateur.setRoles(roles);
+        // Assigner les rôles par défaut
+        Set<String> roleNames = new HashSet<>();
+        roleNames.add("ROLE_UTILISATEUR");
 
-        System.out.println("Rôles attribués à l'utilisateur : " + utilisateur.getRoles()); // 🔍 Vérification des rôles avant la sauvegarde
+        Set<Role> roles = roleNames.stream()
+                .map(roleName -> roleRepository.findByName(roleName)
+                        .orElseThrow(() -> new RuntimeException("Rôle non trouvé : " + roleName)))
+                .collect(Collectors.toSet());
+
+        utilisateur.setRoles(roles);
 
         utilisateurRepository.save(utilisateur);
 
