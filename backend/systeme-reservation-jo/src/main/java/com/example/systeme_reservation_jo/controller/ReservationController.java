@@ -1,6 +1,8 @@
 package com.example.systeme_reservation_jo.controller;
 
+import com.example.systeme_reservation_jo.model.ModePaiement;
 import com.example.systeme_reservation_jo.model.Reservation;
+import com.example.systeme_reservation_jo.model.StatutReservation;
 import com.example.systeme_reservation_jo.model.Utilisateur;
 import com.example.systeme_reservation_jo.service.ReservationService;
 import com.example.systeme_reservation_jo.service.UtilisateurService;
@@ -27,7 +29,7 @@ public class ReservationController {
     private UtilisateurService utilisateurService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('UTILISATEUR', 'ADMINISTRATEUR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_UTILISATEUR', 'ROLE_ADMINISTRATEUR')")
     public List<Reservation> getAllReservations() {
         return reservationService.getAllReservations();
     }
@@ -40,11 +42,11 @@ public class ReservationController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('UTILISATEUR', 'ADMINISTRATEUR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_UTILISATEUR', 'ROLE_ADMINISTRATEUR')")
     public ResponseEntity<?> createReservation(@Valid @RequestBody Reservation reservation) {
         try {
-            if (reservation.getEvenement() == null) {
-                return ResponseEntity.badRequest().body("L'événement lié à la réservation est obligatoire.");
+            if (reservation.getEvenement() == null || reservation.getUtilisateur() == null) {
+                return ResponseEntity.badRequest().body("L'événement et l'utilisateur sont obligatoires.");
             }
             if (reservation.getDateReservation() == null) {
                 reservation.setDateReservation(LocalDateTime.now());
@@ -52,16 +54,15 @@ public class ReservationController {
             if (reservation.getNombreBillets() <= 0) {
                 return ResponseEntity.badRequest().body("Le nombre de billets doit être supérieur à zéro.");
             }
-            if (reservation.getUtilisateur() == null || reservation.getUtilisateur().getEmail() == null) {
-                return ResponseEntity.badRequest().body("L'utilisateur lié à la réservation est obligatoire.");
-            }
 
-            Optional<Utilisateur> utilisateurOpt = utilisateurService.findByEmail(reservation.getUtilisateur().getEmail()); // ✅ Récupération de l'utilisateur
+            Optional<Utilisateur> utilisateurOpt = utilisateurService.findByEmail(reservation.getUtilisateur().getEmail());
             if (utilisateurOpt.isEmpty()) {
                 return ResponseEntity.badRequest().body("Utilisateur non trouvé.");
             }
 
             reservation.setUtilisateur(utilisateurOpt.get());
+            reservation.setStatut(StatutReservation.EN_ATTENTE);
+
             Reservation savedReservation = reservationService.createReservation(reservation);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedReservation);
         } catch (IllegalArgumentException e) {
@@ -69,14 +70,25 @@ public class ReservationController {
         }
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateReservation(@PathVariable Long id, @Valid @RequestBody Reservation reservationDetails) {
-        try {
-            return reservationService.getReservationById(id)
-                    .map(existing -> ResponseEntity.ok(reservationService.updateReservation(id, reservationDetails)))
-                    .orElseGet(() -> ResponseEntity.notFound().build());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+    @PutMapping("/{id}/paiement")
+    @PreAuthorize("hasAnyAuthority('ROLE_UTILISATEUR', 'ROLE_ADMINISTRATEUR')")
+    public ResponseEntity<?> effectuerPaiement(@PathVariable Long id, @RequestBody ModePaiement modePaiement) {
+        Optional<Reservation> reservationOpt = reservationService.getReservationById(id);
+
+        if (reservationOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
         }
+
+        Reservation reservation = reservationOpt.get();
+
+        if (reservation.getStatut() != StatutReservation.EN_ATTENTE) {
+            return ResponseEntity.badRequest().body("La réservation a déjà été payée ou annulée.");
+        }
+
+        reservation.setModePaiement(modePaiement);
+        reservation.setStatut(StatutReservation.CONFIRMEE);
+        reservationService.updateReservation(id, reservation);
+
+        return ResponseEntity.ok("Paiement effectué avec succès !");
     }
 }

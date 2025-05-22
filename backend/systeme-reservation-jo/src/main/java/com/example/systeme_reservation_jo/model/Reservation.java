@@ -34,7 +34,7 @@ public class Reservation {
     private Utilisateur utilisateur;
 
     @NotNull(message = "L'événement lié à la réservation est obligatoire")
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE) // ✅ Suppression automatique des réservations quand l'événement est supprimé
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JoinColumn(name = "evenement_id", nullable = false)
     private Evenement evenement;
 
@@ -49,7 +49,11 @@ public class Reservation {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private StatutReservation statut;
+    private StatutReservation statut = StatutReservation.EN_ATTENTE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
+    private ModePaiement modePaiement;
 
     @JsonProperty("evenementId")
     public Long getEvenementId() {
