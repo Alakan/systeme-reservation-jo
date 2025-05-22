@@ -40,9 +40,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // ✅ Désactive CSRF pour les API REST
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ✅ Configuration CORS
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // ✅ JWT Stateless
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
@@ -55,19 +55,19 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/utilisateurs/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/utilisateurs/**").hasRole("ADMINISTRATEUR")
                         .requestMatchers(HttpMethod.DELETE, "/api/utilisateurs/**").hasRole("ADMINISTRATEUR")
-                        .requestMatchers(HttpMethod.GET, "/api/reservations/**").hasAnyRole("ADMINISTRATEUR", "UTILISATEUR")
-                        .requestMatchers(HttpMethod.POST, "/api/reservations/**").hasAnyRole("ADMINISTRATEUR", "UTILISATEUR")
-                        .requestMatchers(HttpMethod.PUT, "/api/reservations/**").hasAnyAuthority("ROLE_UTILISATEUR", "ROLE_ADMINISTRATEUR")
-                        .requestMatchers(HttpMethod.DELETE, "/api/reservations/**").hasAnyRole("ADMINISTRATEUR", "UTILISATEUR")
-                        .requestMatchers(HttpMethod.GET, "/api/billets/**").hasAnyRole("ADMINISTRATEUR", "UTILISATEUR")
-                        .requestMatchers(HttpMethod.POST, "/api/billets/**").hasAnyRole("ADMINISTRATEUR", "UTILISATEUR")
-                        .requestMatchers(HttpMethod.DELETE, "/api/billets/**").hasAnyRole("ADMINISTRATEUR", "UTILISATEUR")
-                        .requestMatchers(HttpMethod.PUT, "/api/billets/**").hasAnyRole("ADMINISTRATEUR", "UTILISATEUR")
-                        .requestMatchers(HttpMethod.GET, "/api/paiements/**").hasAnyRole("ADMINISTRATEUR", "UTILISATEUR")
-                        .requestMatchers(HttpMethod.POST, "/api/paiements/**").hasAnyRole("ADMINISTRATEUR", "UTILISATEUR")
-                        .requestMatchers(HttpMethod.PUT, "/api/paiements/**").hasRole("ADMINISTRATEUR")
-                        .requestMatchers(HttpMethod.DELETE, "/api.paiements/**").hasRole("ADMINISTRATEUR")
-
+                        .requestMatchers(HttpMethod.GET, "/api/reservations/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/reservations/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/reservations/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/reservations/{id}/paiement").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/reservations/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/billets/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/billets/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/billets/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api.billets/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api.paiements/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api.paiements/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api.paiements/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api.paiements/**").authenticated()
                         .anyRequest().denyAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -88,7 +88,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // ✅ Autorise seulement le frontend React
+        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
         configuration.setAllowCredentials(true);
