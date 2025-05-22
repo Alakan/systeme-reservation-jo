@@ -3,7 +3,7 @@ package com.example.systeme_reservation_jo.service;
 import com.example.systeme_reservation_jo.model.Billet;
 import com.example.systeme_reservation_jo.model.Evenement;
 import com.example.systeme_reservation_jo.model.Reservation;
-import com.example.systeme_reservation_jo.model.TypeBillet;
+import com.example.systeme_reservation_jo.model.StatutBillet;
 import com.example.systeme_reservation_jo.model.Utilisateur;
 import com.example.systeme_reservation_jo.repository.BilletRepository;
 import com.example.systeme_reservation_jo.repository.EvenementRepository;
@@ -32,15 +32,26 @@ public class BilletServiceImpl implements BilletService {
 
     @Override
     public Billet saveBillet(Billet billet) {
-        Long evenementId = billet.getEvenement().getId();
-        Evenement evenement = evenementRepository.findById(evenementId)
-                .orElseThrow(() -> new RuntimeException("Événement non trouvé avec ID : " + evenementId));
-        billet.setEvenement(evenement);
+        logger.info("Tentative de création d’un billet avec : {}", billet);
 
-        Long reservationId = billet.getReservation().getId();
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Réservation non trouvée avec ID : " + reservationId));
+        if (billet.getEvenementId() == null) {
+            throw new IllegalArgumentException("L'événement du billet ne peut pas être null.");
+        }
+        if (billet.getReservation() == null || billet.getReservation().getId() == null) {
+            throw new IllegalArgumentException("La réservation du billet ne peut pas être null.");
+        }
+
+        Evenement evenement = evenementRepository.findById(billet.getEvenementId())
+                .orElseThrow(() -> new RuntimeException("Événement introuvable avec ID : " + billet.getEvenementId()));
+        Reservation reservation = reservationRepository.findById(billet.getReservation().getId())
+                .orElseThrow(() -> new RuntimeException("Réservation introuvable avec ID : " + billet.getReservation().getId()));
+
+        billet.setEvenement(evenement);
         billet.setReservation(reservation);
+
+        if (billet.getNumeroBillet() == null || billetRepository.existsByNumeroBillet(billet.getNumeroBillet())) {
+            billet.setNumeroBillet("JO-" + System.currentTimeMillis());
+        }
 
         logger.info("Enregistrement du billet : {}", billet);
         return billetRepository.save(billet);
@@ -48,6 +59,7 @@ public class BilletServiceImpl implements BilletService {
 
     @Override
     public List<Billet> getAllBillets() {
+        logger.info("Récupération de tous les billets.");
         return billetRepository.findAll();
     }
 
@@ -59,31 +71,40 @@ public class BilletServiceImpl implements BilletService {
 
     @Override
     public List<Billet> getBilletsByEvenement(Evenement evenement) {
-        logger.info("Récupération des billets pour l'événement : {}", evenement.getId());
-        return billetRepository.findByEvenement_Id(evenement.getId()); // 🔹 Correction ici
+        logger.info("Récupération des billets pour l'événement ID : {}", evenement.getId());
+        return billetRepository.findByEvenement_Id(evenement.getId());
     }
 
     @Override
     public List<Billet> getBilletsByUtilisateur(Utilisateur utilisateur) {
-        logger.info("Récupération des billets pour l'utilisateur avec ID : {}", utilisateur.getId());
+        logger.info("Récupération des billets pour l'utilisateur ID : {}", utilisateur.getId());
         return billetRepository.findByUtilisateur(utilisateur);
     }
 
     @Override
-    public List<Billet> getBilletsByStatut(TypeBillet statut) {
+    public List<Billet> getBilletsByStatut(StatutBillet statut) {
         logger.info("Récupération des billets avec le statut : {}", statut);
         return billetRepository.findByStatut(statut);
     }
 
     @Override
+    public boolean existsByNumeroBillet(String numeroBillet) {
+        return billetRepository.existsByNumeroBillet(numeroBillet);
+    }
+
+    @Override
     public Billet updateBillet(Long id, Billet billetDetails) {
+        logger.info("Tentative de mise à jour du billet ID : {}", id);
+
         Billet billet = billetRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Billet non trouvé avec l'id : " + id));
+                .orElseThrow(() -> new RuntimeException("Billet non trouvé avec l'ID : " + id));
+
         billet.setEvenement(billetDetails.getEvenement());
         billet.setUtilisateur(billetDetails.getUtilisateur());
         billet.setDateReservation(billetDetails.getDateReservation());
         billet.setStatut(billetDetails.getStatut());
         billet.setType(billetDetails.getType());
+
         logger.info("Billet mis à jour avec ID : {}", id);
         return billetRepository.save(billet);
     }
@@ -91,6 +112,12 @@ public class BilletServiceImpl implements BilletService {
     @Override
     public void deleteBillet(Long id) {
         logger.info("Suppression du billet avec ID : {}", id);
+
+        if (!billetRepository.existsById(id)) {
+            throw new RuntimeException("Impossible de supprimer : Billet introuvable avec l'ID : " + id);
+        }
+
         billetRepository.deleteById(id);
+        logger.info("Billet supprimé avec succès.");
     }
 }

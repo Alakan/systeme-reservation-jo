@@ -18,14 +18,19 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class AuthServiceImpl implements AuthService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -53,6 +58,10 @@ public class AuthServiceImpl implements AuthService {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = tokenProvider.generateToken(authentication);
+
+        logger.info("Authentification réussie pour : " + loginRequest.getEmail());
+        logger.info("Token généré : " + jwt);
+
         return new JwtAuthenticationResponse(jwt);
     }
 
@@ -71,18 +80,26 @@ public class AuthServiceImpl implements AuthService {
         utilisateur.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
         utilisateur.setEmail(signupRequest.getEmail());
 
-        // Assigner les rôles par défaut
+        // Vérifier si les rôles existent avant de les assigner
         Set<String> roleNames = new HashSet<>();
         roleNames.add("ROLE_UTILISATEUR");
 
         Set<Role> roles = roleNames.stream()
-                .map(roleName -> roleRepository.findByName(roleName)
-                        .orElseThrow(() -> new RuntimeException("Rôle non trouvé : " + roleName)))
+                .map(roleName -> {
+                    Optional<Role> roleOpt = roleRepository.findByName(roleName);
+                    if (roleOpt.isPresent()) {
+                        return roleOpt.get();
+                    } else {
+                        logger.warn("Rôle non trouvé : " + roleName);
+                        throw new RuntimeException("Rôle non trouvé : " + roleName);
+                    }
+                })
                 .collect(Collectors.toSet());
 
         utilisateur.setRoles(roles);
-
         utilisateurRepository.save(utilisateur);
+
+        logger.info("Utilisateur enregistré avec succès : " + utilisateur.getEmail());
 
         return ResponseEntity.ok(new MessageResponse("Utilisateur enregistré avec succès!"));
     }

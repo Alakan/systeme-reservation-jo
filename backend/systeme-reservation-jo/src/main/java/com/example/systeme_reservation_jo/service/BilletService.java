@@ -1,7 +1,7 @@
 package com.example.systeme_reservation_jo.service;
 
 import com.example.systeme_reservation_jo.model.Billet;
-import com.example.systeme_reservation_jo.model.TypeBillet;
+import com.example.systeme_reservation_jo.model.StatutBillet;
 import com.example.systeme_reservation_jo.model.Utilisateur;
 import com.example.systeme_reservation_jo.model.Evenement;
 
@@ -16,5 +16,6 @@ public interface BilletService {
     void deleteBillet(Long id);
     List<Billet> getBilletsByEvenement(Evenement evenement);
     List<Billet> getBilletsByUtilisateur(Utilisateur utilisateur);
-    List<Billet> getBilletsByStatut(TypeBillet statut);
+    List<Billet> getBilletsByStatut(StatutBillet statut);
+    boolean existsByNumeroBillet(String numeroBillet);
 }

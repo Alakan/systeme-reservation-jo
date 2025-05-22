@@ -33,9 +33,9 @@ public class Reservation {
     @JoinColumn(name = "utilisateur_id", nullable = false)
     private Utilisateur utilisateur;
 
-    @NotNull(message = "L'événement lié à la réservation est obligatoire") // ✅ Ajout de validation
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "evenement_id", nullable = false) // ✅ Correction : l'événement ne peut pas être NULL
+    @NotNull(message = "L'événement lié à la réservation est obligatoire")
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE) // ✅ Suppression automatique des réservations quand l'événement est supprimé
+    @JoinColumn(name = "evenement_id", nullable = false)
     private Evenement evenement;
 
     @Column(nullable = false)

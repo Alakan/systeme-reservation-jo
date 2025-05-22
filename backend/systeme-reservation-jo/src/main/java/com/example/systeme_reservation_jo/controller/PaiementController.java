@@ -37,6 +37,17 @@ public class PaiementController {
 
     @PostMapping
     public ResponseEntity<Paiement> createPaiement(@Valid @RequestBody Paiement paiement) {
+        // ✅ Vérification que le paiement est bien lié à une réservation
+        if (paiement.getReservation() == null || paiement.getReservation().getId() == null) {
+            return ResponseEntity.badRequest().body(null); // Erreur 400 si la réservation est manquante
+        }
+
+        // ✅ Récupération de la réservation associée
+        Reservation reservation = reservationService.getReservationById(paiement.getReservation().getId())
+                .orElseThrow(() -> new RuntimeException("Réservation non trouvée avec l'id : " + paiement.getReservation().getId()));
+
+        paiement.setReservation(reservation); // ✅ Association correcte de la réservation
+
         Paiement savedPaiement = paiementService.savePaiement(paiement);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedPaiement);
     }

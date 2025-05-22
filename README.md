@@ -105,4 +105,8 @@ Anthony Bastide
 Email : [Votre.Email@example.com]
 
 
+<<<<<<< HEAD
 Ce projet a été développé dans le cadre de ma formation Studi.
+=======
+Ce projet a été développé dans le cadre de ma formation Studi.
+>>>>>>> f0ca012 (Ajout fonctionnalité création de billet et création paiement coté backend)

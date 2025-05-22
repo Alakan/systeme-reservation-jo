@@ -19,7 +19,7 @@ import java.util.List;
 @RequestMapping("/api/billets")
 public class BilletController {
 
-    private static final Logger logger = LoggerFactory.getLogger(BilletController.class); // Logger pour suivre les actions
+    private static final Logger logger = LoggerFactory.getLogger(BilletController.class);
 
     private final BilletService billetService;
 
@@ -28,23 +28,12 @@ public class BilletController {
         this.billetService = billetService;
     }
 
-    /**
-     * Récupère tous les billets.
-     *
-     * @return Liste de tous les billets
-     */
     @GetMapping
     public List<Billet> getAllBillets() {
         logger.info("Récupération de tous les billets");
         return billetService.getAllBillets();
     }
 
-    /**
-     * Récupère un billet spécifique par son ID.
-     *
-     * @param id ID du billet
-     * @return Billet correspondant ou 404 Not Found
-     */
     @GetMapping("/{id}")
     public ResponseEntity<Billet> getBilletById(@PathVariable Long id) {
         logger.info("Récupération du billet avec ID : {}", id);
@@ -53,26 +42,20 @@ public class BilletController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    /**
-     * Crée un nouveau billet.
-     *
-     * @param billet Données du billet à créer
-     * @return Billet créé avec un statut 201 Created
-     */
     @PostMapping
     public ResponseEntity<Billet> createBillet(@Valid @RequestBody Billet billet) {
-        logger.info("Création d'un billet avec les données : {}", billet);
+        logger.info("Tentative de création d'un billet avec les données : {}", billet);
+
+        // Vérification de duplication du numéro de billet
+        if (billetService.existsByNumeroBillet(billet.getNumeroBillet())) {
+            logger.warn("Échec de création - Le numéro de billet {} existe déjà", billet.getNumeroBillet());
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+
         Billet savedBillet = billetService.saveBillet(billet);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedBillet);
     }
 
-    /**
-     * Met à jour un billet existant.
-     *
-     * @param id ID du billet à mettre à jour
-     * @param billetDetails Nouvelles données du billet
-     * @return Billet mis à jour
-     */
     @PutMapping("/{id}")
     public ResponseEntity<Billet> updateBillet(@PathVariable Long id, @Valid @RequestBody Billet billetDetails) {
         logger.info("Mise à jour du billet avec ID : {}", id);
@@ -80,12 +63,6 @@ public class BilletController {
         return ResponseEntity.ok(updatedBillet);
     }
 
-    /**
-     * Supprime un billet spécifique.
-     *
-     * @param id ID du billet à supprimer
-     * @return Réponse vide avec un statut 204 No Content
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBillet(@PathVariable Long id) {
         logger.info("Suppression du billet avec ID : {}", id);

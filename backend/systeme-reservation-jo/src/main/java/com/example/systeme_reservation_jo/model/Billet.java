@@ -24,8 +24,11 @@ public class Billet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "evenement_id", insertable = false, updatable = false)
+    private Long evenementId; // 🔹 Stocke uniquement l'ID de l'événement
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "evenement_id", nullable = true) // ✅ Permet NULL pour éviter l'erreur
+    @JoinColumn(name = "evenement_id", nullable = false)
     private Evenement evenement;
 
     @ManyToOne(fetch = FetchType.LAZY)
