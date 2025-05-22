@@ -21,11 +21,15 @@ public class UtilisateurService {
     }
 
     public List<Utilisateur> getAllAdminUsers() {
-        return utilisateurRepository.findByRoles_Name("ROLE_ADMINISTRATEUR"); // ✅ Récupère les utilisateurs admin
+        return utilisateurRepository.findByRoles_Name("ROLE_ADMINISTRATEUR");
     }
 
     public boolean existsByEmail(String email) {
         return utilisateurRepository.existsByEmail(email);
+    }
+
+    public Optional<Utilisateur> findByEmail(String email) { // ✅ Ajout de la méthode
+        return utilisateurRepository.findByEmail(email);
     }
 
     public Utilisateur saveUtilisateur(Utilisateur utilisateur) {

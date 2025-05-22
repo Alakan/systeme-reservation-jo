@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import api from '../services/api';
 import '../styles/Login.css';
@@ -35,6 +36,9 @@ function Login() {
                 <input type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 <button type="submit">Se connecter</button>
             </form>
+
+            {/* ✅ Ajout du bouton de retour à la page principale */}
+            <Link to="/"><button className="btn-home">Retour à l’accueil</button></Link>
         </div>
     );
 }

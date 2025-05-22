@@ -22,6 +22,7 @@
     margin-top: 20px;
 }
 
+/* ✅ Bouton "Voir les événements" */
 .home-buttons button {
     background: #007bff;
     color: white;
@@ -38,18 +39,19 @@
     background: #0056b3;
 }
 
-.btn-login {
-    background: #28a745;
+/* ✅ Nouveau bouton "Accéder à mon espace" */
+.btn-access {
+    background: #ff9800;
     color: white;
     font-size: 16px;
     padding: 10px 15px;
-    margin-top: 10px;
+    margin: 10px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
     transition: 0.3s;
 }
 
-.btn-login:hover {
-    background: #218838;
+.btn-access:hover {
+    background: #e68900;
 }

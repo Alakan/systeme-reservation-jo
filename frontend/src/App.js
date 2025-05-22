@@ -1,11 +1,13 @@
-import React from 'react';
-import AppRouter from './router/AppRouter'; // Import du routeur principal
+import { BrowserRouter } from 'react-router-dom';
+import MenuRapide from './components/MenuRapide';
+import AppRouter from './router/AppRouter';
 
 function App() {
     return (
-        <div className="App">
+        <BrowserRouter> {/* ✅ Encapsulation correcte du routeur */}
+            <MenuRapide />
             <AppRouter />
-        </div>
+        </BrowserRouter>
     );
 }
 
