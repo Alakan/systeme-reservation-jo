@@ -33,22 +33,18 @@ import java.util.Collections;
 @ActiveProfiles("test")
 public class AuthControllerTest {
 
-    // Injecte MockMvc pour effectuer des appels simulés sur les endpoints REST
     @Autowired
     private MockMvc mockMvc;
 
-    // ObjectMapper permet de convertir des objets Java en JSON et vice-versa
     @Autowired
     private ObjectMapper objectMapper;
 
-    // Simule le service AuthService pour éviter les dépendances réelles
     @MockBean
     private AuthService authService;
 
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    // Configuration de test pour injecter un AuthenticationManager simulé
     @org.springframework.boot.test.context.TestConfiguration
     static class TestConfig {
         @Bean
@@ -57,7 +53,6 @@ public class AuthControllerTest {
         }
     }
 
-    // Méthode utilitaire pour créer une requête de simulation valide pour l'inscription
     private SignupRequest createValidSignupRequest() {
         return new SignupRequest("testUser", "test@example.com", "password");
     }
@@ -65,9 +60,8 @@ public class AuthControllerTest {
     // ------- Tests pour l'inscription -------
 
     @Test
-    @SuppressWarnings("unchecked") // Supprime les warnings pour les types génériques
+    @SuppressWarnings("unchecked")
     void registerUser_ValidSignupRequest_ReturnsOk() throws Exception {
-        // Test pour vérifier qu'un utilisateur valide peut s'inscrire
         SignupRequest signupRequest = createValidSignupRequest();
         ResponseEntity<?> expectedResponse =
                 ResponseEntity.ok(Collections.singletonMap("message", "Utilisateur enregistré avec succès!"));
@@ -76,13 +70,12 @@ public class AuthControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signupRequest)))
-                .andExpect(MockMvcResultMatchers.status().isOk()); // Vérifie que la réponse HTTP est 200 OK
+                .andExpect(MockMvcResultMatchers.status().isOk());
     }
 
     @Test
     @SuppressWarnings("unchecked")
     void registerUser_UsernameAlreadyTaken_ReturnsBadRequest() throws Exception {
-        // Test pour vérifier la gestion de l'erreur lorsque le nom d'utilisateur est déjà pris
         SignupRequest signupRequest = createValidSignupRequest();
         ResponseEntity<?> expectedResponse =
                 ResponseEntity.badRequest().body(Collections.singletonMap("message", "Erreur: Le nom d'utilisateur est déjà pris!"));
@@ -91,13 +84,12 @@ public class AuthControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signupRequest)))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest()); // Vérifie que la réponse HTTP est 400 Bad Request
+                .andExpect(MockMvcResultMatchers.status().isBadRequest());
     }
 
     @Test
     @SuppressWarnings("unchecked")
     void registerUser_EmailAlreadyUsed_ReturnsBadRequest() throws Exception {
-        // Test pour vérifier la gestion de l'erreur lorsque l'email est déjà utilisé
         SignupRequest signupRequest = createValidSignupRequest();
         ResponseEntity<?> expectedResponse =
                 ResponseEntity.badRequest().body(Collections.singletonMap("message", "Erreur: L'email est déjà utilisé!"));
@@ -112,7 +104,6 @@ public class AuthControllerTest {
     @Test
     @SuppressWarnings("unchecked")
     void registerUser_InvalidEmailFormat_ReturnsBadRequest() throws Exception {
-        // Test pour vérifier la gestion de l'erreur lorsque l'email est invalide
         SignupRequest signupRequest = new SignupRequest("testUser", "invalid-email", "password");
         ResponseEntity<?> expectedResponse =
                 ResponseEntity.badRequest().body(Collections.singletonMap("message", "Erreur de validation"));
@@ -127,7 +118,6 @@ public class AuthControllerTest {
     @Test
     @SuppressWarnings("unchecked")
     void registerUser_MissingEmail_ReturnsBadRequest() throws Exception {
-        // Test pour vérifier la gestion de l'erreur lorsque l'email est manquant
         SignupRequest signupRequest = new SignupRequest("testUser", null, "password");
         ResponseEntity<?> expectedResponse =
                 ResponseEntity.badRequest().body(Collections.singletonMap("message", "Erreur de validation"));
@@ -143,7 +133,6 @@ public class AuthControllerTest {
 
     @Test
     void loginUser_ValidCredentials_ReturnsJwtToken() throws Exception {
-        // Test pour vérifier la connexion réussie avec des identifiants valides
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setEmail("test@example.com");
         loginRequest.setPassword("password");
@@ -155,12 +144,11 @@ public class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.accessToken").value("fakeJwtToken")); // Vérifie que le JWT est correct
+                .andExpect(MockMvcResultMatchers.jsonPath("$.token").value("fakeJwtToken"));
     }
 
     @Test
     void loginUser_InvalidCredentials_ReturnsUnauthorized() throws Exception {
-        // Test pour vérifier la connexion échouée avec des identifiants invalides
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setEmail("test@example.com");
         loginRequest.setPassword("wrongpassword");
@@ -171,6 +159,7 @@ public class AuthControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(MockMvcResultMatchers.status().isUnauthorized()); // Vérifie que la réponse HTTP est 401 Unauthorized
+                .andExpect(MockMvcResultMatchers.status().isUnauthorized())
+                .andExpect(MockMvcResultMatchers.content().string("Échec de l'authentification : Identifiants incorrects."));
     }
 }
