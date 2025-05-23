@@ -30,26 +30,24 @@ public class ReservationController {
     private UtilisateurService utilisateurService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMINISTRATEUR')") // ✅ Seuls les admins peuvent voir toutes les réservations
-    public List<Reservation> getAllReservations() {
-        return reservationService.getAllReservations();
+    @PreAuthorize("hasRole('ADMINISTRATEUR')")
+    public ResponseEntity<List<Reservation>> getAllReservations() {
+        return ResponseEntity.ok(reservationService.getAllReservations());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()") // ✅ Seuls les utilisateurs connectés peuvent voir une réservation spécifique
-    public ResponseEntity<?> getReservationById(@PathVariable Long id) {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Object> getReservationById(@PathVariable Long id) {
         Optional<Reservation> reservationOpt = reservationService.getReservationById(id);
-        if (reservationOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Réservation introuvable.");
-        }
-        return ResponseEntity.ok(reservationOpt.get());
+        return reservationOpt.map(reservation -> ResponseEntity.ok((Object) reservation)) // ✅ Assure le bon typage
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body((Object) "Réservation introuvable."));
     }
 
     @GetMapping("/utilisateur")
-    @PreAuthorize("hasRole('UTILISATEUR') or hasRole('ADMINISTRATEUR')") // ✅ Autorise les utilisateurs normaux et les admins
-    public ResponseEntity<?> getReservationsByUserEmail() {
+    @PreAuthorize("hasRole('UTILISATEUR') or hasRole('ADMINISTRATEUR')")
+    public ResponseEntity<Object> getReservationsByUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userEmail = authentication.getName(); // ✅ Récupère l'email de l'utilisateur connecté
+        String userEmail = authentication.getName();
         System.out.println("🔍 Email de l'utilisateur authentifié : " + userEmail);
 
         Optional<Utilisateur> utilisateurOpt = utilisateurService.findByEmail(userEmail);
@@ -57,19 +55,24 @@ public class ReservationController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Utilisateur introuvable.");
         }
 
-        List<Reservation> reservations = reservationService.findReservationsByUserEmail(userEmail);
-        System.out.println("🔍 Réservations trouvées : " + reservations.size());
+        List<Reservation> reservations = reservationService.getReservationsByUtilisateur(utilisateurOpt.get().getId());
 
-        if (reservations.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Vous n'avez aucune réservation en cours.");
+        for (Reservation reservation : reservations) {
+            if (reservation.getEvenement() == null) {
+                System.out.println("⚠ Réservation " + reservation.getId() + " sans événement !");
+            } else {
+                System.out.println("🔍 Événement récupéré : " + reservation.getEvenement().getTitre());
+            }
         }
 
-        return ResponseEntity.ok(reservations);
+        return reservations.isEmpty()
+                ? ResponseEntity.status(HttpStatus.NOT_FOUND).body("Vous n'avez aucune réservation.")
+                : ResponseEntity.ok(reservations);
     }
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()") // ✅ Supprime la restriction par rôle
-    public ResponseEntity<?> createReservation(@Valid @RequestBody Reservation reservation) {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Object> createReservation(@Valid @RequestBody Reservation reservation) {
         try {
             if (reservation.getEvenement() == null || reservation.getUtilisateur() == null) {
                 return ResponseEntity.badRequest().body("L'événement et l'utilisateur sont obligatoires.");
@@ -96,15 +99,36 @@ public class ReservationController {
         }
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Object> updateReservation(@PathVariable Long id, @Valid @RequestBody Reservation reservationDetails) {
+        try {
+            Reservation updatedReservation = reservationService.updateReservation(id, reservationDetails);
+            return ResponseEntity.ok(updatedReservation);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erreur lors de la mise à jour de la réservation : " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Object> deleteReservation(@PathVariable Long id) {
+        try {
+            reservationService.deleteReservation(id);
+            return ResponseEntity.ok("Réservation supprimée avec succès.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erreur lors de la suppression de la réservation : " + e.getMessage());
+        }
+    }
+
     @PutMapping("/{id}/paiement")
-    @PreAuthorize("isAuthenticated()") // ✅ Supprime la restriction par rôle
-    public ResponseEntity<?> effectuerPaiement(@PathVariable Long id, @RequestBody ModePaiement modePaiement) {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Object> effectuerPaiement(@PathVariable Long id, @RequestBody ModePaiement modePaiement) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         System.out.println("Utilisateur authentifié : " + authentication.getName());
         System.out.println("Rôles de l'utilisateur : " + authentication.getAuthorities());
 
         Optional<Reservation> reservationOpt = reservationService.getReservationById(id);
-
         if (reservationOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Réservation introuvable.");
         }

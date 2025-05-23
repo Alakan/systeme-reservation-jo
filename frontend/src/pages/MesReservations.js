@@ -10,48 +10,75 @@ function MesReservations() {
 
     useEffect(() => {
         if (!token) {
-            navigate("/login"); // ✅ Redirige si l’utilisateur n'est pas connecté
+            navigate("/login");
             return;
         }
 
-        // ✅ Vérifier que l’email est bien récupéré
         const payload = JSON.parse(atob(token.split('.')[1]));
         const userEmail = payload.sub;
-        console.log("🔍 Email récupéré :", userEmail);
+        console.log("Email récupéré :", userEmail);
 
-        // ✅ Vérifier la réponse API pour s’assurer que les réservations sont bien renvoyées
         api.get(`/reservations/utilisateur?email=${userEmail}`, {
             headers: { Authorization: `Bearer ${token}` }
         })
         .then(response => {
-            console.log("🔍 Réponse brute API :", response);
-            console.log("🔍 Réservations récupérées :", response.data);
+            console.log("Données brutes reçues :", response.data);
 
-            if (Array.isArray(response.data) && response.data.length > 0) {
-                setReservations(response.data);
-            } else {
-                console.warn("⚠ Aucune réservation trouvée pour cet utilisateur !");
-            }
+            // ✅ Supprime uniquement les entrées non valides (évite d’exclure des réservations correctes)
+            const reservationsFiltrees = response.data.filter(reservation => 
+                reservation && typeof reservation === 'object' && reservation.id
+            );
+
+            // ✅ Corrige la récupération des événements envoyés comme ID au lieu d'objet
+            const reservationsCorrigees = reservationsFiltrees.map(reservation => {
+                if (!reservation.evenement || typeof reservation.evenement !== 'object') {
+                    console.warn(`ID événement trouvé : ${reservation.evenement}. Conversion en objet.`);
+                    return {
+                        ...reservation,
+                        evenement: { 
+                            id: reservation.evenement || "ID inconnu", 
+                            titre: "Événement non chargé correctement",
+                            dateEvenement: "Date inconnue", 
+                            lieu: "Lieu indisponible"
+                        }
+                    };
+                }
+                return reservation;
+            });
+
+            console.log("Réservations après correction :", reservationsCorrigees);
+            setReservations(reservationsCorrigees);
         })
         .catch(error => {
-            console.error("🚨 Erreur API :", error);
-            alert("⚠ Impossible de récupérer vos réservations. Veuillez réessayer plus tard.");
+            console.error("Erreur API :", error);
+            alert("Impossible de récupérer vos réservations.");
         });
     }, [navigate, token]);
 
     return (
         <div className="reservations-container">
-            <h1>📋 Mes Réservations</h1>
-            <Link to="/evenements"><button className="btn-back">Retour aux événements</button></Link>
+            <h1>Mes Réservations</h1>
+            <Link to="/evenements">
+                <button className="btn-back">Retour aux événements</button>
+            </Link>
 
             {reservations.length === 0 ? (
                 <p>Vous n'avez aucune réservation en cours.</p>
             ) : (
                 <ul className="reservations-list">
-                    {reservations.map((reservation) => (
-                        <li key={reservation.id} className="reservation-item">
-                            <strong>{reservation.evenement.titre}</strong> 📅 {new Date(reservation.dateReservation).toLocaleDateString('fr-FR')}  
-                            🎟 {reservation.nombreBillets} billet(s)
+                    {reservations.map((reservation, index) => (
+                        <li key={index} className="reservation-item">
+                            <strong>
+                                {reservation.evenement && reservation.evenement.titre
+                                    ? reservation.evenement.titre
+                                    : `Événement inconnu (${reservation.evenement?.id || "ID manquant"})`}
+                            </strong> 
+                            {reservation.dateReservation 
+                                ? new Date(reservation.dateReservation).toLocaleDateString('fr-FR') 
+                                : "Données manquantes : date"} 
+                            {reservation.nombreBillets > 0 
+                                ? reservation.nombreBillets 
+                                : "Données manquantes : billets"}
                         </li>
                     ))}
                 </ul>

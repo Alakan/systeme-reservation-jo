@@ -1,15 +1,13 @@
 package com.example.systeme_reservation_jo.service;
 
+import com.example.systeme_reservation_jo.model.ModePaiement;
 import com.example.systeme_reservation_jo.model.Reservation;
-import com.example.systeme_reservation_jo.model.Evenement;
+import com.example.systeme_reservation_jo.model.StatutReservation;
 import com.example.systeme_reservation_jo.repository.ReservationRepository;
-import com.example.systeme_reservation_jo.repository.EvenementRepository;
-import com.example.systeme_reservation_jo.repository.PaiementRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -18,14 +16,10 @@ import java.util.Optional;
 public class ReservationServiceImpl implements ReservationService {
 
     private final ReservationRepository reservationRepository;
-    private final EvenementRepository evenementRepository;
-    private final PaiementRepository paiementRepository;
 
     @Autowired
-    public ReservationServiceImpl(ReservationRepository reservationRepository, EvenementRepository evenementRepository, PaiementRepository paiementRepository) {
+    public ReservationServiceImpl(ReservationRepository reservationRepository) {
         this.reservationRepository = reservationRepository;
-        this.evenementRepository = evenementRepository;
-        this.paiementRepository = paiementRepository;
     }
 
     @Override
@@ -43,15 +37,6 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     @Transactional
     public Reservation createReservation(Reservation reservation) {
-        Long evenementId = reservation.getEvenementId();
-        if (evenementId == null) {
-            throw new IllegalArgumentException("L'événement lié à la réservation est obligatoire !");
-        }
-
-        Evenement evenement = evenementRepository.findById(evenementId)
-                .orElseThrow(() -> new EntityNotFoundException("Événement non trouvé avec l'id : " + evenementId));
-
-        reservation.setEvenement(evenement);
         return reservationRepository.save(reservation);
     }
 
@@ -61,18 +46,11 @@ public class ReservationServiceImpl implements ReservationService {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Réservation non trouvée avec l'id : " + id));
 
-        if (reservationDetails.getEvenementId() == null) {
-            throw new IllegalArgumentException("Une réservation doit toujours être liée à un événement !");
-        }
-
-        Evenement evenement = evenementRepository.findById(reservationDetails.getEvenementId())
-                .orElseThrow(() -> new EntityNotFoundException("Événement non trouvé avec l'id : " + reservationDetails.getEvenementId()));
-
         reservation.setUtilisateur(reservationDetails.getUtilisateur());
         reservation.setDateReservation(reservationDetails.getDateReservation());
         reservation.setNombreBillets(reservationDetails.getNombreBillets());
         reservation.setStatut(reservationDetails.getStatut());
-        reservation.setEvenement(evenement);
+        reservation.setEvenement(reservationDetails.getEvenement());
 
         return reservationRepository.save(reservation);
     }
@@ -83,17 +61,47 @@ public class ReservationServiceImpl implements ReservationService {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Réservation non trouvée avec l'id : " + id));
 
-        if (paiementRepository.existsByReservationId(id)) {
-            throw new IllegalStateException("Impossible de supprimer la réservation : des paiements sont associés.");
-        }
-
         reservationRepository.delete(reservation);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Reservation> getReservationsByUtilisateur(Long utilisateurId) {
-        return reservationRepository.findAll().stream()
-                .filter(reservation -> reservation.getUtilisateur().getId().equals(utilisateurId))
-                .toList();
+        return reservationRepository.findReservationsByUtilisateurId(utilisateurId);
+    }
+
+    @Override
+    @Transactional
+    public Reservation effectuerPaiement(Long id, ModePaiement modePaiement) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Réservation introuvable avec l'id : " + id));
+
+        if (reservation.getStatut() != StatutReservation.EN_ATTENTE) {
+            throw new IllegalStateException("La réservation est déjà payée ou annulée.");
+        }
+
+        reservation.setModePaiement(modePaiement);
+        reservation.setStatut(StatutReservation.CONFIRMEE);
+        return reservationRepository.save(reservation);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Reservation> findReservationsByStatut(StatutReservation statut) {
+        return reservationRepository.findByStatut(statut);
+    }
+
+    @Override
+    @Transactional
+    public Reservation cancelReservation(Long id) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Réservation introuvable avec l'id : " + id));
+
+        if (reservation.getStatut() == StatutReservation.CONFIRMEE) {
+            throw new IllegalStateException("Impossible d'annuler une réservation déjà confirmée.");
+        }
+
+        reservation.setStatut(StatutReservation.ANNULEE);
+        return reservationRepository.save(reservation);
     }
 }
