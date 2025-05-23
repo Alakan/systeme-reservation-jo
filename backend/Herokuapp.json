@@ -1,0 +1,10 @@
+{
+  "buildpacks": [
+    {
+      "url": "heroku/java"
+    }
+  ],
+  "scripts": {
+    "postinstall": "cd backend && mvn clean install"
+  }
+}
