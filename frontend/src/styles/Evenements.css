@@ -1,3 +1,4 @@
+/* src/styles/Evenements.css */
 .evenements-container {
     max-width: 800px;
     margin: 20px auto;
@@ -5,7 +6,7 @@
     background: #f9f9f9;
     border-radius: 8px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    text-align: center; /* ✅ Centrage du contenu */
+    text-align: center;
 }
 
 .evenements-container h1 {
@@ -27,6 +28,16 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .evenement-item strong {
@@ -34,7 +45,29 @@
     color: #007bff;
 }
 
-/* ✅ Ajout du style pour le bouton retour */
+.evenement-actions button {
+    margin-left: 10px;
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.evenement-actions button:first-of-type {
+    background: #28a745;
+}
+
+.evenement-actions button:last-of-type {
+    background: #ffc107;
+}
+
+.evenement-actions button:hover {
+    opacity: 0.8;
+}
+
 .btn-home {
     background: #007bff;
     color: white;
@@ -49,18 +82,4 @@
 
 .btn-home:hover {
     background: #0056b3;
-}
-
-.evenement-item button {
-    background: #28a745;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.evenement-item button:hover {
-    background: #218838;
 }

@@ -1,0 +1,29 @@
+/* src/styles/DashboardUtilisateurs.css */
+.dashboard-container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.profile-info {
+  margin-bottom: 20px;
+}
+
+.dashboard-links button {
+  margin: 10px;
+  padding: 10px 15px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.dashboard-links button:hover {
+  background: #0056b3;
+}

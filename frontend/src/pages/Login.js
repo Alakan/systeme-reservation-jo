@@ -12,16 +12,18 @@ function Login() {
         console.log("Tentative de connexion :", { email, password });
 
         try {
-            const response = await api.post('/auth/login', JSON.stringify({ email, password }), {
-                headers: { 'Content-Type': 'application/json' }
-            });
+            const response = await api.post(
+                '/auth/login',
+                JSON.stringify({ email, password }),
+                { headers: { 'Content-Type': 'application/json' } }
+            );
 
             const token = response.data.token;
-            localStorage.setItem("token", token); // ✅ Stockage du token
-            console.log("Token sauvegardé :", localStorage.getItem("token")); // ✅ Vérification console
+            localStorage.setItem("token", token);
+            console.log("Token sauvegardé :", localStorage.getItem("token"));
 
             alert("Connexion réussie !");
-            window.location.href = "/evenements"; // 🔹 Redirection après succès
+            window.location.href = "/dashboard"; // redirection vers le dashboard de l'utilisateur
         } catch (error) {
             console.error("Erreur de connexion :", error.response?.data || error);
             alert("Échec de la connexion. Vérifie tes informations.");
@@ -32,12 +34,25 @@ function Login() {
         <div className="login-container">
             <h1>Connexion</h1>
             <form onSubmit={handleLogin}>
-                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                <input type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <input 
+                    type="email" 
+                    placeholder="Email" 
+                    value={email} 
+                    onChange={(e) => setEmail(e.target.value)} 
+                    required 
+                />
+                <input 
+                    type="password" 
+                    placeholder="Mot de passe" 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                    required 
+                />
                 <button type="submit">Se connecter</button>
             </form>
-
-            {/* ✅ Ajout du bouton de retour à la page principale */}
+            <div className="signup-link">
+                <p>Vous n'avez pas de compte ? <Link to="/register">Créez-en un ici</Link></p>
+            </div>
             <Link to="/"><button className="btn-home">Retour à l’accueil</button></Link>
         </div>
     );
