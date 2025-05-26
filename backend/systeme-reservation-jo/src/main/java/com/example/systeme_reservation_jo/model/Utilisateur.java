@@ -1,5 +1,6 @@
 package com.example.systeme_reservation_jo.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -14,7 +15,7 @@ import java.util.Set;
 /**
  * Représente un utilisateur du système.
  */
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // ✅ Correction Hibernate
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // Pour corriger les problèmes liés à Hibernate
 @Entity
 @Table(name = "utilisateurs")
 @Getter
@@ -25,7 +26,7 @@ public class Utilisateur {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // ✅ Correction du type Long → Integer
+    private Long id;
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -36,11 +37,12 @@ public class Utilisateur {
     @Column(nullable = false)
     private String username;
 
+    // La collection de réservations est ignorée lors de la sérialisation pour éviter les problèmes de récursivité
     @OneToMany(mappedBy = "utilisateur", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("utilisateur") // ✅ Empêche la sérialisation récursive
+    @JsonIgnore
     private List<Reservation> reservations;
 
-    @ManyToMany(fetch = FetchType.EAGER) // ✅ Chargement immédiat pour éviter les problèmes Hibernate
+    @ManyToMany(fetch = FetchType.EAGER) // Chargement immédiat pour éviter les problèmes liés à Hibernate
     @JoinTable(
             name = "utilisateur_roles",
             joinColumns = @JoinColumn(name = "utilisateur_id"),

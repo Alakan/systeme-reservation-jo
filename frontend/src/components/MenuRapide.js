@@ -6,19 +6,16 @@ import '../styles/MenuRapide.css';
 function MenuRapide() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-  const isAuthenticated = !!localStorage.getItem("token"); // Vérifie si un utilisateur est connecté
+  const isAuthenticated = !!localStorage.getItem("token");
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    console.log("Déconnexion effectuée, token supprimé :", localStorage.getItem("token"));
     navigate("/login");
   };
 
-  // Redirige vers la page de login si on tente d'accéder à une page protégée sans être connecté
   useEffect(() => {
     const token = localStorage.getItem("token");
-    console.log("Vérification de connexion, token :", token);
-    const pagesProtegees = ["/reservations", "/profil", "/dashboard", "/mes-reservations"];
+    const pagesProtegees = ["/reservations", "/modifier-profil", "/dashboard", "/mes-reservations"];
     if (!token && pagesProtegees.includes(window.location.pathname)) {
       navigate("/login");
     }
@@ -27,22 +24,23 @@ function MenuRapide() {
   return (
     <nav className="menu-rapide">
       <button className="menu-button" onClick={() => setIsOpen(!isOpen)}>☰</button>
-      
       {isOpen && (
         <div className="menu-items">
-          <button onClick={() => navigate("/")}>Accueil</button>
-          <button onClick={() => navigate("/evenements")}>Événements</button>
+          <button onClick={() => { setIsOpen(false); navigate("/") }}>Accueil</button>
+          <button onClick={() => { setIsOpen(false); navigate("/evenements") }}>Événements</button>
           {isAuthenticated ? (
             <>
-              <button onClick={() => navigate("/dashboard")}>Dashboard</button>
-              <button onClick={() => navigate("/mes-reservations")}>Mes Réservations</button>
-              <button onClick={handleLogout}>Déconnexion</button>
+              <button onClick={() => { setIsOpen(false); navigate("/dashboard") }}>Dashboard</button>
+              <button onClick={() => { setIsOpen(false); navigate("/mes-reservations") }}>Mes Réservations</button>
+              {/* Lien vers modifier le profil */}
+              <button onClick={() => { setIsOpen(false); navigate("/modifier-profil") }}>Modifier mon profil</button>
+              <button onClick={() => { setIsOpen(false); handleLogout(); }}>Déconnexion</button>
             </>
           ) : (
             <>
-              <button onClick={() => navigate("/login")}>Mon compte</button>
+              <button onClick={() => { setIsOpen(false); navigate("/login"); }}>Mon compte</button>
               <Link to="/register">
-                <button>Créer un compte</button>
+                <button onClick={() => setIsOpen(false)}>Créer un compte</button>
               </Link>
             </>
           )}

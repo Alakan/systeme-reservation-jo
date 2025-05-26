@@ -15,12 +15,4 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
 }
 
 
-/*
-public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> {
-    Optional<Utilisateur> findByEmail(String email); // Recherche par email
-    Boolean existsByEmail(String email);          // Vérifie si un email existe
-    Optional<Utilisateur> findByUsername(String username); //On garde la méthode au cas où.
-    Boolean existsByUsername(String username); //On garde la méthode au cas où.
-    List<Utilisateur> findByRoles_Name(String roleName);
-}
-*/
+

@@ -1,14 +1,20 @@
 // src/App.js
-import { BrowserRouter } from 'react-router-dom';
-import MenuRapide from './components/MenuRapide';
+import { BrowserRouter as Router } from 'react-router-dom';
 import AppRouter from './router/AppRouter';
+import MenuRapide from './components/MenuRapide';
+import { UserProvider } from './contexts/UserContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
   return (
-    <BrowserRouter>
-      <MenuRapide />
-      <AppRouter />
-    </BrowserRouter>
+    <UserProvider>
+      <ThemeProvider>
+        <Router>
+          <MenuRapide />
+          <AppRouter />
+        </Router>
+      </ThemeProvider>
+    </UserProvider>
   );
 }
 

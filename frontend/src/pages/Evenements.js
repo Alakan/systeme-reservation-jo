@@ -1,3 +1,4 @@
+// src/pages/Evenements.js
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -7,7 +8,7 @@ function Evenements() {
   const [evenements, setEvenements] = useState([]);
   const navigate = useNavigate();
 
-  // Récupération des événements accessible à tous (visiteurs)
+  // Récupération des événements accessibles à tous (visiteurs)
   useEffect(() => {
     api.get('/evenements')
       .then(response => {
@@ -22,76 +23,97 @@ function Evenements() {
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
-      year: 'numeric', month: 'long', day: 'numeric', 
-      hour: '2-digit', minute: '2-digit' 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit'
     });
   };
 
   const handleReservation = async (evenement) => {
     const token = localStorage.getItem("token");
-
     if (!token) {
-      // Propose à l'utilisateur de s'inscrire s'il n'est pas connecté
       if (window.confirm("Vous devez être connecté pour réserver. Voulez-vous vous inscrire maintenant ?")) {
         navigate("/register");
       }
       return;
     }
 
-    // Extraction d'informations utilisateurs à partir du token (attention : ce n'est qu'un exemple)
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const userEmail = payload.sub;
-
+    // Décodage du token pour récupérer l'email de l'utilisateur
+    let payload;
     try {
-      const response = await api.post('/reservations', { 
-        utilisateur: { email: userEmail },
-        evenement, 
-        dateReservation: new Date().toISOString(), 
-        nombreBillets: 1 
-      }, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
+      payload = JSON.parse(atob(token.split('.')[1]));
+    } catch (error) {
+      console.error("Erreur lors du décodage du token :", error);
+      alert("Token invalide, veuillez vous reconnecter.");
+      navigate("/login");
+      return;
+    }
+    const userEmail = payload.sub; // On considère ici que "sub" contient l'email
+
+    // Demande du nombre de billets souhaités
+    const billetsStr = window.prompt("Combien de billets souhaitez-vous réserver ?");
+    const nombreBillets = parseInt(billetsStr, 10);
+    if (isNaN(nombreBillets) || nombreBillets <= 0) {
+      alert("Saisie invalide. Le nombre de billets doit être un nombre supérieur à 0.");
+      return;
+    }
+
+    // Demande du mode de paiement
+    const modePaiementInput = window.prompt("Choisissez votre mode de paiement : CARTE, PAYPAL, VIREMENT");
+    const modePaiement = modePaiementInput ? modePaiementInput.toUpperCase() : "";
+    if (!["CARTE", "PAYPAL", "VIREMENT"].includes(modePaiement)) {
+      alert("Mode de paiement invalide. La réservation est annulée.");
+      return;
+    }
+
+    // Tout est validé : création de la réservation
+    try {
+      const response = await api.post(
+        '/reservations',
+        { 
+          utilisateur: { email: userEmail },
+          evenement, 
+          dateReservation: new Date().toISOString(), 
+          nombreBillets: nombreBillets
+        },
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+      );
 
       const reservationId = response.data.id;
       console.log("Réservation créée avec ID :", reservationId);
 
-      // Demande du mode de paiement via prompt
-      const modePaiement = window.prompt("Choisissez votre mode de paiement : CARTE, PAYPAL, VIREMENT")?.toUpperCase();
+      // Procéder au paiement
+      await handlePaiement(reservationId, modePaiement);
 
-      if (modePaiement && ["CARTE", "PAYPAL", "VIREMENT"].includes(modePaiement)) {
-        handlePaiement(reservationId, modePaiement);
-      } else {
-        alert("Mode de paiement invalide. Veuillez réessayer.");
-      }
-
-      alert(`Réservation effectuée pour ${evenement.titre} !`);
+      alert(`Réservation effectuée pour ${evenement.titre} avec ${nombreBillets} billet(s) !`);
     } catch (error) {
       console.error("Erreur lors de la réservation :", error);
+      alert("Erreur lors de la réservation.");
     }
   };
 
   const handlePaiement = (reservationId, modePaiement) => {
-    console.log("Paiement en cours pour réservation ID :", reservationId, "Mode :", modePaiement);
     const token = localStorage.getItem('token');
     if (!token) {
       alert("Erreur : vous devez être connecté.");
       return;
     }
 
-    api.put(`/reservations/${reservationId}/paiement`, JSON.stringify(modePaiement), {
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-    })
+    api.put(
+      `/reservations/${reservationId}/paiement`,
+      JSON.stringify(modePaiement),
+      { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+    )
     .then(() => {
       alert("Paiement effectué avec succès !");
-      navigate("/reservations"); // Redirection (pour la suite, la page des réservations devra être créée)
+      navigate("/mes-reservations"); // Redirection vers la page MesReservations
     })
-    .catch(error => console.error("Erreur lors du paiement :", error));
-  };
-
-  // Gestion des favoris : stocke l'événement dans localStorage
-  const handleFavori = (evenement) => {
-    let favoris = JSON.parse(localStorage.getItem("favoris")) || [];
-    favoris.push(evenement);
-    localStorage.setItem("favoris", JSON.stringify(favoris));
-    alert("Événement ajouté aux favoris !");
+    .catch(error => {
+      console.error("Erreur lors du paiement :", error);
+      alert("Erreur lors du paiement.");
+    });
   };
 
   return (
@@ -114,7 +136,6 @@ function Evenements() {
               </div>
               <div className="evenement-actions">
                 <button onClick={() => handleReservation(evenement)}>Réserver</button>
-                <button onClick={() => handleFavori(evenement)}>Favori</button>
               </div>
             </li>
           ))}

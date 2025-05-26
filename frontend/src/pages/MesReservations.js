@@ -9,7 +9,8 @@ function MesReservations() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
+  // Fonction de récupération des réservations pour l'utilisateur
+  const fetchReservations = () => {
     if (!token) {
       navigate("/login");
       return;
@@ -17,7 +18,7 @@ function MesReservations() {
 
     let userEmail = "";
     try {
-      // Décodage du token pour récupérer l'email ou l'identifiant
+      // Extraction du payload pour récupérer l'email (ou un identifiant) de l'utilisateur
       const payload = JSON.parse(atob(token.split('.')[1]));
       userEmail = payload.email || payload.sub;
       console.log("Email récupéré :", userEmail);
@@ -28,77 +29,90 @@ function MesReservations() {
       return;
     }
 
-    // Appel API pour récupérer l'ensemble des réservations de l'utilisateur
+    // Récupère toutes les réservations de l'utilisateur via l'API
     api.get(`/reservations/utilisateur?email=${encodeURIComponent(userEmail)}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(response => {
-        const reservationsArray = Array.isArray(response.data) ? response.data : [];
-        console.log("Nombre de réservations brutes reçues :", reservationsArray.length);
+        console.log("Données brutes reçues :", response.data);
 
-        // Pour chaque réservation, si "evenement" n'est pas un objet complet, récupérer l'ID depuis either reservation.evenement or reservation.evenement_id
+        // Filtrer uniquement les réservations valides (ayant un id)
+        const reservationsFiltrees = Array.isArray(response.data)
+          ? response.data.filter(reservation =>
+              reservation && typeof reservation === 'object' && reservation.id
+            )
+          : [];
+
+        // Pour chaque réservation, si "evenement" n'est pas un objet, on tente de le charger via un appel supplémentaire
         Promise.all(
-          reservationsArray.map(async reservation => {
-            // Récupère l'ID d'événement depuis reservation.evenement s'il s'agit d'un objet ou directement depuis evenement_id
-            const eventId =
-              (reservation.evenement && typeof reservation.evenement === "object"
-                ? reservation.evenement.id
-                : null) ||
-              reservation.evenement ||
-              reservation.evenement_id;
-
-            if (!eventId) {
-              console.warn("Aucun ID d'événement trouvé pour la réservation", reservation.id);
-              return {
-                ...reservation,
-                evenement: {
-                  id: "ID inconnu",
-                  titre: "Événement non chargé correctement",
-                  dateEvenement: "Date inconnue",
-                  lieu: "Lieu indisponible"
-                }
-              };
+          reservationsFiltrees.map(async reservation => {
+            if (!reservation.evenement || typeof reservation.evenement !== 'object') {
+              console.warn(`ID événement trouvé : ${reservation.evenement}. Récupération des détails...`);
+              try {
+                const eventResponse = await api.get(`/evenements/${reservation.evenement}`, {
+                  headers: { Authorization: `Bearer ${token}` }
+                });
+                return { ...reservation, evenement: eventResponse.data };
+              } catch (error) {
+                console.error("Erreur lors de la récupération de l'événement :", error);
+                // Si l'appel échoue, on fournit des valeurs par défaut
+                return {
+                  ...reservation,
+                  evenement: {
+                    id: reservation.evenement || "ID inconnu",
+                    titre: "Événement non chargé correctement",
+                    dateEvenement: "Date inconnue",
+                    lieu: "Lieu indisponible"
+                  }
+                };
+              }
             }
-
-            // Si l'objet est déjà complet, on le laisse tel quel
-            if (reservation.evenement && typeof reservation.evenement === 'object') {
-              return reservation;
-            }
-
-            console.warn(`ID événement trouvé : ${eventId}. Récupération des détails...`);
-            try {
-              const eventResponse = await api.get(`/evenements/${eventId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-              });
-              return { ...reservation, evenement: eventResponse.data };
-            } catch (error) {
-              console.error("Erreur lors de la récupération de l'événement :", error);
-              return {
-                ...reservation,
-                evenement: {
-                  id: eventId,
-                  titre: "Événement non chargé correctement",
-                  dateEvenement: "Date inconnue",
-                  lieu: "Lieu indisponible"
-                }
-              };
-            }
+            return reservation;
           })
-        )
-          .then(updatedReservations => {
-            console.log("Nombre de réservations après mise à jour :", updatedReservations.length);
-            setReservations(updatedReservations);
-          })
-          .catch(error => {
-            console.error("Erreur lors de la mise à jour des réservations :", error);
-            alert("Une erreur est survenue lors du chargement de vos réservations.");
-          });
+        ).then(updatedReservations => {
+          console.log("Réservations après mise à jour :", updatedReservations);
+          setReservations(updatedReservations);
+        }).catch(error => {
+          console.error("Erreur lors de la mise à jour des réservations :", error);
+          alert("Une erreur est survenue lors du chargement de vos réservations.");
+        });
       })
       .catch(error => {
         console.error("Erreur lors de la récupération des réservations :", error.response?.data || error);
         alert("Impossible de récupérer vos réservations.");
       });
+  };
+
+  useEffect(() => {
+    fetchReservations();
   }, [navigate, token]);
+
+  // Fonction de paiement d'une réservation en attente (non confirmée)
+  const handlePayment = async (reservationId) => {
+    if (!token) {
+      alert("Vous devez être connecté pour payer.");
+      navigate("/login");
+      return;
+    }
+    const modePaiementInput = window.prompt("Choisissez votre mode de paiement : CARTE, PAYPAL, VIREMENT");
+    const modePaiement = modePaiementInput ? modePaiementInput.toUpperCase() : "";
+    if (!["CARTE", "PAYPAL", "VIREMENT"].includes(modePaiement)) {
+      alert("Mode de paiement invalide.");
+      return;
+    }
+    try {
+      await api.put(
+        `/reservations/${reservationId}/paiement`,
+        JSON.stringify(modePaiement),
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+      );
+      alert("Paiement effectué avec succès !");
+      fetchReservations();
+    } catch (error) {
+      console.error("Erreur lors du paiement :", error);
+      alert("Erreur lors du paiement.");
+    }
+  };
 
   return (
     <div className="reservations-container">
@@ -113,21 +127,44 @@ function MesReservations() {
         <ul className="reservations-list">
           {reservations.map((reservation) => (
             <li key={reservation.id} className="reservation-item">
-              <strong>
-                {reservation.evenement && reservation.evenement.titre
-                  ? reservation.evenement.titre
-                  : `Événement inconnu (${reservation.evenement?.id || "ID manquant"})`}
-              </strong>
-              <div>
-                {reservation.dateReservation 
-                  ? new Date(reservation.dateReservation).toLocaleDateString('fr-FR')
-                  : "Date non renseignée"}
+              <div className="reservation-details">
+                <strong>
+                  {reservation.evenement && reservation.evenement.titre
+                    ? reservation.evenement.titre
+                    : `Événement inconnu (${reservation.evenement?.id || "ID manquant"})`}
+                </strong>
+                <div>
+                  <strong>Numéro de réservation :</strong> {reservation.id || "Non renseigné"}
+                </div>
+                <div>
+                  <strong>Date de réservation :</strong>{" "}
+                  {reservation.dateReservation
+                    ? new Date(reservation.dateReservation).toLocaleString('fr-FR')
+                    : "Date non renseignée"}
+                </div>
+                <div>
+                  <strong>Date de l'événement :</strong>{" "}
+                  {reservation.evenement && reservation.evenement.dateEvenement
+                    ? new Date(reservation.evenement.dateEvenement).toLocaleDateString('fr-FR')
+                    : "Date non renseignée"}
+                </div>
+                <div>
+                  <strong>Billets :</strong> {reservation.nombreBillets > 0 ? reservation.nombreBillets : "Non renseigné"}
+                </div>
+                <div>
+                  <strong>Statut :</strong>{" "}
+                  {reservation.statut === "CONFIRMEE" ? (
+                    <span className="confirmed">Confirmée</span>
+                  ) : (
+                    <span className="not-confirmed">Non confirmée</span>
+                  )}
+                </div>
               </div>
-              <div>
-                {reservation.nombreBillets > 0 
-                  ? `Billets : ${reservation.nombreBillets}`
-                  : "Billets non renseignés"}
-              </div>
+              {reservation.statut !== "CONFIRMEE" && (
+                <button onClick={() => handlePayment(reservation.id)} className="btn-pay">
+                  Payer
+                </button>
+              )}
             </li>
           ))}
         </ul>

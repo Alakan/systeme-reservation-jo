@@ -1,17 +1,16 @@
 package com.example.systeme_reservation_jo.service;
 
-import com.example.systeme_reservation_jo.model.Billet;
 import com.example.systeme_reservation_jo.model.Evenement;
+import com.example.systeme_reservation_jo.model.Billet;
 import com.example.systeme_reservation_jo.model.Reservation;
-import com.example.systeme_reservation_jo.repository.BilletRepository;
 import com.example.systeme_reservation_jo.repository.EvenementRepository;
+import com.example.systeme_reservation_jo.repository.BilletRepository;
 import com.example.systeme_reservation_jo.repository.PaiementRepository;
 import com.example.systeme_reservation_jo.repository.ReservationRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +25,10 @@ public class EvenementServiceImpl implements EvenementService {
     private final ReservationRepository reservationRepository;
 
     @Autowired
-    public EvenementServiceImpl(EvenementRepository evenementRepository, BilletRepository billetRepository, PaiementRepository paiementRepository, ReservationRepository reservationRepository) {
+    public EvenementServiceImpl(EvenementRepository evenementRepository,
+                                BilletRepository billetRepository,
+                                PaiementRepository paiementRepository,
+                                ReservationRepository reservationRepository) {
         this.evenementRepository = evenementRepository;
         this.billetRepository = billetRepository;
         this.paiementRepository = paiementRepository;
@@ -48,7 +50,8 @@ public class EvenementServiceImpl implements EvenementService {
     @Override
     @Transactional
     public Evenement createEvenement(Evenement evenement) {
-        if (evenement.getDateEvenement() == null || evenement.getDateEvenement().isBefore(LocalDateTime.now())) {
+        if (evenement.getDateEvenement() == null ||
+                evenement.getDateEvenement().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("La date de l'événement doit être dans le futur.");
         }
         if (evenement.getLieu() == null || evenement.getLieu().trim().isEmpty()) {
@@ -66,7 +69,8 @@ public class EvenementServiceImpl implements EvenementService {
         Evenement evenement = evenementRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Événement non trouvé avec l'id : " + id));
 
-        if (evenementDetails.getDateEvenement() == null || evenementDetails.getDateEvenement().isBefore(LocalDateTime.now())) {
+        if (evenementDetails.getDateEvenement() == null ||
+                evenementDetails.getDateEvenement().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("La date de l'événement doit être dans le futur.");
         }
         if (evenementDetails.getLieu() == null || evenementDetails.getLieu().trim().isEmpty()) {
@@ -106,26 +110,22 @@ public class EvenementServiceImpl implements EvenementService {
         Evenement evenement = evenementRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Événement non trouvé avec l'id : " + id));
 
-        // Vérifier s'il y a des paiements actifs pour cet événement
         if (paiementRepository.existsByReservation_Evenement_IdAndStatut(id, "EN_ATTENTE")) {
             throw new IllegalStateException("Impossible de supprimer l'événement : des paiements en attente existent.");
         }
 
-        // Supprimer la référence à l'événement dans les réservations sans les supprimer
         List<Reservation> reservations = reservationRepository.findByEvenement_Id(id);
         for (Reservation reservation : reservations) {
-            reservation.setEvenement(null); // 🔹 Supprime la référence à l'événement
+            reservation.setEvenement(null);
             reservationRepository.save(reservation);
         }
 
-        // Supprimer la référence à l'événement dans les billets sans les supprimer
         List<Billet> billets = billetRepository.findByEvenement_Id(id);
         for (Billet billet : billets) {
-            billet.setEvenement(null); // 🔹 Supprime la référence à l'événement
+            billet.setEvenement(null);
             billetRepository.save(billet);
         }
 
-        // Supprimer l'événement
         evenementRepository.delete(evenement);
     }
 }
