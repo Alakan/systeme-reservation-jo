@@ -6,7 +6,7 @@ import java.util.Optional;
 
 public interface UtilisateurService {
 
-    // Retourne la liste de tous les utilisateurs
+    // Retourne la liste complète des utilisateurs
     List<Utilisateur> getAllUtilisateurs();
 
     // Retourne la liste des utilisateurs ayant le rôle d'administrateur
@@ -18,7 +18,7 @@ public interface UtilisateurService {
     // Recherche un utilisateur par son email
     Optional<Utilisateur> findByEmail(String email);
 
-    // Sauvegarde un nouvel utilisateur (avec cryptage du mot de passe)
+    // Sauvegarde un nouvel utilisateur (avec encodage du mot de passe si nécessaire)
     Utilisateur saveUtilisateur(Utilisateur utilisateur);
 
     // Met à jour les informations d'un utilisateur existant identifié par son id

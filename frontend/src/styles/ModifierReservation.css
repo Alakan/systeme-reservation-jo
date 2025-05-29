@@ -1,0 +1,39 @@
+/* src/styles/ModifierReservation.css */
+.modifier-reservation-container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.modifier-reservation-container h2 {
+  text-align: center;
+}
+
+.modifier-reservation-container form {
+  display: flex;
+  flex-direction: column;
+}
+
+.modifier-reservation-container input,
+.modifier-reservation-container select {
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.modifier-reservation-container button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.modifier-reservation-container button:hover {
+  background-color: #0056b3;
+}

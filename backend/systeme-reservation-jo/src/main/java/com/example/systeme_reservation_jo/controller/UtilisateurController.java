@@ -82,6 +82,10 @@ public class UtilisateurController {
         return ResponseEntity.ok(updatedDTO);
     }
 
+    /**
+     * Récupère un utilisateur via son identifiant.
+     * Cet endpoint est utile, par exemple, pour pré-remplir les formulaires d'administration.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<?> getUtilisateurById(@PathVariable Long id) {
         Optional<Utilisateur> utilisateurOpt = utilisateurService.getUtilisateurById(id);
@@ -91,11 +95,10 @@ public class UtilisateurController {
             dto.setId(user.getId());
             dto.setEmail(user.getEmail());
             dto.setUsername(user.getUsername());
-            // Vous pouvez ajouter ici d’autres champs si nécessaire (sans exposer le mot de passe)
+            // On évite d'exposer le password
             return ResponseEntity.ok(dto);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Utilisateur non trouvé.");
         }
     }
-
 }

@@ -1,0 +1,38 @@
+/* src/styles/AjouterUtilisateur.css */
+.ajouter-utilisateur-container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.ajouter-utilisateur-container h2 {
+  text-align: center;
+}
+
+.ajouter-utilisateur-container form {
+  display: flex;
+  flex-direction: column;
+}
+
+.ajouter-utilisateur-container input {
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.ajouter-utilisateur-container button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.ajouter-utilisateur-container button:hover {
+  background-color: #0056b3;
+}

@@ -9,6 +9,12 @@ import Reservation from '../pages/Reservation';
 import MesReservations from '../pages/MesReservations';
 import DashboardUtilisateurs from '../pages/DashboardUtilisateurs';
 import ModifierProfil from '../pages/ModifierProfil';
+import AjouterUtilisateur from '../pages/AjouterUtilisateur';
+import ModifierUtilisateur from '../pages/ModifierUtilisateur';
+import AjouterEvenement from '../pages/AjouterEvenement';
+import ModifierEvenement from '../pages/ModifierEvenement';
+import AjouterReservation from '../pages/AjouterReservation';
+import ModifierReservation from '../pages/ModifierReservation';
 import PrivateRoute from './PrivateRoute';
 
 // Composant NotFound pour les URL non reconnues
@@ -26,15 +32,26 @@ function AppRouter() {
       <Route path="/evenements" element={<Evenements />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      
       {/* Routes protégées */}
       <Route path="/admin" element={<PrivateRoute element={<Admin />} />} />
       <Route path="/reservations" element={<PrivateRoute element={<Reservation />} />} />
       <Route path="/mes-reservations" element={<PrivateRoute element={<MesReservations />} />} />
       <Route path="/dashboard" element={<PrivateRoute element={<DashboardUtilisateurs />} />} />
-      {/* Route pour modifier le profil - vous pouvez la protéger si besoin */}
-      <Route path="/modifier-profil" element={
-        <PrivateRoute element={<ModifierProfil />} />
-      } />
+      <Route path="/modifier-profil" element={<PrivateRoute element={<ModifierProfil />} />} />
+
+      {/* Routes pour ajouter / modifier utilisateurs */}
+      <Route path="/admin/ajouter-utilisateur" element={<PrivateRoute element={<AjouterUtilisateur />} />} />
+      <Route path="/admin/modifier-utilisateur/:id" element={<PrivateRoute element={<ModifierUtilisateur />} />} />
+
+      {/* Routes pour ajouter / modifier événements */}
+      <Route path="/admin/ajouter-evenement" element={<PrivateRoute element={<AjouterEvenement />} />} />
+      <Route path="/admin/modifier-evenement/:id" element={<PrivateRoute element={<ModifierEvenement />} />} />
+
+      {/* Routes pour ajouter / modifier réservations */}
+      <Route path="/admin/ajouter-reservation" element={<PrivateRoute element={<AjouterReservation />} />} />
+      <Route path="/admin/modifier-reservation/:id" element={<PrivateRoute element={<ModifierReservation />} />} />
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

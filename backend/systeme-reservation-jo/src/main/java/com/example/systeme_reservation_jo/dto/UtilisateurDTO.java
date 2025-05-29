@@ -6,7 +6,7 @@ import lombok.Data;
 /**
  * Data Transfer Object pour l'utilisateur.
  * Ce DTO est utilisé pour afficher ou modifier le profil de l'utilisateur côté frontend.
- * Le champ "password" n'est utilisé que lors des mises à jour.
+ * Le champ "password" n'est utilisé que lors des mises à jour (écriture uniquement).
  */
 @Data
 public class UtilisateurDTO {

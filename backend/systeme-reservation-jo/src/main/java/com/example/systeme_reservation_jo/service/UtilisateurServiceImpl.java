@@ -1,5 +1,6 @@
 package com.example.systeme_reservation_jo.service;
 
+import com.example.systeme_reservation_jo.dto.UtilisateurDTO;
 import com.example.systeme_reservation_jo.model.Utilisateur;
 import com.example.systeme_reservation_jo.repository.UtilisateurRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,13 +25,13 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         return utilisateurRepository.findAll();
     }
 
-    // Retourne uniquement les utilisateurs "administrateurs"
+    // Retourne uniquement les utilisateurs ayant le rôle administrateur
     @Override
     public List<Utilisateur> getAllAdminUsers() {
         return utilisateurRepository.findByRoles_Name("ROLE_ADMINISTRATEUR");
     }
 
-    // Vérifie l'existence d'un utilisateur par email
+    // Vérifie si un utilisateur existe par email
     @Override
     public boolean existsByEmail(String email) {
         return utilisateurRepository.existsByEmail(email);
@@ -42,7 +43,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         return utilisateurRepository.findByEmail(email);
     }
 
-    // Sauvegarde un nouvel utilisateur avec encodage du mot de passe, si nécessaire
+    // Sauvegarde un nouvel utilisateur avec encodage du mot de passe si nécessaire
     @Override
     public Utilisateur saveUtilisateur(Utilisateur utilisateur) {
         if (utilisateur.getPassword() != null
@@ -53,18 +54,21 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         return utilisateurRepository.save(utilisateur);
     }
 
-    // Mise à jour de l'utilisateur, y compris le mot de passe et les rôles
+    // Mise à jour des informations d'un utilisateur existant identifié par son id
+    // Ici, on met à jour le nom d'utilisateur, l'email, et on encode le mot de passe s'il est fourni.
     @Override
     public Utilisateur updateUtilisateur(Long id, Utilisateur utilisateurDetails) {
-        Utilisateur utilisateur = utilisateurRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+        Optional<Utilisateur> utilisateurOpt = utilisateurRepository.findById(id);
+        if (utilisateurOpt.isEmpty()) {
+            throw new RuntimeException("Utilisateur non trouvé");
+        }
 
-        // Mise à jour des champs basiques
+        Utilisateur utilisateur = utilisateurOpt.get();
         utilisateur.setUsername(utilisateurDetails.getUsername());
         utilisateur.setEmail(utilisateurDetails.getEmail());
 
-        // Encodage du mot de passe si un nouveau mot de passe est fourni
         if (utilisateurDetails.getPassword() != null && !utilisateurDetails.getPassword().isBlank()) {
+            // Si le mot de passe n'est pas déjà encodé, on l'encode
             if (!utilisateurDetails.getPassword().startsWith("$2a$")) {
                 utilisateur.setPassword(passwordEncoder.encode(utilisateurDetails.getPassword()));
             } else {
@@ -72,18 +76,18 @@ public class UtilisateurServiceImpl implements UtilisateurService {
             }
         }
 
-        // Mise à jour des rôles si nécessaire
+        // Mise à jour éventuelle des rôles (si nécessaire)
         utilisateur.setRoles(utilisateurDetails.getRoles());
         return utilisateurRepository.save(utilisateur);
     }
 
-    // Suppression de l'utilisateur par son identifiant
+    // Supprime un utilisateur par son identifiant
     @Override
     public void deleteUtilisateur(Long id) {
         utilisateurRepository.deleteById(id);
     }
 
-    // Récupération d'un utilisateur par son id
+    // Récupère un utilisateur par son id
     @Override
     public Optional<Utilisateur> getUtilisateurById(Long id) {
         return utilisateurRepository.findById(id);
