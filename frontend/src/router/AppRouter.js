@@ -15,6 +15,7 @@ import AjouterEvenement from '../pages/AjouterEvenement';
 import ModifierEvenement from '../pages/ModifierEvenement';
 import AjouterReservation from '../pages/AjouterReservation';
 import ModifierReservation from '../pages/ModifierReservation';
+import Billet from '../pages/Billet'; // Importez le composant Billet
 import PrivateRoute from './PrivateRoute';
 
 // Composant NotFound pour les URL non reconnues
@@ -51,6 +52,9 @@ function AppRouter() {
       {/* Routes pour ajouter / modifier réservations */}
       <Route path="/admin/ajouter-reservation" element={<PrivateRoute element={<AjouterReservation />} />} />
       <Route path="/admin/modifier-reservation/:id" element={<PrivateRoute element={<ModifierReservation />} />} />
+
+      {/* Nouvelle route pour afficher un billet */}
+      <Route path="/billet/:id" element={<PrivateRoute element={<Billet />} />} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>

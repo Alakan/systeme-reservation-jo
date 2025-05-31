@@ -39,7 +39,7 @@ public class ReservationController {
         this.evenementService = evenementService;
     }
 
-    // Accessible uniquement aux administrateurs pour récupérer toutes les réservations
+    // Accessible uniquement aux administrateurs pour récupérer toutes les réservations (actives et inactives)
     @GetMapping
     @PreAuthorize("hasRole('ADMINISTRATEUR')")
     public ResponseEntity<List<ReservationDTO>> getAllReservations() {
@@ -50,20 +50,34 @@ public class ReservationController {
         return ResponseEntity.ok(dtos);
     }
 
-    // Récupération d'une réservation par son identifiant (retourne un DTO)
+    // Récupération d'une réservation par son identifiant
+    // Pour les utilisateurs non admin, on ne renvoie que si la réservation est active
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getReservationById(@PathVariable Long id) {
         Optional<Reservation> reservationOpt = reservationService.getReservationById(id);
         if (reservationOpt.isPresent()) {
-            ReservationDTO dto = ReservationMapper.toDTO(reservationOpt.get());
+            Reservation reservation = reservationOpt.get();
+
+            // Vérifier si l'utilisateur authentifié est administrateur
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            boolean isAdmin = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equalsIgnoreCase("ROLE_ADMINISTRATEUR") ||
+                            a.getAuthority().equalsIgnoreCase("ROLE_ADMIN"));
+
+            // Si l'utilisateur n'est pas admin et si la réservation est désactivée, on retourne 404.
+            if (!isAdmin && !reservation.isActif()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Réservation introuvable.");
+            }
+
+            ReservationDTO dto = ReservationMapper.toDTO(reservation);
             return ResponseEntity.ok(dto);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Réservation introuvable.");
         }
     }
 
-    // Récupération des réservations de l'utilisateur authentifié, renvoyées au format DTO
+    // Récupération des réservations de l'utilisateur authentifié, seules les réservations actives sont renvoyées
     @GetMapping("/utilisateur")
     @PreAuthorize("hasRole('UTILISATEUR') or hasRole('ADMINISTRATEUR')")
     public ResponseEntity<Object> getReservationsByUserEmail() {
@@ -77,13 +91,16 @@ public class ReservationController {
         }
 
         List<Reservation> reservations = reservationService.getReservationsByUtilisateur(utilisateurOpt.get().getId());
-        if (reservations.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Vous n'avez aucune réservation.");
-        }
 
+        // Pour la vue utilisateur, ne renvoyer que les réservations actives
         List<ReservationDTO> reservationDTOs = reservations.stream()
+                .filter(Reservation::isActif)
                 .map(ReservationMapper::toDTO)
                 .collect(Collectors.toList());
+
+        if (reservationDTOs.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Vous n'avez aucune réservation.");
+        }
 
         return ResponseEntity.ok(reservationDTOs);
     }
@@ -139,7 +156,7 @@ public class ReservationController {
         }
     }
 
-    // Suppression d'une réservation
+    // Suppression d'une réservation (opération de suppression définitive)
     @DeleteMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Object> deleteReservation(@PathVariable Long id) {

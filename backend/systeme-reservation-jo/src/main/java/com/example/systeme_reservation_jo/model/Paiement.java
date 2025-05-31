@@ -39,7 +39,7 @@ public class Paiement {
     private LocalDateTime datePaiement;
 
     @NotNull(message = "La méthode de paiement ne peut pas être nulle")
-    @Enumerated(EnumType.ORDINAL) // ✅ Stocke l'enum sous forme d'un entier (smallint)
+    @Enumerated(EnumType.ORDINAL)
     @Column(nullable = false)
     private ModePaiement methodePaiement;
 
@@ -47,5 +47,5 @@ public class Paiement {
 
     @NotBlank(message = "Le statut du paiement ne peut pas être vide")
     @Column(nullable = false)
-    private String statut; // "SUCCES", "ECHEC", "EN_ATTENTE"
+    private String statut; // Par exemple : "SUCCES", "ECHEC", "EN_ATTENTE"
 }

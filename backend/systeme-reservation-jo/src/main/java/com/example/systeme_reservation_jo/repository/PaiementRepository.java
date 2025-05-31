@@ -8,9 +8,12 @@ import java.util.List;
 
 public interface PaiementRepository extends JpaRepository<Paiement, Long> {
 
-    boolean existsByReservationId(Long reservationId); // ✅ Vérifie si des paiements existent pour une réservation
+    // Vérifie si des paiements existent pour une réservation donnée
+    boolean existsByReservationId(Long reservationId);
 
-    boolean existsByReservation_Evenement_IdAndStatut(Long evenementId, String statut); // Vérifie les paiements actifs
+    // Vérifie les paiements actifs par événement et statut
+    boolean existsByReservation_Evenement_IdAndStatut(Long evenementId, String statut);
 
-    List<Paiement> findByReservation(Reservation reservation); // Récupère les paiements liés à une réservation
+    // Récupère tous les paiements liés à une réservation
+    List<Paiement> findByReservation(Reservation reservation);
 }

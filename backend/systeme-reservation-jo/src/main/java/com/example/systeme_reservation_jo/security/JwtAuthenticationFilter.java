@@ -8,8 +8,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -18,8 +16,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 @Component
 @Profile("!test")
@@ -36,8 +32,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String requestURI = request.getRequestURI();
-        // Log pour déboguer les URI des requêtes
         logger.info("Traitement de la requête pour l'URI: " + requestURI);
+
+        // Bypass le traitement du token pour les endpoints d'authentification
+        if (requestURI.startsWith("/api/auth/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         try {
             // Récupère le token JWT de la requête
@@ -57,13 +58,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // Charge les détails de l'utilisateur
                 UserDetails userDetails = utilisateurDetailsService.loadUserByUsername(email);
                 logger.info("Authorities récupérées pour l'utilisateur : " + userDetails.getAuthorities());
-
-                // Vérifie si le rôle ADMINISTRATEUR est présent
-                if (userDetails.getAuthorities().toString().contains("ROLE_ADMINISTRATEUR")) {
-                    logger.info("L'utilisateur a le rôle ADMINISTRATEUR");
-                } else {
-                    logger.warn("Rôle ADMINISTRATEUR manquant pour l'utilisateur");
-                }
 
                 // Crée l'objet d'authentification
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(

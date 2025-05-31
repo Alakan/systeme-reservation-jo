@@ -17,5 +17,7 @@ public interface BilletService {
     List<Billet> getBilletsByEvenement(Evenement evenement);
     List<Billet> getBilletsByUtilisateur(Utilisateur utilisateur);
     List<Billet> getBilletsByStatut(StatutBillet statut);
+    Optional<Billet> getBilletByReservationId(Long reservationId);
     boolean existsByNumeroBillet(String numeroBillet);
 }
+

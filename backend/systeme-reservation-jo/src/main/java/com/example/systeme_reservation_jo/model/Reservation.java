@@ -29,6 +29,7 @@ public class Reservation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Relation vers l'utilisateur
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "utilisateur_id", nullable = false)
     private Utilisateur utilisateur;
@@ -54,6 +55,10 @@ public class Reservation {
     @Enumerated(EnumType.STRING)
     @Column(nullable = true)
     private ModePaiement modePaiement;
+
+    // Nouveau champ pour gérer l'activation/désactivation
+    @Column(nullable = false)
+    private boolean actif = true;
 
     @JsonProperty("evenementId")
     public Long getEvenementId() {

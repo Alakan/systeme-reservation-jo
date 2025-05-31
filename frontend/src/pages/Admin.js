@@ -7,7 +7,7 @@ import { useTheme } from "../contexts/ThemeContext";
 
 function Admin() {
   const [activeTab, setActiveTab] = useState("utilisateurs"); // Onglet par défaut
-  const [data, setData] = useState([]); // Stocke les données chargées
+  const [data, setData] = useState([]); // Données chargées via l'API
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -21,7 +21,6 @@ function Admin() {
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
       console.log("Token payload (Admin):", payload);
-
       const rolesFromToken = payload.roles;
       let isAdminFlag = false;
       if (rolesFromToken) {
@@ -52,7 +51,7 @@ function Admin() {
     }
   }, [navigate, token]);
 
-  // Fonction de rafraîchissement des données
+  // Fonction de rafraîchissement des données en fonction de l'onglet actif
   const fetchData = () => {
     if (!token) return;
     let endpoint = "";
@@ -89,6 +88,90 @@ function Admin() {
   // Fonction pour basculer le thème (mode sombre / clair)
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
+  };
+
+  // Fonctions de désactivation et de réactivation pour les événements
+  const handleDesactiverEvenement = (eventId) => {
+    if (
+      window.confirm("Voulez-vous vraiment désactiver cet événement ?")
+    ) {
+      api
+        .put(
+          `/admin/evenements/${eventId}/desactiver`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        .then(() => fetchData())
+        .catch((error) => {
+          console.error(
+            "Erreur lors de la désactivation de l'événement :",
+            error
+          );
+        });
+    }
+  };
+
+  const handleReactiverEvenement = (eventId) => {
+    if (window.confirm("Voulez-vous réactiver cet événement ?")) {
+      api
+        .put(
+          `/admin/evenements/${eventId}/reactiver`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        .then(() => fetchData())
+        .catch((error) => {
+          console.error(
+            "Erreur lors de la réactivation de l'événement :",
+            error
+          );
+        });
+    }
+  };
+
+  // Fonctions de désactivation et de réactivation pour les réservations
+  const handleDesactiverReservation = (reservationId) => {
+    if (
+      window.confirm(
+        "Voulez-vous désactiver cette réservation ?"
+      )
+    ) {
+      api
+        .put(
+          `/admin/reservations/${reservationId}/desactiver`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        .then(() => fetchData())
+        .catch((error) => {
+          console.error(
+            "Erreur lors de la désactivation de la réservation :",
+            error
+          );
+        });
+    }
+  };
+
+  const handleReactiverReservation = (reservationId) => {
+    if (
+      window.confirm(
+        "Voulez-vous réactiver cette réservation ?"
+      )
+    ) {
+      api
+        .put(
+          `/admin/reservations/${reservationId}/reactiver`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        .then(() => fetchData())
+        .catch((error) => {
+          console.error(
+            "Erreur lors de la réactivation de la réservation :",
+            error
+          );
+        });
+    }
   };
 
   return (
@@ -144,10 +227,11 @@ function Admin() {
                             "Voulez-vous vraiment supprimer cet utilisateur ?"
                           )
                         ) {
-                          // Mise à jour de l'endpoint pour correspondre à celui défini dans AdminController
                           api
                             .delete(`/admin/utilisateurs/${user.id}`, {
-                              headers: { Authorization: `Bearer ${token}` },
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                              },
                             })
                             .then(() => {
                               fetchData(); // Rafraîchit les données après suppression
@@ -183,7 +267,17 @@ function Admin() {
               <ul>
                 {data.map((event) => (
                   <li key={event.id}>
-                    {event.titre} - {event.dateEvenement}{" "}
+                    {event.titre} -{" "}
+                    {new Date(event.dateEvenement).toLocaleString()}{" "}
+                    {event.actif ? (
+                      <span style={{ color: "green", fontWeight: "bold" }}>
+                        [Actif]
+                      </span>
+                    ) : (
+                      <span style={{ color: "red", fontWeight: "bold" }}>
+                        [Désactivé]
+                      </span>
+                    )}
                     <button
                       onClick={() =>
                         navigate(`/admin/modifier-evenement/${event.id}`)
@@ -191,31 +285,23 @@ function Admin() {
                     >
                       Modifier
                     </button>
-                    <button
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            "Voulez-vous vraiment supprimer cet événement ?"
-                          )
-                        ) {
-                          api
-                            .delete(`/admin/evenements/${event.id}`, {
-                              headers: { Authorization: `Bearer ${token}` },
-                            })
-                            .then(() => {
-                              fetchData();
-                            })
-                            .catch((error) => {
-                              console.error(
-                                "Erreur lors de la suppression de l'événement :",
-                                error
-                              );
-                            });
+                    {event.actif ? (
+                      <button
+                        onClick={() =>
+                          handleDesactiverEvenement(event.id)
                         }
-                      }}
-                    >
-                      Supprimer
-                    </button>
+                      >
+                        Désactiver
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() =>
+                          handleReactiverEvenement(event.id)
+                        }
+                      >
+                        Réactiver
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -234,47 +320,50 @@ function Admin() {
             </button>
             {data && Array.isArray(data) && data.length > 0 ? (
               <ul>
-                {data.map((res) => {
-                  return (
-                    <li key={res.id}>
-                      Réservation #{res.id} pour{" "}
-                      {res.evenement?.titre || "Événement inconnu"} - Statut :{" "}
-                      {res.statut}
+                {data.map((res) => (
+                  <li key={res.id}>
+                    Réservation #{res.id} pour{" "}
+                    {res.evenement?.titre || "Événement inconnu"} - Statut :{" "}
+                    {res.statut}{" "}
+                    {res.actif ? (
+                      <span
+                        style={{ color: "green", fontWeight: "bold" }}
+                      >
+                        [Actif]
+                      </span>
+                    ) : (
+                      <span
+                        style={{ color: "red", fontWeight: "bold" }}
+                      >
+                        [Désactivé]
+                      </span>
+                    )}
+                    <button
+                      onClick={() =>
+                        navigate(`/admin/modifier-reservation/${res.id}`)
+                      }
+                    >
+                      Modifier
+                    </button>
+                    {res.actif ? (
                       <button
                         onClick={() =>
-                          navigate(`/admin/modifier-reservation/${res.id}`)
+                          handleDesactiverReservation(res.id)
                         }
                       >
-                        Modifier
+                        Désactiver
                       </button>
+                    ) : (
                       <button
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              "Voulez-vous vraiment supprimer cette réservation ?"
-                            )
-                          ) {
-                            api
-                              .delete(`/admin/reservations/${res.id}`, {
-                                headers: { Authorization: `Bearer ${token}` },
-                              })
-                              .then(() => {
-                                fetchData();
-                              })
-                              .catch((error) => {
-                                console.error(
-                                  "Erreur lors de la suppression de la réservation :",
-                                  error
-                                );
-                              });
-                          }
-                        }}
+                        onClick={() =>
+                          handleReactiverReservation(res.id)
+                        }
                       >
-                        Supprimer
+                        Réactiver
                       </button>
-                    </li>
-                  );
-                })}
+                    )}
+                  </li>
+                ))}
               </ul>
             ) : (
               <p>Aucune réservation trouvée.</p>

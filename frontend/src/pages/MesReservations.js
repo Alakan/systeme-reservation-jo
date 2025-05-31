@@ -43,7 +43,7 @@ function MesReservations() {
             )
           : [];
 
-        // Pour chaque réservation, si "evenement" n'est pas un objet, on tente de le charger via un appel supplémentaire
+        // Pour chaque réservation, si "evenement" n'est pas un objet, tenter de récupérer ses détails via un appel supplémentaire
         Promise.all(
           reservationsFiltrees.map(async reservation => {
             if (!reservation.evenement || typeof reservation.evenement !== 'object') {
@@ -55,7 +55,6 @@ function MesReservations() {
                 return { ...reservation, evenement: eventResponse.data };
               } catch (error) {
                 console.error("Erreur lors de la récupération de l'événement :", error);
-                // Si l'appel échoue, on fournit des valeurs par défaut
                 return {
                   ...reservation,
                   evenement: {
@@ -69,10 +68,12 @@ function MesReservations() {
             }
             return reservation;
           })
-        ).then(updatedReservations => {
+        )
+        .then(updatedReservations => {
           console.log("Réservations après mise à jour :", updatedReservations);
           setReservations(updatedReservations);
-        }).catch(error => {
+        })
+        .catch(error => {
           console.error("Erreur lors de la mise à jour des réservations :", error);
           alert("Une erreur est survenue lors du chargement de vos réservations.");
         });
@@ -112,6 +113,12 @@ function MesReservations() {
       console.error("Erreur lors du paiement :", error);
       alert("Erreur lors du paiement.");
     }
+  };
+
+  // Fonction pour consulter le billet en cas de réservation confirmée
+  const handleVoirBillet = (reservationId) => {
+    console.log("Navigation vers le billet pour la réservation ID:", reservationId);
+    navigate(`/billet/${reservationId}`);
   };
 
   return (
@@ -160,7 +167,11 @@ function MesReservations() {
                   )}
                 </div>
               </div>
-              {reservation.statut !== "CONFIRMEE" && (
+              {reservation.statut === "CONFIRMEE" ? (
+                <button onClick={() => handleVoirBillet(reservation.id)} className="btn-ticket">
+                  Voir mon billet
+                </button>
+              ) : (
                 <button onClick={() => handlePayment(reservation.id)} className="btn-pay">
                   Payer
                 </button>

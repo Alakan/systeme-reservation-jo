@@ -53,7 +53,7 @@ public class AdminController {
         }
     }
 
-    // Suppression d'un utilisateur
+    // Suppression d'un utilisateur (suppression physique)
     @DeleteMapping("/utilisateurs/{id}")
     public ResponseEntity<String> deleteUtilisateur(@PathVariable Long id) {
         utilisateurService.deleteUtilisateur(id);
@@ -67,11 +67,28 @@ public class AdminController {
         return ResponseEntity.ok(evenements);
     }
 
-    // Suppression d'un événement
-    @DeleteMapping("/evenements/{id}")
-    public ResponseEntity<String> deleteEvenement(@PathVariable Long id) {
-        evenementService.deleteEvenement(id);
-        return ResponseEntity.ok("Événement supprimé avec succès.");
+    // Désactivation d'un événement (mise à jour du champ actif à false)
+    @PutMapping("/evenements/{id}/desactiver")
+    public ResponseEntity<?> desactiverEvenement(@PathVariable Long id) {
+        try {
+            Evenement evenementDesactive = evenementService.desactiverEvenement(id);
+            return ResponseEntity.ok(evenementDesactive);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Erreur lors de la désactivation de l'événement : " + e.getMessage());
+        }
+    }
+
+    // Réactivation (activation) d'un événement (champ actif à true)
+    @PutMapping("/evenements/{id}/reactiver")
+    public ResponseEntity<?> reactiverEvenement(@PathVariable Long id) {
+        try {
+            Evenement evenementActive = evenementService.reactiverEvenement(id);
+            return ResponseEntity.ok(evenementActive);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Erreur lors de la réactivation de l'événement : " + e.getMessage());
+        }
     }
 
     // Récupérer toutes les réservations
@@ -81,11 +98,28 @@ public class AdminController {
         return ResponseEntity.ok(reservations);
     }
 
-    // Suppression d'une réservation
-    @DeleteMapping("/reservations/{id}")
-    public ResponseEntity<String> deleteReservation(@PathVariable Long id) {
-        reservationService.deleteReservation(id);
-        return ResponseEntity.ok("Réservation supprimée avec succès.");
+    // Désactivation d'une réservation (mise à jour du champ actif à false)
+    @PutMapping("/reservations/{id}/desactiver")
+    public ResponseEntity<?> desactiverReservation(@PathVariable Long id) {
+        try {
+            Reservation reservationDesactive = reservationService.desactiverReservation(id);
+            return ResponseEntity.ok(reservationDesactive);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Erreur lors de la désactivation de la réservation : " + e.getMessage());
+        }
+    }
+
+    // Réactivation (activation) d'une réservation (champ actif à true)
+    @PutMapping("/reservations/{id}/reactiver")
+    public ResponseEntity<?> reactiverReservation(@PathVariable Long id) {
+        try {
+            Reservation reservationActive = reservationService.reactiverReservation(id);
+            return ResponseEntity.ok(reservationActive);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Erreur lors de la réactivation de la réservation : " + e.getMessage());
+        }
     }
 
     /**

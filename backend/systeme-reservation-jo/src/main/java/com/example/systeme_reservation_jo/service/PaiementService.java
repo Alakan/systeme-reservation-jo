@@ -13,5 +13,5 @@ public interface PaiementService {
     Paiement updatePaiement(Long id, Paiement paiementDetails);
     void deletePaiement(Long id);
 
-    List<Paiement> getPaiementsByReservation(Reservation reservation); // 🔹 Correction ici
+    List<Paiement> getPaiementsByReservation(Reservation reservation);
 }

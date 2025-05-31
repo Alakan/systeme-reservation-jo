@@ -16,7 +16,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/evenements")
-@CrossOrigin(origins = "http://localhost:3000") // À changer une fois le front créé
+@CrossOrigin(origins = "http://localhost:3000") // À adapter selon votre configuration front-end
 public class EvenementController {
 
     private static final Logger logger = LoggerFactory.getLogger(EvenementController.class);
@@ -28,18 +28,37 @@ public class EvenementController {
         this.evenementService = evenementService;
     }
 
+    /**
+     * Récupération de tous les événements publics (seulement ceux actifs).
+     */
     @GetMapping
     public ResponseEntity<List<Evenement>> getAllEvenements() {
-        return ResponseEntity.ok(evenementService.getAllEvenements());
+        // Retourne uniquement les événements actifs pour la vue publique
+        return ResponseEntity.ok(evenementService.getAllEvenementsPublic());
     }
 
+    /**
+     * Récupération d'un événement par son id (seulement s'il est actif).
+     */
     @GetMapping("/{id}")
-    public ResponseEntity<Evenement> getEvenementById(@PathVariable Long id) { // ✅ Correction Integer → Long
-        Optional<Evenement> evenement = evenementService.getEvenementById(id);
-        return evenement.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build()); // ✅ Correction map(<method reference>)
+    public ResponseEntity<Evenement> getEvenementById(@PathVariable Long id) {
+        Optional<Evenement> evenementOpt = evenementService.getEvenementById(id);
+        if (evenementOpt.isPresent()) {
+            Evenement evenement = evenementOpt.get();
+            if (!evenement.isActif()) {
+                // Si l'événement est désactivé, on renvoie 404
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(evenement);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
+    /**
+     * Création d'un événement.
+     * (Cette opération peut être réservée aux administrateurs.)
+     */
     @PostMapping
     public ResponseEntity<Evenement> createEvenement(@Valid @RequestBody Evenement evenement) {
         logger.info("Création de l'événement avec les données : {}", evenement);
@@ -47,8 +66,12 @@ public class EvenementController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdEvenement);
     }
 
+    /**
+     * Mise à jour d'un événement existant.
+     * (Opération réservée aux administrateurs.)
+     */
     @PutMapping("/{id}")
-    public ResponseEntity<Evenement> updateEvenement(@PathVariable Long id, @Valid @RequestBody Evenement evenement) { // ✅ Correction Integer → Long
+    public ResponseEntity<Evenement> updateEvenement(@PathVariable Long id, @Valid @RequestBody Evenement evenement) {
         Optional<Evenement> existingEvenement = evenementService.getEvenementById(id);
         if (existingEvenement.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -57,21 +80,30 @@ public class EvenementController {
         return ResponseEntity.ok(updatedEvenement);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEvenement(@PathVariable Long id) { // ✅ Correction Integer → Long
+    /**
+     * Désactivation d'un événement (opération d'administration),
+     * qui met à jour le champ actif à false.
+     */
+    @PutMapping("/{id}/desactiver")
+    public ResponseEntity<Evenement> desactiverEvenement(@PathVariable Long id) {
         Optional<Evenement> existingEvenement = evenementService.getEvenementById(id);
         if (existingEvenement.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        evenementService.deleteEvenement(id);
-        return ResponseEntity.noContent().build();
+        Evenement evenementDesactive = evenementService.desactiverEvenement(id);
+        return ResponseEntity.ok(evenementDesactive);
     }
 
+    /**
+     * Récupération d'événements entre deux dates (filtrés pour ne retourner que les actifs).
+     */
     @GetMapping("/between-dates")
     public ResponseEntity<List<Evenement>> getEvenementsBetweenDates(
             @RequestParam("start") LocalDateTime dateDebut,
             @RequestParam("end") LocalDateTime dateFin) {
         List<Evenement> evenements = evenementService.findEvenementsBetweenDates(dateDebut, dateFin);
+        // Filtrage complémentaire au cas où le service ne le ferait pas déjà
+        evenements.removeIf(e -> !e.isActif());
         return ResponseEntity.ok(evenements);
     }
 }

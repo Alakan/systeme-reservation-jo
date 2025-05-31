@@ -5,7 +5,6 @@ import com.example.systeme_reservation_jo.service.BilletService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,10 +19,8 @@ import java.util.List;
 public class BilletController {
 
     private static final Logger logger = LoggerFactory.getLogger(BilletController.class);
-
     private final BilletService billetService;
 
-    @Autowired
     public BilletController(BilletService billetService) {
         this.billetService = billetService;
     }
@@ -42,9 +39,19 @@ public class BilletController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    // Nouvel endpoint pour récupérer un billet par l'ID de la réservation
+    @GetMapping("/reservation/{reservationId}")
+    public ResponseEntity<Billet> getBilletByReservationId(@PathVariable Long reservationId) {
+        logger.info("Récupération du billet pour la réservation ID : {}", reservationId);
+        return billetService.getBilletByReservationId(reservationId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    }
+
     @PostMapping
     public ResponseEntity<Billet> createBillet(@Valid @RequestBody Billet billet) {
-        logger.info("Tentative de création d'un billet avec les données : {}", billet);
+        // Loguer le payload reçu pour vérifier que l'objet contient bien les données attendues.
+        logger.info("Payload reçu pour création de billet : {}", billet);
 
         // Vérification de duplication du numéro de billet
         if (billetService.existsByNumeroBillet(billet.getNumeroBillet())) {
@@ -58,7 +65,7 @@ public class BilletController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Billet> updateBillet(@PathVariable Long id, @Valid @RequestBody Billet billetDetails) {
-        logger.info("Mise à jour du billet avec ID : {}", id);
+        logger.info("Mise à jour du billet avec ID : {}. Payload : {}", id, billetDetails);
         Billet updatedBillet = billetService.updateBillet(id, billetDetails);
         return ResponseEntity.ok(updatedBillet);
     }

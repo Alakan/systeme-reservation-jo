@@ -20,7 +20,7 @@ import java.math.BigDecimal;
 /**
  * Représente un événement du système de réservation.
  */
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // ✅ Évite les erreurs de proxy Hibernate
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @Entity
 @Table(name = "evenements")
@@ -32,7 +32,7 @@ public class Evenement {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // ✅ Correction Integer → Long
+    private Long id;
 
     @NotBlank(message = "Le titre de l'événement ne peut pas être vide")
     private String titre;
@@ -62,4 +62,8 @@ public class Evenement {
     @DecimalMin(value = "0.0", inclusive = false, message = "Le prix doit être supérieur à 0")
     @Column(nullable = false)
     private BigDecimal prix;
+
+    // Nouveau champ pour gérer l'activation/désactivation
+    @Column(nullable = false)
+    private boolean actif = true;
 }

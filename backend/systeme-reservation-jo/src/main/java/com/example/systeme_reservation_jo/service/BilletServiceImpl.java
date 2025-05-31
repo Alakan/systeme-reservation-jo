@@ -8,11 +8,10 @@ import com.example.systeme_reservation_jo.model.Utilisateur;
 import com.example.systeme_reservation_jo.repository.BilletRepository;
 import com.example.systeme_reservation_jo.repository.EvenementRepository;
 import com.example.systeme_reservation_jo.repository.ReservationRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -21,34 +20,56 @@ public class BilletServiceImpl implements BilletService {
 
     private static final Logger logger = LoggerFactory.getLogger(BilletServiceImpl.class);
 
-    @Autowired
-    private BilletRepository billetRepository;
+    private final BilletRepository billetRepository;
+    private final EvenementRepository evenementRepository;
+    private final ReservationRepository reservationRepository;
 
-    @Autowired
-    private EvenementRepository evenementRepository;
-
-    @Autowired
-    private ReservationRepository reservationRepository;
+    public BilletServiceImpl(BilletRepository billetRepository,
+                             EvenementRepository evenementRepository,
+                             ReservationRepository reservationRepository) {
+        this.billetRepository = billetRepository;
+        this.evenementRepository = evenementRepository;
+        this.reservationRepository = reservationRepository;
+    }
 
     @Override
     public Billet saveBillet(Billet billet) {
         logger.info("Tentative de création d’un billet avec : {}", billet);
 
-        if (billet.getEvenementId() == null) {
-            throw new IllegalArgumentException("L'événement du billet ne peut pas être null.");
-        }
+        // Vérification que la réservation existe bien dans le payload
         if (billet.getReservation() == null || billet.getReservation().getId() == null) {
             throw new IllegalArgumentException("La réservation du billet ne peut pas être null.");
         }
 
-        Evenement evenement = evenementRepository.findById(billet.getEvenementId())
-                .orElseThrow(() -> new RuntimeException("Événement introuvable avec ID : " + billet.getEvenementId()));
+        // Récupération de la Réservation à partir de son ID
         Reservation reservation = reservationRepository.findById(billet.getReservation().getId())
-                .orElseThrow(() -> new RuntimeException("Réservation introuvable avec ID : " + billet.getReservation().getId()));
+                .orElseThrow(() -> new EntityNotFoundException("Réservation introuvable avec ID : " + billet.getReservation().getId()));
 
+        // Détermination de l'objet Evenement
+        Evenement evenement;
+        if (billet.getEvenement() != null && billet.getEvenement().getId() != null) {
+            // Si le payload fournit un objet Evenement
+            evenement = evenementRepository.findById(billet.getEvenement().getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Événement introuvable avec ID : " + billet.getEvenement().getId()));
+        } else {
+            // Sinon, on tente de récupérer l'événement depuis la réservation
+            if (reservation.getEvenement() == null) {
+                throw new IllegalArgumentException("Aucun événement fourni dans le payload et la réservation ne contient pas d'événement.");
+            }
+            evenement = reservation.getEvenement();
+            logger.info("Aucun événement fourni dans le payload, utilisation de l'événement de la réservation : {}", evenement.getId());
+        }
+
+        // Affectation explicite de l'objet Evenement et de la Réservation dans le billet
         billet.setEvenement(evenement);
         billet.setReservation(reservation);
 
+        // Optionnel : Traitement de l'utilisateur, si nécessaire.
+        if (billet.getUtilisateur() != null && billet.getUtilisateur().getId() != null) {
+            // Vous pouvez récupérer l'utilisateur via un repository Utilisateur si besoin.
+        }
+
+        // Vérification et génération du numéro de billet si nécessaire
         if (billet.getNumeroBillet() == null || billetRepository.existsByNumeroBillet(billet.getNumeroBillet())) {
             billet.setNumeroBillet("JO-" + System.currentTimeMillis());
         }
@@ -56,6 +77,7 @@ public class BilletServiceImpl implements BilletService {
         logger.info("Enregistrement du billet : {}", billet);
         return billetRepository.save(billet);
     }
+
 
     @Override
     public List<Billet> getAllBillets() {
@@ -67,6 +89,12 @@ public class BilletServiceImpl implements BilletService {
     public Optional<Billet> getBilletById(Long id) {
         logger.info("Recherche du billet avec ID : {}", id);
         return billetRepository.findById(id);
+    }
+
+    @Override
+    public Optional<Billet> getBilletByReservationId(Long reservationId) {
+        logger.info("Recherche du billet pour la réservation ID : {}", reservationId);
+        return billetRepository.findByReservationIdWithEvenement(reservationId);
     }
 
     @Override
@@ -94,27 +122,33 @@ public class BilletServiceImpl implements BilletService {
 
     @Override
     public Billet updateBillet(Long id, Billet billetDetails) {
-        logger.info("Tentative de mise à jour du billet ID : {}", id);
+        logger.info("Tentative de mise à jour du billet avec l'ID : {}", id);
 
         Billet billet = billetRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Billet non trouvé avec l'ID : " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Billet non trouvé avec l'ID : " + id));
 
-        billet.setEvenement(billetDetails.getEvenement());
+        // Si l'événement est mis à jour, récupérez l'objet Evenement et affectez-le
+        if (billetDetails.getEvenement() != null && billetDetails.getEvenement().getId() != null) {
+            Evenement evenement = evenementRepository.findById(billetDetails.getEvenement().getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Événement introuvable avec l'ID : " + billetDetails.getEvenement().getId()));
+            billet.setEvenement(evenement);
+        }
+
         billet.setUtilisateur(billetDetails.getUtilisateur());
         billet.setDateReservation(billetDetails.getDateReservation());
         billet.setStatut(billetDetails.getStatut());
         billet.setType(billetDetails.getType());
 
-        logger.info("Billet mis à jour avec ID : {}", id);
+        logger.info("Billet mis à jour avec l'ID : {}", id);
         return billetRepository.save(billet);
     }
 
     @Override
     public void deleteBillet(Long id) {
-        logger.info("Suppression du billet avec ID : {}", id);
+        logger.info("Suppression du billet avec l'ID : {}", id);
 
         if (!billetRepository.existsById(id)) {
-            throw new RuntimeException("Impossible de supprimer : Billet introuvable avec l'ID : " + id);
+            throw new EntityNotFoundException("Impossible de supprimer : Billet introuvable avec l'ID : " + id);
         }
 
         billetRepository.deleteById(id);

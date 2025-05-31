@@ -21,6 +21,10 @@ public class ReservationMapper {
             evDto.setDateEvenement(ev.getDateEvenement());
             evDto.setLieu(ev.getLieu());
             dto.setEvenement(evDto);
+        } else {
+            // Optionnel : Vous pouvez définir un message ou laisser "null"
+            // dto.setEvenement(new EvenementDTO("Événement inconnu", ...));
+            // Pour l'instant, si c'est null, votre UI affichera "Événement inconnu"
         }
         return dto;
     }

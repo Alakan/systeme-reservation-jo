@@ -43,6 +43,12 @@ public class EvenementServiceImpl implements EvenementService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Evenement> getAllEvenementsPublic() {
+        return evenementRepository.findByActifTrue();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Optional<Evenement> getEvenementById(Long id) {
         return evenementRepository.findById(id);
     }
@@ -50,8 +56,7 @@ public class EvenementServiceImpl implements EvenementService {
     @Override
     @Transactional
     public Evenement createEvenement(Evenement evenement) {
-        if (evenement.getDateEvenement() == null ||
-                evenement.getDateEvenement().isBefore(LocalDateTime.now())) {
+        if (evenement.getDateEvenement() == null || evenement.getDateEvenement().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("La date de l'événement doit être dans le futur.");
         }
         if (evenement.getLieu() == null || evenement.getLieu().trim().isEmpty()) {
@@ -60,6 +65,7 @@ public class EvenementServiceImpl implements EvenementService {
         if (evenement.getCapaciteTotale() <= 0) {
             throw new IllegalArgumentException("La capacité totale doit être supérieure à zéro.");
         }
+        // Le champ actif est géré par défaut dans l'entité (valeur true)
         return evenementRepository.save(evenement);
     }
 
@@ -106,26 +112,19 @@ public class EvenementServiceImpl implements EvenementService {
 
     @Override
     @Transactional
-    public void deleteEvenement(Long id) {
+    public Evenement desactiverEvenement(Long id) {
         Evenement evenement = evenementRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Événement non trouvé avec l'id : " + id));
+        evenement.setActif(false);
+        return evenementRepository.save(evenement);
+    }
 
-        if (paiementRepository.existsByReservation_Evenement_IdAndStatut(id, "EN_ATTENTE")) {
-            throw new IllegalStateException("Impossible de supprimer l'événement : des paiements en attente existent.");
-        }
-
-        List<Reservation> reservations = reservationRepository.findByEvenement_Id(id);
-        for (Reservation reservation : reservations) {
-            reservation.setEvenement(null);
-            reservationRepository.save(reservation);
-        }
-
-        List<Billet> billets = billetRepository.findByEvenement_Id(id);
-        for (Billet billet : billets) {
-            billet.setEvenement(null);
-            billetRepository.save(billet);
-        }
-
-        evenementRepository.delete(evenement);
+    @Override
+    @Transactional
+    public Evenement reactiverEvenement(Long id) {
+        Evenement evenement = evenementRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Événement non trouvé avec l'id : " + id));
+        evenement.setActif(true);
+        return evenementRepository.save(evenement);
     }
 }

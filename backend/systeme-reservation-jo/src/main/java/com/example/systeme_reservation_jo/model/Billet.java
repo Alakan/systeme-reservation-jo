@@ -1,6 +1,7 @@
 package com.example.systeme_reservation_jo.model;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -8,8 +9,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "billets")
@@ -24,11 +25,10 @@ public class Billet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "evenement_id", insertable = false, updatable = false)
-    private Long evenementId; // 🔹 Stocke uniquement l'ID de l'événement
-
-    @ManyToOne(fetch = FetchType.LAZY)
+    // Nous utilisons uniquement l'association vers l'événement.
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "evenement_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Evenement evenement;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -40,9 +40,10 @@ public class Billet {
     @JoinColumn(name = "reservation_id", nullable = false)
     private Reservation reservation;
 
+    @Column(nullable = false)
     private LocalDateTime dateReservation;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String numeroBillet;
 
     @NotNull(message = "Le statut du billet ne peut pas être nul")
@@ -54,4 +55,15 @@ public class Billet {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TypeBillet type;
+
+    @PrePersist
+    protected void prePersist() {
+        if (dateReservation == null) {
+            dateReservation = LocalDateTime.now();
+        }
+        if (numeroBillet == null) {
+            // Génération d'un identifiant unique pour le billet
+            numeroBillet = "BILLET-" + UUID.randomUUID().toString();
+        }
+    }
 }
