@@ -5,10 +5,17 @@ import api from "../services/api";
 import "../styles/Billet.css";
 
 function Billet() {
-  const { id } = useParams(); // Ici, id correspond à l'ID de la réservation
+  const { id } = useParams(); // Ici, id correspond à l'ID de la réservation associée
   const [billet, setBillet] = useState(null);
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(price);
+  };
 
   useEffect(() => {
     if (!token) {
@@ -17,8 +24,7 @@ function Billet() {
     }
 
     // Appel à l'API pour récupérer le billet associé à la réservation
-    api
-      .get(`/billets/reservation/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+    api.get(`/billets/reservation/${id}`, { headers: { Authorization: `Bearer ${token}` } })
       .then((response) => {
         setBillet(response.data);
       })
@@ -53,6 +59,10 @@ function Billet() {
         </p>
         <p>
           <strong>Lieu :</strong> {billet.evenement ? billet.evenement.lieu : "N/A"}
+        </p>
+        <p>
+          <strong>Prix total du billet :</strong>{" "}
+          {billet.prixTotal ? formatPrice(billet.prixTotal) : "Non renseigné"}
         </p>
       </div>
       <button onClick={() => navigate("/mesreservations")} className="btn-back">

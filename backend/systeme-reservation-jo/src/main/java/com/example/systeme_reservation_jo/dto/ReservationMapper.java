@@ -2,6 +2,7 @@ package com.example.systeme_reservation_jo.dto;
 
 import com.example.systeme_reservation_jo.model.Evenement;
 import com.example.systeme_reservation_jo.model.Reservation;
+import java.math.BigDecimal;
 
 public class ReservationMapper {
     public static ReservationDTO toDTO(Reservation reservation) {
@@ -20,11 +21,13 @@ public class ReservationMapper {
             evDto.setDescription(ev.getDescription());
             evDto.setDateEvenement(ev.getDateEvenement());
             evDto.setLieu(ev.getLieu());
+            evDto.setPrix(ev.getPrix()); // Récupération du prix unitaire depuis l'événement
             dto.setEvenement(evDto);
-        } else {
-            // Optionnel : Vous pouvez définir un message ou laisser "null"
-            // dto.setEvenement(new EvenementDTO("Événement inconnu", ...));
-            // Pour l'instant, si c'est null, votre UI affichera "Événement inconnu"
+
+            // Calcul du prix unitaire et prix total
+            dto.setPrixUnitaire(ev.getPrix());
+            // Le prix total = prix unitaire multiplié par le nombre de billets réservés
+            dto.setPrixTotal(ev.getPrix().multiply(BigDecimal.valueOf(reservation.getNombreBillets())));
         }
         return dto;
     }

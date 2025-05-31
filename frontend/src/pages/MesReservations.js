@@ -9,6 +9,13 @@ function MesReservations() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(price);
+  };
+
   // Fonction de récupération des réservations pour l'utilisateur
   const fetchReservations = () => {
     if (!token) {
@@ -157,6 +164,14 @@ function MesReservations() {
                 </div>
                 <div>
                   <strong>Billets :</strong> {reservation.nombreBillets > 0 ? reservation.nombreBillets : "Non renseigné"}
+                </div>
+                <div>
+                  <strong>Prix unitaire :</strong>{" "}
+                  {reservation.prixUnitaire ? formatPrice(reservation.prixUnitaire) : "Non renseigné"}
+                </div>
+                <div>
+                  <strong>Prix total :</strong>{" "}
+                  {reservation.prixTotal ? formatPrice(reservation.prixTotal) : "Non renseigné"}
                 </div>
                 <div>
                   <strong>Statut :</strong>{" "}

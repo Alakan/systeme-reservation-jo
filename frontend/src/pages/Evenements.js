@@ -31,6 +31,14 @@ function Evenements() {
     });
   };
 
+  // Formatage du prix en euro avec deux décimales
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(price);
+  };
+
   const handleReservation = async (evenement) => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -60,6 +68,14 @@ function Evenements() {
       return;
     }
 
+    // Calcul du montant total de la réservation
+    const totalPrice = evenement.prix * nombreBillets;
+
+    // Afficher le montant total et demander confirmation
+    if (!window.confirm(`Le montant total de votre réservation est de ${formatPrice(totalPrice)}. Voulez-vous continuer ?`)) {
+      return;
+    }
+
     // Demande du mode de paiement
     const modePaiementInput = window.prompt("Choisissez votre mode de paiement : CARTE, PAYPAL, VIREMENT");
     const modePaiement = modePaiementInput ? modePaiementInput.toUpperCase() : "";
@@ -68,7 +84,7 @@ function Evenements() {
       return;
     }
 
-    // Tout est validé : création de la réservation
+    // Création de la réservation avec les informations validées
     try {
       const response = await api.post(
         '/reservations',
@@ -133,6 +149,8 @@ function Evenements() {
                 {formatDate(evenement.dateEvenement)}
                 <br />
                 {evenement.lieu}
+                <br />
+                <span>Prix : {formatPrice(evenement.prix)}</span>
               </div>
               <div className="evenement-actions">
                 <button onClick={() => handleReservation(evenement)}>Réserver</button>

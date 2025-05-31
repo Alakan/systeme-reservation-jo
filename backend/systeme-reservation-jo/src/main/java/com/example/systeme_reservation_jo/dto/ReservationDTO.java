@@ -1,5 +1,6 @@
 package com.example.systeme_reservation_jo.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Data;
 
@@ -11,6 +12,10 @@ public class ReservationDTO {
     private String statut;
     private String modePaiement;
 
-    // L'objet événement est désormais intégré sous forme d'objet
+    // L'objet événement est désormais intégré sous forme d'objet DTO
     private EvenementDTO evenement;
+
+    // Champs supplémentaires pour afficher les prix
+    private BigDecimal prixUnitaire;
+    private BigDecimal prixTotal;
 }

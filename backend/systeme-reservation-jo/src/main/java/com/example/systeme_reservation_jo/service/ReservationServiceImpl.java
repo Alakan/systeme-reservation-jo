@@ -110,13 +110,19 @@ public class ReservationServiceImpl implements ReservationService {
         // Création et enregistrement du billet associé
         Billet billet = new Billet();
         billet.setReservation(reservationConfirmee);
-        // Correction : affecter explicitement l'objet Evenement au billet
         billet.setEvenement(reservationConfirmee.getEvenement());
         billet.setDateReservation(LocalDateTime.now());
         billet.setNumeroBillet(generateUniqueCode());
         billet.setStatut(com.example.systeme_reservation_jo.model.StatutBillet.VALIDE);
         billet.setType(com.example.systeme_reservation_jo.model.TypeBillet.ADULTE);
+
+        // Calcul du prix total du billet (prix unitaire * nombre de billets)
+        BigDecimal prixTotal = reservationConfirmee.getEvenement().getPrix()
+                .multiply(BigDecimal.valueOf(reservationConfirmee.getNombreBillets()));
+        billet.setPrixTotal(prixTotal);
+
         billetRepository.save(billet);
+
 
         return reservationConfirmee;
     }

@@ -4,11 +4,14 @@ import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -66,4 +69,10 @@ public class Billet {
             numeroBillet = "BILLET-" + UUID.randomUUID().toString();
         }
     }
+
+    // Nouveau champ pour le coût total de la commande (prix unitaire * nombre de billets)
+    @NotNull(message = "Le prix total du billet doit etre renseigné")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Le prix total doit être supérieur à 0")
+    private BigDecimal prixTotal= BigDecimal.ZERO;
+
 }
