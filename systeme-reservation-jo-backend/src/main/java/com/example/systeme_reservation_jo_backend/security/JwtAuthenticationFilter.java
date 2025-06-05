@@ -35,7 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Ignore les requêtes OPTIONS (preflight CORS) pour que celles-ci ne soient pas bloquées
+        // Ignore les requêtes de type OPTIONS (préflight CORS)
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             response.setStatus(HttpServletResponse.SC_OK);
             filterChain.doFilter(request, response);
@@ -45,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         logger.info("Traitement de la requête pour l'URI : " + requestURI);
 
-        // Bypass : ne traite pas le token sur les endpoints d'authentification
+        // Bypass : si la requête concerne l'authentification, ne pas traiter le JWT.
         if (requestURI.startsWith("/api/auth/")) {
             filterChain.doFilter(request, response);
             return;
@@ -62,7 +62,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // Si le token est présent et valide, établir l'authentication
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-                // Récupération de l'email à partir du token
+                // Extraction de l'email depuis le token
                 String email = tokenProvider.getUsernameFromJWT(jwt);
                 logger.info("Email extrait du token : " + email);
 
@@ -75,7 +75,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // Mise en place de l'authentication dans le contexte de sécurité
+                // Stockage de l'authentication dans le contexte de sécurité
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 logger.info("Authentification définie dans SecurityContext pour : " + email);
             } else {
@@ -89,11 +89,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    // Méthode pour extraire le token JWT depuis l'en-tête Authorization
+    // Extraction du token JWT depuis l'en-tête Authorization
     private String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            String token = bearerToken.substring(7); // Supprime le préfixe "Bearer "
+            String token = bearerToken.substring(7); // Supprime "Bearer "
             logger.info("Token extrait après 'Bearer ': " + token);
             return token;
         }

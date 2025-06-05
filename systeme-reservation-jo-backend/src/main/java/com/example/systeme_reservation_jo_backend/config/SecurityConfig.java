@@ -49,7 +49,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint((request, response, authException) -> {
-                            // Pour s'assurer que même en cas d'erreur, les en-têtes CORS sont renvoyés
+                            // Ajoute les en-têtes CORS même pour les réponses d'erreur
                             String origin = request.getHeader("Origin");
                             if (origin != null) {
                                 response.setHeader("Access-Control-Allow-Origin", origin);
@@ -61,19 +61,29 @@ public class SecurityConfig {
                         })
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // autoriser les requêtes OPTIONS
+                        // Autoriser les préflights
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Les endpoints publics
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+
+                        // Les endpoints publics pour les événements
                         .requestMatchers(HttpMethod.GET, "/api/evenements/**").permitAll()
+                        // Endpoints réservés aux administrateurs pour les événements
                         .requestMatchers(HttpMethod.POST, "/api/evenements/**").hasRole("ADMINISTRATEUR")
                         .requestMatchers(HttpMethod.PUT, "/api/evenements/**").hasRole("ADMINISTRATEUR")
                         .requestMatchers(HttpMethod.DELETE, "/api/evenements/**").hasRole("ADMINISTRATEUR")
+
+                        // Les endpoints liés aux utilisateurs, réservés aux authentifiés ou administrateurs
                         .requestMatchers(HttpMethod.GET, "/api/utilisateurs/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/utilisateurs/**").hasRole("ADMINISTRATEUR")
                         .requestMatchers(HttpMethod.DELETE, "/api/utilisateurs/**").hasRole("ADMINISTRATEUR")
+
+                        // Endpoints liés aux réservations et billets / paiements (sécurisés)
                         .requestMatchers(HttpMethod.GET, "/api/reservations/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/reservations/utilisateur/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/reservations/**").authenticated()
@@ -88,7 +98,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/paiements/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/paiements/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/paiements/**").authenticated()
+                        // Endpoints administrateur
                         .requestMatchers("/api/admin/**").hasRole("ADMINISTRATEUR")
+
                         .anyRequest().denyAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -123,7 +135,7 @@ public class SecurityConfig {
         return source;
     }
 
-    // Ce bean garantit que le filtre CORS est exécuté avec la plus haute priorité.
+    // Ce bean garantit que le filtre CORS est exécuté en priorité maximale.
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public CorsFilter corsFilter() {
