@@ -1,0 +1,59 @@
+/* src/styles/Billet.css */
+.billet-container {
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-family: sans-serif;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.billet-container.dark {
+  background: #1e1e1e;
+  color: #ddd;
+}
+
+.billet-container.dark h1,
+.billet-container.dark h2 {
+  color: #fff;
+}
+
+.billet-info {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: background 0.3s ease;
+}
+
+.billet-container.dark .billet-info {
+  background: #2a2a2a;
+  color: #ccc;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.billet-info p {
+  margin: 10px 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.btn-back {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 10px 16px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s;
+  text-decoration: none;
+}
+
+.btn-back:hover {
+  background: #0056b3;
+}

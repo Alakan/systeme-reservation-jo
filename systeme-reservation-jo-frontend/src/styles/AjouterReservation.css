@@ -1,0 +1,39 @@
+/* src/styles/AjouterReservation.css */
+.ajouter-reservation-container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.ajouter-reservation-container h2 {
+  text-align: center;
+}
+
+.ajouter-reservation-container form {
+  display: flex;
+  flex-direction: column;
+}
+
+.ajouter-reservation-container input,
+.ajouter-reservation-container select {
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.ajouter-reservation-container button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.ajouter-reservation-container button:hover {
+  background-color: #0056b3;
+}

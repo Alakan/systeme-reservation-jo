@@ -1,0 +1,52 @@
+/* src/styles/MenuRapide.css */
+.menu-rapide {
+  position: fixed;
+  left: 10px;
+  top: 10px;
+  z-index: 1000;
+  font-family: sans-serif;
+}
+
+.menu-button {
+  background: #333;
+  color: #fff;
+  font-size: 20px;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.menu-button:hover {
+  background: #555;
+}
+
+.menu-items {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  background: #ffffff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+}
+
+.menu-items button {
+  background: none;
+  border: none;
+  color: #333;
+  padding: 8px;
+  text-align: left;
+  width: 100%;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.menu-items button:hover {
+  background: #f0f0f0;
+}

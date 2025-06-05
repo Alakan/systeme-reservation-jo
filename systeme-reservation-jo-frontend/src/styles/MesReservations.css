@@ -1,0 +1,99 @@
+/* src/styles/MesReservations.css */
+
+/* Conteneur principal */
+.reservations-container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+/* Titre principal */
+.reservations-container h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 2.5rem;
+  color: #333;
+}
+
+/* Bouton de retour */
+.btn-back {
+  background-color: #f2f2f2;
+  color: #333;
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  margin-bottom: 20px;
+  transition: background-color 0.3s ease;
+}
+.btn-back:hover {
+  background-color: #e6e6e6;
+}
+
+/* Liste des réservations */
+.reservations-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Carte de réservation */
+.reservation-item {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.reservation-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Détails de la réservation */
+.reservation-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.reservation-details strong {
+  font-size: 1.2rem;
+  color: #444;
+}
+.reservation-details div {
+  font-size: 1rem;
+  color: #555;
+}
+
+/* Statut de la réservation */
+.confirmed {
+  color: green;
+  font-weight: bold;
+}
+.not-confirmed {
+  color: red;
+  font-weight: bold;
+}
+
+/* Bouton de paiement */
+.btn-pay {
+  background-color: #007bff;
+  color: #fff;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  width: fit-content;
+  transition: background-color 0.3s ease;
+}
+.btn-pay:hover {
+  background-color: #0056b3;
+}
