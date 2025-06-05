@@ -35,7 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Bypass pour les requêtes de type OPTIONS (preflight CORS)
+        // Ignore les requêtes OPTIONS (preflight CORS) pour que celles-ci ne soient pas bloquées
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             response.setStatus(HttpServletResponse.SC_OK);
             filterChain.doFilter(request, response);
@@ -45,14 +45,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         logger.info("Traitement de la requête pour l'URI : " + requestURI);
 
-        // Bypass le traitement du token pour les endpoints d'authentification
+        // Bypass : on ne traite pas le token pour les endpoints d'authentification
         if (requestURI.startsWith("/api/auth/")) {
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            // Récupère le token JWT de la requête
+            // Extraction du token JWT depuis l'en-tête Authorization
             String jwt = getJwtFromRequest(request);
             if (jwt == null) {
                 logger.warn("Aucun token JWT trouvé dans la requête.");
@@ -60,21 +60,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 logger.info("Token brut reçu : " + jwt);
             }
 
-            // Vérifie si le token est valide
+            // Si le token est présent et valide, on établit l'authentication
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-                // Récupère l'email à partir du JWT
+                // Récupération de l'email à partir du token
                 String email = tokenProvider.getUsernameFromJWT(jwt);
                 logger.info("Email extrait du token : " + email);
 
-                // Charge les détails de l'utilisateur
+                // Chargement des détails de l'utilisateur
                 UserDetails userDetails = utilisateurDetailsService.loadUserByUsername(email);
                 logger.info("Authorities récupérées pour l'utilisateur : " + userDetails.getAuthorities());
 
-                // Crée l'objet d'authentification et le positionne dans le contexte de sécurité
+                // Création de l'objet d'authentication
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
+                // Mise en place de l'authentication dans le contexte de sécurité
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 logger.info("Authentification définie dans SecurityContext pour : " + email);
             } else {
@@ -84,16 +85,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             logger.error("Erreur lors du traitement du JWT : ", ex);
         }
 
-        // Poursuivre la chaîne des filtres
+        // Poursuite de la chaîne des filtres
         filterChain.doFilter(request, response);
     }
 
-    // Méthode pour extraire le token JWT de l'en-tête Authorization
+    // Méthode pour extraire le token JWT depuis l'en-tête Authorization
     private String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            String token = bearerToken.substring(7); // Supprime "Bearer "
-            logger.info("Token extrait après 'Bearer ' : " + token);
+            String token = bearerToken.substring(7); // Supprime le préfixe "Bearer "
+            logger.info("Token extrait après 'Bearer ': " + token);
             return token;
         }
         return null;
