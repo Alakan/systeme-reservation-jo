@@ -45,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         logger.info("Traitement de la requête pour l'URI : " + requestURI);
 
-        // Bypass : on ne traite pas le token pour les endpoints d'authentification
+        // Bypass : ne traite pas le token sur les endpoints d'authentification
         if (requestURI.startsWith("/api/auth/")) {
             filterChain.doFilter(request, response);
             return;
@@ -60,7 +60,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 logger.info("Token brut reçu : " + jwt);
             }
 
-            // Si le token est présent et valide, on établit l'authentication
+            // Si le token est présent et valide, établir l'authentication
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
                 // Récupération de l'email à partir du token
                 String email = tokenProvider.getUsernameFromJWT(jwt);

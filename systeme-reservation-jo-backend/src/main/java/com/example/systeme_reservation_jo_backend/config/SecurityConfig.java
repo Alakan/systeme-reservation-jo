@@ -2,6 +2,7 @@ package com.example.systeme_reservation_jo_backend.config;
 
 import com.example.systeme_reservation_jo_backend.security.JwtAuthenticationFilter;
 import com.example.systeme_reservation_jo_backend.service.UtilisateurDetailsServiceImpl;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,6 +47,19 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            // Pour s'assurer que même en cas d'erreur, les en-têtes CORS sont renvoyés
+                            String origin = request.getHeader("Origin");
+                            if (origin != null) {
+                                response.setHeader("Access-Control-Allow-Origin", origin);
+                                response.setHeader("Vary", "Origin");
+                                response.setHeader("Access-Control-Allow-Credentials", "true");
+                            }
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.getWriter().write("Unauthorized");
+                        })
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // autoriser les requêtes OPTIONS
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
