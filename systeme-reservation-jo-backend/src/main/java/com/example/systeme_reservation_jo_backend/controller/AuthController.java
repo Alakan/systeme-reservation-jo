@@ -13,7 +13,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {"http://localhost:3000", "https://front-systeme-reservation-jo-be1e62ad3714.herokuapp.com"})
 public class AuthController {
 
     @Autowired
@@ -23,10 +23,11 @@ public class AuthController {
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         try {
             JwtAuthenticationResponse jwtResponse = authService.login(loginRequest);
-            System.out.println("Token généré et envoyé : " + jwtResponse.getToken()); // ✅ Vérification console
+            System.out.println("Token généré et envoyé : " + jwtResponse.getToken());
             return ResponseEntity.ok(jwtResponse);
         } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Échec de l'authentification : Identifiants incorrects.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Échec de l'authentification : Identifiants incorrects.");
         }
     }
 
