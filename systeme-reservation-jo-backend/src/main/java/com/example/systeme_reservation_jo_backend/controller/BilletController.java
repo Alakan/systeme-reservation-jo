@@ -11,11 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Contrôleur REST pour gérer les billets.
- */
 @RestController
 @RequestMapping("/api/billets")
+@CrossOrigin(origins = {"http://localhost:3000", "https://front-systeme-reservation-jo-be1e62ad3714.herokuapp.com"})
 public class BilletController {
 
     private static final Logger logger = LoggerFactory.getLogger(BilletController.class);
@@ -50,10 +48,8 @@ public class BilletController {
 
     @PostMapping
     public ResponseEntity<Billet> createBillet(@Valid @RequestBody Billet billet) {
-        // Loguer le payload reçu pour vérifier que l'objet contient bien les données attendues.
         logger.info("Payload reçu pour création de billet : {}", billet);
 
-        // Vérification de duplication du numéro de billet
         if (billetService.existsByNumeroBillet(billet.getNumeroBillet())) {
             logger.warn("Échec de création - Le numéro de billet {} existe déjà", billet.getNumeroBillet());
             return ResponseEntity.status(HttpStatus.CONFLICT).build();

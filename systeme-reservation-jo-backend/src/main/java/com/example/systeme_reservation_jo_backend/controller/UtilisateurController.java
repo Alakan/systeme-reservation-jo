@@ -14,6 +14,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/utilisateurs")
+@CrossOrigin(origins = {"http://localhost:3000", "https://front-systeme-reservation-jo-be1e62ad3714.herokuapp.com"})
 public class UtilisateurController {
 
     private final UtilisateurService utilisateurService;
@@ -95,7 +96,7 @@ public class UtilisateurController {
             dto.setId(user.getId());
             dto.setEmail(user.getEmail());
             dto.setUsername(user.getUsername());
-            // On évite d'exposer le password
+            // On évite d'exposer le mot de passe pour des raisons de sécurité
             return ResponseEntity.ok(dto);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Utilisateur non trouvé.");

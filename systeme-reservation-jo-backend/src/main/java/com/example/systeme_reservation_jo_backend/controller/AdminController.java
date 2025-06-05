@@ -12,11 +12,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
 @PreAuthorize("hasRole('ADMINISTRATEUR')")
+@CrossOrigin(origins = {"http://localhost:3000", "https://front-systeme-reservation-jo-be1e62ad3714.herokuapp.com"})
 public class AdminController {
 
     private final UtilisateurService utilisateurService;
@@ -43,7 +45,6 @@ public class AdminController {
     public ResponseEntity<?> updateUtilisateur(@PathVariable Long id,
                                                @Valid @RequestBody UtilisateurDTO utilisateurDTO) {
         try {
-            // Conversion du DTO en entité
             Utilisateur utilisateurToUpdate = dtoToEntity(utilisateurDTO);
             Utilisateur updatedUtilisateur = utilisateurService.updateUtilisateur(id, utilisateurToUpdate);
             return ResponseEntity.ok(updatedUtilisateur);
@@ -129,7 +130,6 @@ public class AdminController {
         Utilisateur user = new Utilisateur();
         user.setUsername(dto.getUsername());
         user.setEmail(dto.getEmail());
-        // Le mot de passe est transmis si présent (le service se chargera de l'encoder)
         user.setPassword(dto.getPassword());
         return user;
     }

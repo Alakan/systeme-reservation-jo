@@ -16,11 +16,10 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/evenements")
-@CrossOrigin(origins = "http://localhost:3000") // À adapter selon votre configuration front-end
+@CrossOrigin(origins = {"http://localhost:3000", "https://front-systeme-reservation-jo-be1e62ad3714.herokuapp.com"})
 public class EvenementController {
 
     private static final Logger logger = LoggerFactory.getLogger(EvenementController.class);
-
     private final EvenementService evenementService;
 
     @Autowired
@@ -102,7 +101,7 @@ public class EvenementController {
             @RequestParam("start") LocalDateTime dateDebut,
             @RequestParam("end") LocalDateTime dateFin) {
         List<Evenement> evenements = evenementService.findEvenementsBetweenDates(dateDebut, dateFin);
-        // Filtrage complémentaire au cas où le service ne le ferait pas déjà
+        // Filtrage complémentaire au cas où le service ne le fasse pas déjà
         evenements.removeIf(e -> !e.isActif());
         return ResponseEntity.ok(evenements);
     }

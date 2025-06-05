@@ -2,13 +2,10 @@ package com.example.systeme_reservation_jo_backend.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-/**
- * Contrôleur REST pour gérer la page d'accueil de l'API.
- */
 @RestController
+@CrossOrigin(origins = {"http://localhost:3000", "https://front-systeme-reservation-jo-be1e62ad3714.herokuapp.com"})
 public class HomeController {
 
     private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
