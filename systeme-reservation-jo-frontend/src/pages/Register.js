@@ -13,7 +13,7 @@ function Register() {
     console.log("Tentative d'inscription :", { username, email, password });
 
     try {
-      // Note : pas de slash initial pour que le chemin soit concaténé avec baseURL
+      // Appel à l'API sans slash initial pour concaténer avec la baseURL
       const response = await api.post('auth/register', JSON.stringify({ username, email, password }), {
         headers: { 'Content-Type': 'application/json' }
       });
