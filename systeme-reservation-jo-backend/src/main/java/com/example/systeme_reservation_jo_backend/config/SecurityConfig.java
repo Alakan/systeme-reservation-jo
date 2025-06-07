@@ -61,12 +61,14 @@ public class SecurityConfig {
                         })
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // Autoriser les préflights
+                        // Autoriser les requêtes preflight OPTIONS
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Les endpoints publics
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll()
+                        // Autoriser l'accès à /favicon.ico pour éviter que le navigateur ne reçoive un 401
+                        .requestMatchers(HttpMethod.GET, "/favicon.ico").permitAll()
 
+                        // Autoriser les endpoints publics
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
@@ -84,7 +86,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/utilisateurs/**").hasRole("ADMINISTRATEUR")
                         .requestMatchers(HttpMethod.DELETE, "/api/utilisateurs/**").hasRole("ADMINISTRATEUR")
 
-                        // Endpoints liés aux réservations et billets / paiements (sécurisés)
+                        // Endpoints liés aux réservations et billets/paiements (sécurisés)
                         .requestMatchers(HttpMethod.GET, "/api/reservations/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/reservations/utilisateur/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/reservations/**").authenticated()
