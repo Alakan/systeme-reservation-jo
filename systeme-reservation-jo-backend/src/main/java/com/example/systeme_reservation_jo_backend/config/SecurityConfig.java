@@ -65,7 +65,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Les endpoints publics
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll()
+
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
