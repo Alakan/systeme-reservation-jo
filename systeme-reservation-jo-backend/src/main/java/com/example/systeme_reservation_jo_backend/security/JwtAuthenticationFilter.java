@@ -43,10 +43,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String requestURI = request.getRequestURI();
-        logger.info("Traitement de la requête pour l'URI : " + requestURI);
+        logger.info("URI reçue : " + requestURI);
 
-        // Bypass : si la requête concerne l'authentification, ne pas traiter le JWT.
-        if (requestURI.startsWith("/api/auth/")) {
+        // Bypass : si l'URI contient /api/auth/, ne pas traiter le JWT
+        if (requestURI.contains("/api/auth/")) {
+            logger.info("Bypass du JWT filter pour l'URI : " + requestURI);
             filterChain.doFilter(request, response);
             return;
         }
