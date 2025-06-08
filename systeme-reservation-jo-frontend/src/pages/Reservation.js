@@ -1,3 +1,4 @@
+// src/pages/Reservation.js
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import '../styles/Reservation.css';
@@ -14,7 +15,8 @@ function Reservation() {
             return;
         }
 
-        api.get('/reservations', { headers: { Authorization: `Bearer ${token}` } })
+        // Utilisation d'un chemin relatif pour récupérer les réservations
+        api.get("reservations", { headers: { Authorization: `Bearer ${token}` } })
             .then(response => {
                 console.log("Données de réservation :", response.data);
                 setReservations(response.data);
@@ -22,13 +24,14 @@ function Reservation() {
             .catch(error => console.error("Erreur lors de la récupération des réservations :", error));
     }, []);
 
-    // ✅ Fonction pour gérer le paiement
+    // Fonction pour gérer le paiement
     const handlePaiement = (reservationId, modePaiement) => {
         console.log("Demande de paiement pour la réservation ID :", reservationId, "Mode :", modePaiement);
         setLoadingPayment(reservationId);
 
         const token = localStorage.getItem('token');
-        api.put(`/reservations/${reservationId}/paiement`, modePaiement, {
+        // Utilisation d'un chemin relatif pour le paiement
+        api.put(`reservations/${reservationId}/paiement`, modePaiement, {
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'text/plain' }
         })
         .then(() => {
@@ -55,14 +58,12 @@ function Reservation() {
                 <ul className="reservation-list">
                     {reservations.map((res, index) => (
                         <li key={res.id ?? index}>
-                            {/* ✅ Vérification avant d'afficher `evenement.titre` */}
                             <strong>{res.evenement?.titre ?? "Événement inconnu"}</strong> - 
                             {res.evenement?.dateEvenement ?? "Date inconnue"} - 
                             {res.evenement?.lieu ?? "Lieu inconnu"}
                             
                             <p><strong>Statut :</strong> {res.statut}</p>
                             
-                            {/* ✅ Afficher le bouton "Payer" seulement si la réservation est en attente */}
                             {res.statut === "EN_ATTENTE" && (
                                 <div>
                                     <button 

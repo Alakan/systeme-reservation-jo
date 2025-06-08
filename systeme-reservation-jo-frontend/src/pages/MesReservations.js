@@ -37,7 +37,7 @@ function MesReservations() {
     }
 
     // Récupère toutes les réservations de l'utilisateur via l'API
-    api.get(`/reservations/utilisateur?email=${encodeURIComponent(userEmail)}`, {
+    api.get(`reservations/utilisateur?email=${encodeURIComponent(userEmail)}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(response => {
@@ -56,7 +56,7 @@ function MesReservations() {
             if (!reservation.evenement || typeof reservation.evenement !== 'object') {
               console.warn(`ID événement trouvé : ${reservation.evenement}. Récupération des détails...`);
               try {
-                const eventResponse = await api.get(`/evenements/${reservation.evenement}`, {
+                const eventResponse = await api.get(`evenements/${reservation.evenement}`, {
                   headers: { Authorization: `Bearer ${token}` }
                 });
                 return { ...reservation, evenement: eventResponse.data };
@@ -110,7 +110,7 @@ function MesReservations() {
     }
     try {
       await api.put(
-        `/reservations/${reservationId}/paiement`,
+        `reservations/${reservationId}/paiement`,
         JSON.stringify(modePaiement),
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );

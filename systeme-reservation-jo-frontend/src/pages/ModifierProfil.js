@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import '../styles/ModifierProfil.css'; // Créez ce fichier CSS pour styliser la page si besoin
+import '../styles/ModifierProfil.css';
 
 function ModifierProfil() {
   const [profile, setProfile] = useState({
@@ -22,7 +22,7 @@ function ModifierProfil() {
     }
 
     // Appel à l'API pour récupérer le profil
-    api.get('/utilisateurs/me', { headers: { Authorization: `Bearer ${token}` } })
+    api.get('utilisateurs/me', { headers: { Authorization: `Bearer ${token}` } })
       .then(response => {
         // On met à jour le state avec les données récupérées
         const { email, username } = response.data;
@@ -55,9 +55,15 @@ function ModifierProfil() {
     try {
       // Envoi des données de mise à jour vers l'API
       // Si le champ mot de passe est vide, l'API devrait ne pas modifier le mot de passe
-      await api.put('/utilisateurs/me', profile, { headers: { Authorization: `Bearer ${token}` } });
-      alert("Profil mis à jour avec succès !");
-      navigate("/dashboard"); // Redirige vers le dashboard ou une page appropriée
+      api.put('utilisateurs/me', profile, { headers: { Authorization: `Bearer ${token}` } })
+      .then(() => {
+        alert("Profil mis à jour avec succès !");
+        navigate("/dashboard"); // Redirige vers le dashboard ou une page appropriée
+      })
+      .catch(error => {
+        console.error("Erreur lors de la mise à jour du profil :", error);
+        alert("Erreur lors de la mise à jour du profil.");
+      });
     } catch (error) {
       console.error("Erreur lors de la mise à jour du profil :", error);
       alert("Erreur lors de la mise à jour du profil.");

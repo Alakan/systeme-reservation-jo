@@ -16,7 +16,7 @@ function ModifierReservation() {
   });
 
   useEffect(() => {
-    api.get(`/admin/reservations/${id}`, {
+    api.get(`admin/reservations/${id}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => setReservation(res.data))
@@ -30,11 +30,14 @@ function ModifierReservation() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.put(`/admin/reservations/${id}`, reservation, {
+      api.put(`admin/reservations/${id}`, reservation, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      alert("Réservation modifiée !");
-      navigate("/admin");
+      })
+      .then(() => {
+        alert("Réservation modifiée !");
+        navigate("/admin");
+      })
+      .catch(() => alert("Erreur lors de la modification !"));
     } catch (error) {
       alert("Erreur lors de la modification !");
     }

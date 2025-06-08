@@ -16,7 +16,7 @@ function ModifierEvenement() {
 
   // Récupérer les infos de l'événement via l'API
   useEffect(() => {
-    api.get(`/admin/evenements/${id}`, {
+    api.get(`admin/evenements/${id}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => setEvenement(res.data))
@@ -30,11 +30,16 @@ function ModifierEvenement() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.put(`/admin/evenements/${id}`, evenement, {
+      api.put(`admin/evenements/${id}`, evenement, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      })
+      .then(() => {
+        alert("Événement modifié !");
+        navigate("/admin");
+      })
+      .catch(() => {
+        alert("Erreur lors de la modification !");
       });
-      alert("Événement modifié !");
-      navigate("/admin");
     } catch (error) {
       alert("Erreur lors de la modification !");
     }

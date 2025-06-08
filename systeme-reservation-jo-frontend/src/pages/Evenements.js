@@ -10,7 +10,8 @@ function Evenements() {
 
   // Récupération des événements accessibles à tous (visiteurs)
   useEffect(() => {
-    api.get('/evenements')
+    // Utilisation d'un chemin relatif sans slash initial
+    api.get("evenements")
       .then(response => {
         if (Array.isArray(response.data)) {
           setEvenements(response.data);
@@ -21,6 +22,7 @@ function Evenements() {
       .catch(error => console.error("Erreur lors de la récupération des événements :", error));
   }, []);
 
+  // Formatage de la date
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
       year: 'numeric', 
@@ -31,7 +33,7 @@ function Evenements() {
     });
   };
 
-  // Formatage du prix en euro avec deux décimales
+  // Formatage du prix en euro (avec deux décimales)
   const formatPrice = (price) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
@@ -86,8 +88,9 @@ function Evenements() {
 
     // Création de la réservation avec les informations validées
     try {
+      // Utilisation d'un chemin relatif pour la réservation
       const response = await api.post(
-        '/reservations',
+        "reservations",
         { 
           utilisateur: { email: userEmail },
           evenement, 
@@ -117,8 +120,9 @@ function Evenements() {
       return;
     }
 
+    // Utilisation d'un chemin relatif pour le paiement
     api.put(
-      `/reservations/${reservationId}/paiement`,
+      `reservations/${reservationId}/paiement`,
       JSON.stringify(modePaiement),
       { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
     )

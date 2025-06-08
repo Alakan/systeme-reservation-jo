@@ -14,8 +14,9 @@ function ModifierUtilisateur() {
   });
 
   useEffect(() => {
-    // Pour récupérer les données de l'utilisateur, on utilise l'endpoint du UtilisateurController
-    api.get(`/utilisateurs/${id}`, {
+    // Récupère les informations de l'utilisateur via l'API
+    // Utilisation d'un chemin relatif sans slash initial
+    api.get(`utilisateurs/${id}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => setUser(res.data))
@@ -23,7 +24,7 @@ function ModifierUtilisateur() {
         console.error("Erreur GET:", error);
         alert("Erreur lors du chargement de l'utilisateur.");
       });
-  }, [id]);
+  }, [id, navigate]);
 
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
@@ -32,8 +33,8 @@ function ModifierUtilisateur() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Pour mettre à jour, on passe par l'endpoint admin
-      await api.put(`/admin/utilisateurs/${id}`, user, {
+      // Mise à jour de l'utilisateur via l'endpoint admin, avec chemin relatif
+      await api.put(`admin/utilisateurs/${id}`, user, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       alert("Utilisateur modifié !");
