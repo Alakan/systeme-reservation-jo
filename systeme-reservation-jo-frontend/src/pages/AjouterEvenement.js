@@ -19,13 +19,15 @@ function AjouterEvenement() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Utilisation d'un chemin relatif ("admin/evenements") sans le slash initial
-      await api.post("admin/evenements", evenement, {
+      // Il faut utiliser "evenements" et non "admin/evenements" 
+      // afin d'appeler l'endpoint POST /api/evenements défini dans EvenementController
+      await api.post("evenements", evenement, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       alert("Événement ajouté avec succès !");
       navigate("/admin");
     } catch (error) {
+      console.error("Erreur lors de l'ajout de l'événement :", error);
       alert("Erreur lors de l'ajout de l'événement !");
     }
   };
