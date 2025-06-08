@@ -80,7 +80,7 @@ function Admin() {
     }
   };
 
-  // Fonction pour désactiver un événement
+  // Fonctions pour gérer les événements
   const handleDesactiverEvenement = (eventId) => {
     if (window.confirm("Voulez-vous vraiment désactiver cet événement ?")) {
       api
@@ -92,7 +92,6 @@ function Admin() {
     }
   };
 
-  // Fonction pour réactiver un événement
   const handleReactiverEvenement = (eventId) => {
     if (window.confirm("Voulez-vous réactiver cet événement ?")) {
       api
@@ -104,7 +103,30 @@ function Admin() {
     }
   };
 
-  // Recharger les données à chaque changement d'onglet
+  // Fonctions pour gérer les réservations
+  const handleDesactiverReservation = (reservationId) => {
+    if (window.confirm("Voulez-vous désactiver cette réservation ?")) {
+      api
+        .put(`admin/reservations/${reservationId}/desactiver`, {}, { headers: { Authorization: `Bearer ${token}` } })
+        .then(() => fetchData())
+        .catch((error) => {
+          console.error("Erreur lors de la désactivation de la réservation :", error);
+        });
+    }
+  };
+
+  const handleReactiverReservation = (reservationId) => {
+    if (window.confirm("Voulez-vous réactiver cette réservation ?")) {
+      api
+        .put(`admin/reservations/${reservationId}/reactiver`, {}, { headers: { Authorization: `Bearer ${token}` } })
+        .then(() => fetchData())
+        .catch((error) => {
+          console.error("Erreur lors de la réactivation de la réservation :", error);
+        });
+    }
+  };
+
+  // Charger les données en fonction de l'onglet actif
   useEffect(() => {
     fetchData();
   }, [activeTab, token]);
@@ -227,17 +249,13 @@ function Admin() {
                     </button>
                     {event.actif ? (
                       <button
-                        onClick={() =>
-                          handleDesactiverEvenement(event.id)
-                        }
+                        onClick={() => handleDesactiverEvenement(event.id)}
                       >
                         Désactiver
                       </button>
                     ) : (
                       <button
-                        onClick={() =>
-                          handleReactiverEvenement(event.id)
-                        }
+                        onClick={() => handleReactiverEvenement(event.id)}
                       >
                         Réactiver
                       </button>
@@ -266,15 +284,11 @@ function Admin() {
                     {res.evenement?.titre || "Événement inconnu"} - Statut :{" "}
                     {res.statut}{" "}
                     {res.actif ? (
-                      <span
-                        style={{ color: "green", fontWeight: "bold" }}
-                      >
+                      <span style={{ color: "green", fontWeight: "bold" }}>
                         [Actif]
                       </span>
                     ) : (
-                      <span
-                        style={{ color: "red", fontWeight: "bold" }}
-                      >
+                      <span style={{ color: "red", fontWeight: "bold" }}>
                         [Désactivé]
                       </span>
                     )}
@@ -287,19 +301,13 @@ function Admin() {
                     </button>
                     {res.actif ? (
                       <button
-                        onClick={() =>
-                          // Ici la fonction handleDesactiverReservation est utilisée
-                          handleDesactiverReservation(res.id)
-                        }
+                        onClick={() => handleDesactiverReservation(res.id)}
                       >
                         Désactiver
                       </button>
                     ) : (
                       <button
-                        onClick={() =>
-                          // Ici la fonction handleReactiverReservation est utilisée
-                          handleReactiverReservation(res.id)
-                        }
+                        onClick={() => handleReactiverReservation(res.id)}
                       >
                         Réactiver
                       </button>
