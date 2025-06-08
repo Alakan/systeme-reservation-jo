@@ -33,7 +33,8 @@ public class EvenementController {
     @GetMapping
     public ResponseEntity<List<Evenement>> getAllEvenements() {
         // Retourne uniquement les événements actifs pour la vue publique
-        return ResponseEntity.ok(evenementService.getAllEvenementsPublic());
+        List<Evenement> evenements = evenementService.getAllEvenementsPublic();
+        return ResponseEntity.ok(evenements);
     }
 
     /**
@@ -94,14 +95,17 @@ public class EvenementController {
     }
 
     /**
-     * Récupération d'événements entre deux dates (filtrés pour ne retourner que les actifs).
+     * Récupération d'événements entre deux dates.
+     * Seuls les événements actifs sont retournés.
+     *
+     * Exemple d'appel :
+     * GET /api/evenements/between-dates?start=2025-08-01T00:00:00&end=2025-08-31T23:59:59
      */
     @GetMapping("/between-dates")
     public ResponseEntity<List<Evenement>> getEvenementsBetweenDates(
             @RequestParam("start") LocalDateTime dateDebut,
             @RequestParam("end") LocalDateTime dateFin) {
         List<Evenement> evenements = evenementService.findEvenementsBetweenDates(dateDebut, dateFin);
-        // Filtrage complémentaire au cas où le service ne le fasse pas déjà
         evenements.removeIf(e -> !e.isActif());
         return ResponseEntity.ok(evenements);
     }
