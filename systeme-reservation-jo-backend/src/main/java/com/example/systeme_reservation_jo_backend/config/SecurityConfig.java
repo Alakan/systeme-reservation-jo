@@ -44,12 +44,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable()) // ne pas oublier de remettre actif (test en dev) mieux de laisser actif avec un niveau de sécurité
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint((request, response, authException) -> {
-                            // Ajoute les en-têtes CORS même pour les réponses d'erreur
+                            // Ajout les en-têtes CORS même pour les réponses d'erreur
                             String origin = request.getHeader("Origin");
                             if (origin != null) {
                                 response.setHeader("Access-Control-Allow-Origin", origin);
@@ -71,8 +71,8 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+                        /*.requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()*/
 
                         // Les endpoints publics pour les événements
                         .requestMatchers(HttpMethod.GET, "/api/evenements/**").permitAll()
@@ -87,20 +87,22 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/utilisateurs/**").hasRole("ADMINISTRATEUR")
 
                         // Endpoints liés aux réservations et billets/paiements (sécurisés)
-                        .requestMatchers(HttpMethod.GET, "/api/reservations/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/reservations/utilisateur/**").authenticated()
+                        .requestMatchers("/api/reservations/**").authenticated()
+                        /*.requestMatchers(HttpMethod.GET, "/api/reservations/utilisateur/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/reservations/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/reservations/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/reservations/{id}/paiement").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/reservations/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/billets/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/reservations/**").authenticated()*/
+                        .requestMatchers("/api/billets/**").authenticated()
+                        /*.requestMatchers(HttpMethod.GET, "/api/billets/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/billets/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/billets/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/billets/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/paiements/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/billets/**").authenticated()*/
+                        .requestMatchers("/api/paiements/**").authenticated()
+                        /*.requestMatchers(HttpMethod.GET, "/api/paiements/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/paiements/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/paiements/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/paiements/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/paiements/**").authenticated()*/
                         // Endpoints administrateur
                         .requestMatchers("/api/admin/**").hasRole("ADMINISTRATEUR")
 

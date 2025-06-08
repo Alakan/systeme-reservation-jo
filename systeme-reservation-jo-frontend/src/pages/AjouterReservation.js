@@ -20,7 +20,8 @@ function AjouterReservation() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post("/admin/reservations", reservation, {
+      // Modification : chemin relatif sans slash initial ("admin/reservations")
+      await api.post("admin/reservations", reservation, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       alert("Réservation ajoutée avec succès !");
@@ -34,10 +35,33 @@ function AjouterReservation() {
     <div>
       <h2>Ajouter une réservation</h2>
       <form onSubmit={handleSubmit}>
-        <input type="text" name="utilisateurId" placeholder="ID utilisateur" onChange={handleChange} required />
-        <input type="text" name="evenementId" placeholder="ID événement" onChange={handleChange} required />
-        <input type="datetime-local" name="dateReservation" onChange={handleChange} required />
-        <input type="number" name="nombreBillets" placeholder="Nombre de billets" onChange={handleChange} required />
+        <input
+          type="text"
+          name="utilisateurId"
+          placeholder="ID utilisateur"
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="text"
+          name="evenementId"
+          placeholder="ID événement"
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="datetime-local"
+          name="dateReservation"
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="number"
+          name="nombreBillets"
+          placeholder="Nombre de billets"
+          onChange={handleChange}
+          required
+        />
         <select name="modePaiement" onChange={handleChange} required>
           <option value="">Sélectionner un mode de paiement</option>
           <option value="CARTE">Carte</option>

@@ -23,8 +23,8 @@ function Billet() {
       return;
     }
 
-    // Appel à l'API pour récupérer le billet associé à la réservation
-    api.get(`/billets/reservation/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+    // Utilisation d'un chemin relatif sans slash initial
+    api.get(`billets/reservation/${id}`, { headers: { Authorization: `Bearer ${token}` } })
       .then((response) => {
         setBillet(response.data);
       })

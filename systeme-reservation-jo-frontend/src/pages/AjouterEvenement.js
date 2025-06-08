@@ -19,7 +19,8 @@ function AjouterEvenement() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post("/admin/evenements", evenement, {
+      // Utilisation d'un chemin relatif ("admin/evenements") sans le slash initial
+      await api.post("admin/evenements", evenement, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       alert("Événement ajouté avec succès !");
@@ -33,10 +34,33 @@ function AjouterEvenement() {
     <div>
       <h2>Ajouter un événement</h2>
       <form onSubmit={handleSubmit}>
-        <input type="text" name="titre" placeholder="Titre" onChange={handleChange} required />
-        <input type="text" name="description" placeholder="Description" onChange={handleChange} required />
-        <input type="datetime-local" name="dateEvenement" onChange={handleChange} required />
-        <input type="text" name="lieu" placeholder="Lieu" onChange={handleChange} required />
+        <input
+          type="text"
+          name="titre"
+          placeholder="Titre"
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="text"
+          name="description"
+          placeholder="Description"
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="datetime-local"
+          name="dateEvenement"
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="text"
+          name="lieu"
+          placeholder="Lieu"
+          onChange={handleChange}
+          required
+        />
         <button type="submit">Ajouter</button>
       </form>
     </div>

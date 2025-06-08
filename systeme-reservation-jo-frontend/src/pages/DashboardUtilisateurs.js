@@ -49,8 +49,9 @@ function DashboardUtilisateurs() {
     }
 
     // Appel sécurisé pour récupérer le profil complet de l'utilisateur
+    // Modification : utilisation d'un chemin relatif sans slash initial ("utilisateurs/me")
     api
-      .get('/utilisateurs/me', {
+      .get('utilisateurs/me', {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then((response) => {

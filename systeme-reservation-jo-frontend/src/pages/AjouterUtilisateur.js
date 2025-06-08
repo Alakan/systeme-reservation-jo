@@ -18,7 +18,8 @@ function AjouterUtilisateur() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/admin/utilisateurs', user, {
+      // Modification : utilisation d'un chemin relatif sans le slash initial
+      await api.post('admin/utilisateurs', user, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       alert("Utilisateur ajouté avec succès !");
@@ -32,9 +33,27 @@ function AjouterUtilisateur() {
     <div>
       <h2>Ajouter un utilisateur</h2>
       <form onSubmit={handleSubmit}>
-        <input type="text" name="username" placeholder="Nom d'utilisateur" onChange={handleChange} required />
-        <input type="email" name="email" placeholder="Email" onChange={handleChange} required />
-        <input type="password" name="password" placeholder="Mot de passe" onChange={handleChange} required />
+        <input
+          type="text"
+          name="username"
+          placeholder="Nom d'utilisateur"
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="Mot de passe"
+          onChange={handleChange}
+          required
+        />
         <button type="submit">Ajouter</button>
       </form>
     </div>

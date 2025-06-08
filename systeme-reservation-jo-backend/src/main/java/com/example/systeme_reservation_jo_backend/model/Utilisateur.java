@@ -32,7 +32,7 @@ public class Utilisateur {
     private String email;
 
     @Column(nullable = false)
-    private String password;
+    private String password; // voir pour chiffrer le mot de passe / voir pour ne pas envoyer le mdp
 
     @Column(nullable = false)
     private String username;
