@@ -25,7 +25,8 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/reservations")
-@CrossOrigin(origins = {"http://localhost:3000", "https://front-systeme-reservation-jo-be1e62ad3714.herokuapp.com"})
+@CrossOrigin(origins = {"http://localhost:3000",
+        "https://front-systeme-reservation-jo-be1e62ad3714.herokuapp.com"})
 public class ReservationController {
 
     private final ReservationService reservationService;
@@ -66,7 +67,7 @@ public class ReservationController {
                     .anyMatch(a -> a.getAuthority().equalsIgnoreCase("ROLE_ADMINISTRATEUR") ||
                             a.getAuthority().equalsIgnoreCase("ROLE_ADMIN"));
 
-            // Si l'utilisateur n'est pas admin et si la réservation est désactivée, on retourne 404.
+            // Si l'utilisateur n'est pas admin et si la réservation est désactivée, retourner 404.
             if (!isAdmin && !reservation.isActif()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Réservation introuvable.");
             }
