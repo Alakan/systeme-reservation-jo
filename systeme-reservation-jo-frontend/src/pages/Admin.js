@@ -7,12 +7,12 @@ import { useTheme } from "../contexts/ThemeContext";
 
 function Admin() {
   const [activeTab, setActiveTab] = useState("utilisateurs"); // Onglet par défaut
-  const [data, setData] = useState([]); // Données chargées via l'API
+  const [data, setData] = useState([]); // Les données récupérées via l'API
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  // Vérification d'accès administrateur
+  // Vérification d'accès administrateur en décodant le token JWT
   useEffect(() => {
     if (!token) {
       navigate("/login");
@@ -51,13 +51,13 @@ function Admin() {
     }
   }, [navigate, token]);
 
-  // Fonction de rafraîchissement des données en fonction de l'onglet actif
+  // Fonction pour charger les données en fonction de l'onglet actif
   const fetchData = () => {
     if (!token) return;
     let endpoint = "";
     switch (activeTab) {
       case "utilisateurs":
-        endpoint = "admin/utilisateurs"; // chemin relatif
+        endpoint = "admin/utilisateurs";
         break;
       case "evenements":
         endpoint = "admin/evenements";
@@ -80,11 +80,20 @@ function Admin() {
     }
   };
 
-  // Fonctions pour gérer les événements
+  // Recharge les données quand l'onglet actif ou le token change
+  useEffect(() => {
+    fetchData();
+  }, [activeTab, token]);
+
+  // Fonctions pour la gestion des Évènements
   const handleDesactiverEvenement = (eventId) => {
     if (window.confirm("Voulez-vous vraiment désactiver cet événement ?")) {
       api
-        .put(`admin/evenements/${eventId}/desactiver`, {}, { headers: { Authorization: `Bearer ${token}` } })
+        .put(
+          `admin/evenements/${eventId}/desactiver`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
         .then(() => fetchData())
         .catch((error) => {
           console.error("Erreur lors de la désactivation de l'événement :", error);
@@ -95,7 +104,11 @@ function Admin() {
   const handleReactiverEvenement = (eventId) => {
     if (window.confirm("Voulez-vous réactiver cet événement ?")) {
       api
-        .put(`admin/evenements/${eventId}/reactiver`, {}, { headers: { Authorization: `Bearer ${token}` } })
+        .put(
+          `admin/evenements/${eventId}/reactiver`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
         .then(() => fetchData())
         .catch((error) => {
           console.error("Erreur lors de la réactivation de l'événement :", error);
@@ -103,11 +116,15 @@ function Admin() {
     }
   };
 
-  // Fonctions pour gérer les réservations
+  // Fonctions pour la gestion des Réservations
   const handleDesactiverReservation = (reservationId) => {
     if (window.confirm("Voulez-vous désactiver cette réservation ?")) {
       api
-        .put(`admin/reservations/${reservationId}/desactiver`, {}, { headers: { Authorization: `Bearer ${token}` } })
+        .put(
+          `admin/reservations/${reservationId}/desactiver`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
         .then(() => fetchData())
         .catch((error) => {
           console.error("Erreur lors de la désactivation de la réservation :", error);
@@ -118,7 +135,11 @@ function Admin() {
   const handleReactiverReservation = (reservationId) => {
     if (window.confirm("Voulez-vous réactiver cette réservation ?")) {
       api
-        .put(`admin/reservations/${reservationId}/reactiver`, {}, { headers: { Authorization: `Bearer ${token}` } })
+        .put(
+          `admin/reservations/${reservationId}/reactiver`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
         .then(() => fetchData())
         .catch((error) => {
           console.error("Erreur lors de la réactivation de la réservation :", error);
@@ -126,12 +147,7 @@ function Admin() {
     }
   };
 
-  // Charger les données en fonction de l'onglet actif
-  useEffect(() => {
-    fetchData();
-  }, [activeTab, token]);
-
-  // Fonction pour basculer le thème (mode sombre / clair)
+  // Fonction pour basculer le thème
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
   };
@@ -176,9 +192,7 @@ function Admin() {
                   <li key={user.id}>
                     {user.username} - {user.email}{" "}
                     <button
-                      onClick={() =>
-                        navigate(`/admin/modifier-utilisateur/${user.id}`)
-                      }
+                      onClick={() => navigate(`/admin/modifier-utilisateur/${user.id}`)}
                     >
                       Modifier le profil
                     </button>
@@ -191,19 +205,15 @@ function Admin() {
                         ) {
                           api
                             .delete(`admin/utilisateurs/${user.id}`, {
-                              headers: {
-                                Authorization: `Bearer ${token}`,
-                              },
+                              headers: { Authorization: `Bearer ${token}` },
                             })
-                            .then(() => {
-                              fetchData();
-                            })
-                            .catch((error) => {
+                            .then(() => fetchData())
+                            .catch((error) =>
                               console.error(
                                 "Erreur lors de la suppression de l'utilisateur :",
                                 error
-                              );
-                            });
+                              )
+                            );
                         }
                       }}
                     >
@@ -229,8 +239,7 @@ function Admin() {
               <ul>
                 {data.map((event) => (
                   <li key={event.id}>
-                    {event.titre} -{" "}
-                    {new Date(event.dateEvenement).toLocaleString()}{" "}
+                    {event.titre} - {new Date(event.dateEvenement).toLocaleString()}{" "}
                     {event.actif ? (
                       <span style={{ color: "green", fontWeight: "bold" }}>
                         [Actif]
@@ -248,15 +257,11 @@ function Admin() {
                       Modifier
                     </button>
                     {event.actif ? (
-                      <button
-                        onClick={() => handleDesactiverEvenement(event.id)}
-                      >
+                      <button onClick={() => handleDesactiverEvenement(event.id)}>
                         Désactiver
                       </button>
                     ) : (
-                      <button
-                        onClick={() => handleReactiverEvenement(event.id)}
-                      >
+                      <button onClick={() => handleReactiverEvenement(event.id)}>
                         Réactiver
                       </button>
                     )}
@@ -300,15 +305,11 @@ function Admin() {
                       Modifier
                     </button>
                     {res.actif ? (
-                      <button
-                        onClick={() => handleDesactiverReservation(res.id)}
-                      >
+                      <button onClick={() => handleDesactiverReservation(res.id)}>
                         Désactiver
                       </button>
                     ) : (
-                      <button
-                        onClick={() => handleReactiverReservation(res.id)}
-                      >
+                      <button onClick={() => handleReactiverReservation(res.id)}>
                         Réactiver
                       </button>
                     )}
