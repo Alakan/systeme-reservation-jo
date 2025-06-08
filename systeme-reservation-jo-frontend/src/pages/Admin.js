@@ -57,7 +57,7 @@ function Admin() {
     let endpoint = "";
     switch (activeTab) {
       case "utilisateurs":
-        endpoint = "admin/utilisateurs"; // chemin relatif (sans slash initial)
+        endpoint = "admin/utilisateurs"; // chemin relatif
         break;
       case "evenements":
         endpoint = "admin/evenements";
@@ -80,6 +80,30 @@ function Admin() {
     }
   };
 
+  // Fonction pour désactiver un événement
+  const handleDesactiverEvenement = (eventId) => {
+    if (window.confirm("Voulez-vous vraiment désactiver cet événement ?")) {
+      api
+        .put(`admin/evenements/${eventId}/desactiver`, {}, { headers: { Authorization: `Bearer ${token}` } })
+        .then(() => fetchData())
+        .catch((error) => {
+          console.error("Erreur lors de la désactivation de l'événement :", error);
+        });
+    }
+  };
+
+  // Fonction pour réactiver un événement
+  const handleReactiverEvenement = (eventId) => {
+    if (window.confirm("Voulez-vous réactiver cet événement ?")) {
+      api
+        .put(`admin/evenements/${eventId}/reactiver`, {}, { headers: { Authorization: `Bearer ${token}` } })
+        .then(() => fetchData())
+        .catch((error) => {
+          console.error("Erreur lors de la réactivation de l'événement :", error);
+        });
+    }
+  };
+
   // Recharger les données à chaque changement d'onglet
   useEffect(() => {
     fetchData();
@@ -88,43 +112,6 @@ function Admin() {
   // Fonction pour basculer le thème (mode sombre / clair)
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
-  };
-
-  // Fonctions de désactivation et de réactivation pour les réservations
-  const handleDesactiverReservation = (reservationId) => {
-    if (window.confirm("Voulez-vous désactiver cette réservation ?")) {
-      api
-        .put(
-          `admin/reservations/${reservationId}/desactiver`, // chemin relatif
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        .then(() => fetchData())
-        .catch((error) => {
-          console.error(
-            "Erreur lors de la désactivation de la réservation :",
-            error
-          );
-        });
-    }
-  };
-
-  const handleReactiverReservation = (reservationId) => {
-    if (window.confirm("Voulez-vous réactiver cette réservation ?")) {
-      api
-        .put(
-          `admin/reservations/${reservationId}/reactiver`, // chemin relatif
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        .then(() => fetchData())
-        .catch((error) => {
-          console.error(
-            "Erreur lors de la réactivation de la réservation :",
-            error
-          );
-        });
-    }
   };
 
   return (
@@ -301,6 +288,7 @@ function Admin() {
                     {res.actif ? (
                       <button
                         onClick={() =>
+                          // Ici la fonction handleDesactiverReservation est utilisée
                           handleDesactiverReservation(res.id)
                         }
                       >
@@ -309,6 +297,7 @@ function Admin() {
                     ) : (
                       <button
                         onClick={() =>
+                          // Ici la fonction handleReactiverReservation est utilisée
                           handleReactiverReservation(res.id)
                         }
                       >
