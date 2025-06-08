@@ -29,16 +29,17 @@ public class EvenementController {
 
     /**
      * Récupération de tous les événements publics (seulement ceux actifs).
+     * GET /api/evenements
      */
     @GetMapping
     public ResponseEntity<List<Evenement>> getAllEvenements() {
-        // Retourne uniquement les événements actifs pour la vue publique
         List<Evenement> evenements = evenementService.getAllEvenementsPublic();
         return ResponseEntity.ok(evenements);
     }
 
     /**
      * Récupération d'un événement par son id (seulement s'il est actif).
+     * GET /api/evenements/{id}
      */
     @GetMapping("/{id}")
     public ResponseEntity<Evenement> getEvenementById(@PathVariable Long id) {
@@ -46,7 +47,6 @@ public class EvenementController {
         if (evenementOpt.isPresent()) {
             Evenement evenement = evenementOpt.get();
             if (!evenement.isActif()) {
-                // Si l'événement est désactivé, on renvoie 404
                 return ResponseEntity.notFound().build();
             }
             return ResponseEntity.ok(evenement);
@@ -58,6 +58,7 @@ public class EvenementController {
     /**
      * Création d'un événement.
      * (Cette opération peut être réservée aux administrateurs.)
+     * POST /api/evenements
      */
     @PostMapping
     public ResponseEntity<Evenement> createEvenement(@Valid @RequestBody Evenement evenement) {
@@ -69,6 +70,7 @@ public class EvenementController {
     /**
      * Mise à jour d'un événement existant.
      * (Opération réservée aux administrateurs.)
+     * PUT /api/evenements/{id}
      */
     @PutMapping("/{id}")
     public ResponseEntity<Evenement> updateEvenement(@PathVariable Long id, @Valid @RequestBody Evenement evenement) {
@@ -81,25 +83,9 @@ public class EvenementController {
     }
 
     /**
-     * Désactivation d'un événement (opération d'administration),
-     * qui met à jour le champ actif à false.
-     */
-    @PutMapping("/{id}/desactiver")
-    public ResponseEntity<Evenement> desactiverEvenement(@PathVariable Long id) {
-        Optional<Evenement> existingEvenement = evenementService.getEvenementById(id);
-        if (existingEvenement.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        Evenement evenementDesactive = evenementService.desactiverEvenement(id);
-        return ResponseEntity.ok(evenementDesactive);
-    }
-
-    /**
      * Récupération d'événements entre deux dates.
      * Seuls les événements actifs sont retournés.
-     *
-     * Exemple d'appel :
-     * GET /api/evenements/between-dates?start=2025-08-01T00:00:00&end=2025-08-31T23:59:59
+     * GET /api/evenements/between-dates?start=YYYY-MM-DDTHH:MM:SS&end=YYYY-MM-DDTHH:MM:SS
      */
     @GetMapping("/between-dates")
     public ResponseEntity<List<Evenement>> getEvenementsBetweenDates(
