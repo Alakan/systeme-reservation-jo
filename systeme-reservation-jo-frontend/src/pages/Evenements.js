@@ -6,6 +6,7 @@ import '../styles/Evenements.css';
 
 function Evenements() {
   const [evenements, setEvenements] = useState([]);
+  const [expandedDescriptions, setExpandedDescriptions] = useState({});
   const navigate = useNavigate();
 
   // Récupération des événements accessibles à tous (visiteurs)
@@ -39,6 +40,14 @@ function Evenements() {
       style: 'currency',
       currency: 'EUR'
     }).format(price);
+  };
+
+  // Permet de basculer l'affichage complet/reduit de la description d'un événement
+  const toggleDescription = (id) => {
+    setExpandedDescriptions(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
   };
 
   const handleReservation = async (evenement) => {
@@ -155,6 +164,21 @@ function Evenements() {
                 {evenement.lieu}
                 <br />
                 <span>Prix : {formatPrice(evenement.prix)}</span>
+                <br />
+                {/* Affichage de l'extrait ou de la description complète */}
+                {expandedDescriptions[evenement.id] ? (
+                  <p className="description">{evenement.description}</p>
+                ) : (
+                  <p className="description">
+                    {evenement.description.length > 100
+                      ? evenement.description.slice(0, 100) + '...'
+                      : evenement.description
+                    }
+                  </p>
+                )}
+                <button onClick={() => toggleDescription(evenement.id)}>
+                  {expandedDescriptions[evenement.id] ? 'Voir moins' : 'Voir plus'}
+                </button>
               </div>
               <div className="evenement-actions">
                 <button onClick={() => handleReservation(evenement)}>Réserver</button>
