@@ -39,7 +39,8 @@ public class Evenement {
 
     private String description;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    // On accepte ici le format sans secondes : "yyyy-MM-dd'T'HH:mm"
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     @NotNull(message = "La date et l'heure de l'événement ne peuvent pas être nulles")
     @Column(nullable = false)
     private LocalDateTime dateEvenement;

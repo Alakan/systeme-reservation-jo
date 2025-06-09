@@ -19,12 +19,12 @@ function AjouterEvenement() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Si la valeur de dateEvenement contient des secondes (longueur > 16), on la tronque :
+      // Si la valeur de dateEvenement contient plus de 16 caractères,
+      // cela signifie qu'elle fournit possiblement des secondes. On la tronque pour obtenir "yyyy-MM-ddTHH:mm".
       let dateStr = evenement.dateEvenement;
       if (dateStr.length > 16) {
         dateStr = dateStr.slice(0, 16);
       }
-      // Envoie la requête avec le format de date correct
       await api.post("evenements", { ...evenement, dateEvenement: dateStr }, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
