@@ -96,7 +96,10 @@ function Admin() {
         )
         .then(() => fetchData())
         .catch((error) => {
-          console.error("Erreur lors de la désactivation de l'événement :", error);
+          console.error(
+            "Erreur lors de la désactivation de l'événement :",
+            error
+          );
         });
     }
   };
@@ -111,7 +114,10 @@ function Admin() {
         )
         .then(() => fetchData())
         .catch((error) => {
-          console.error("Erreur lors de la réactivation de l'événement :", error);
+          console.error(
+            "Erreur lors de la réactivation de l'événement :",
+            error
+          );
         });
     }
   };
@@ -127,7 +133,10 @@ function Admin() {
         )
         .then(() => fetchData())
         .catch((error) => {
-          console.error("Erreur lors de la désactivation de la réservation :", error);
+          console.error(
+            "Erreur lors de la désactivation de la réservation :",
+            error
+          );
         });
     }
   };
@@ -142,7 +151,10 @@ function Admin() {
         )
         .then(() => fetchData())
         .catch((error) => {
-          console.error("Erreur lors de la réactivation de la réservation :", error);
+          console.error(
+            "Erreur lors de la réactivation de la réservation :",
+            error
+          );
         });
     }
   };
@@ -192,7 +204,9 @@ function Admin() {
                   <li key={user.id}>
                     {user.username} - {user.email}{" "}
                     <button
-                      onClick={() => navigate(`/admin/modifier-utilisateur/${user.id}`)}
+                      onClick={() =>
+                        navigate(`/admin/modifier-utilisateur/${user.id}`)
+                      }
                     >
                       Modifier le profil
                     </button>
@@ -239,13 +253,18 @@ function Admin() {
               <ul>
                 {data.map((event) => (
                   <li key={event.id}>
-                    {event.titre} - {new Date(event.dateEvenement).toLocaleString()}{" "}
+                    {event.titre} -{" "}
+                    {new Date(event.dateEvenement).toLocaleString()}{" "}
                     {event.actif ? (
-                      <span style={{ color: "green", fontWeight: "bold" }}>
+                      <span
+                        style={{ color: "green", fontWeight: "bold" }}
+                      >
                         [Actif]
                       </span>
                     ) : (
-                      <span style={{ color: "red", fontWeight: "bold" }}>
+                      <span
+                        style={{ color: "red", fontWeight: "bold" }}
+                      >
                         [Désactivé]
                       </span>
                     )}
@@ -257,11 +276,15 @@ function Admin() {
                       Modifier
                     </button>
                     {event.actif ? (
-                      <button onClick={() => handleDesactiverEvenement(event.id)}>
+                      <button
+                        onClick={() => handleDesactiverEvenement(event.id)}
+                      >
                         Désactiver
                       </button>
                     ) : (
-                      <button onClick={() => handleReactiverEvenement(event.id)}>
+                      <button
+                        onClick={() => handleReactiverEvenement(event.id)}
+                      >
                         Réactiver
                       </button>
                     )}
@@ -278,9 +301,7 @@ function Admin() {
         {activeTab === "reservations" && (
           <div>
             <h2>Gestion des Réservations</h2>
-            <button onClick={() => navigate("/admin/ajouter-reservation")}>
-              Ajouter une réservation
-            </button>
+            {/* Bouton "Ajouter une réservation" retiré car les clients réservent eux-mêmes */}
             {data && Array.isArray(data) && data.length > 0 ? (
               <ul>
                 {data.map((res) => (
@@ -289,11 +310,15 @@ function Admin() {
                     {res.evenement?.titre || "Événement inconnu"} - Statut :{" "}
                     {res.statut}{" "}
                     {res.actif ? (
-                      <span style={{ color: "green", fontWeight: "bold" }}>
+                      <span
+                        style={{ color: "green", fontWeight: "bold" }}
+                      >
                         [Actif]
                       </span>
                     ) : (
-                      <span style={{ color: "red", fontWeight: "bold" }}>
+                      <span
+                        style={{ color: "red", fontWeight: "bold" }}
+                      >
                         [Désactivé]
                       </span>
                     )}
