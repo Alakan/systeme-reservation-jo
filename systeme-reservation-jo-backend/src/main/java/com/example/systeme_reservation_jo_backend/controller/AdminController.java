@@ -80,7 +80,7 @@ public class AdminController {
         }
     }
 
-    // Réactivation (activation) d'un événement (champ actif à true)
+    // Réactivation d'un événement (champ actif à true)
     @PutMapping("/evenements/{id}/reactiver")
     public ResponseEntity<?> reactiverEvenement(@PathVariable Long id) {
         try {
@@ -99,6 +99,18 @@ public class AdminController {
         return ResponseEntity.ok(reservations);
     }
 
+    // Création d'une réservation via l'administration
+    @PostMapping("/reservations")
+    public ResponseEntity<?> createReservation(@Valid @RequestBody Reservation reservation) {
+        try {
+            Reservation createdReservation = reservationService.createReservation(reservation);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdReservation);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erreur lors de la création de la réservation : " + e.getMessage());
+        }
+    }
+
     // Désactivation d'une réservation (mise à jour du champ actif à false)
     @PutMapping("/reservations/{id}/desactiver")
     public ResponseEntity<?> desactiverReservation(@PathVariable Long id) {
@@ -111,7 +123,7 @@ public class AdminController {
         }
     }
 
-    // Réactivation (activation) d'une réservation (champ actif à true)
+    // Réactivation d'une réservation (champ actif à true)
     @PutMapping("/reservations/{id}/reactiver")
     public ResponseEntity<?> reactiverReservation(@PathVariable Long id) {
         try {
