@@ -11,7 +11,6 @@ function Evenements() {
 
   // Récupération des événements accessibles à tous (visiteurs)
   useEffect(() => {
-    // Utilisation d'un chemin relatif sans slash initial
     api.get("evenements")
       .then(response => {
         if (Array.isArray(response.data)) {
@@ -34,7 +33,7 @@ function Evenements() {
     });
   };
 
-  // Formatage du prix en euro (avec deux décimales)
+  // Formatage du prix en euro
   const formatPrice = (price) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
@@ -42,7 +41,7 @@ function Evenements() {
     }).format(price);
   };
 
-  // Permet de basculer l'affichage complet/reduit de la description d'un événement
+  // Bascule de l'affichage complet/reduit de la description d'un événement
   const toggleDescription = (id) => {
     setExpandedDescriptions(prev => ({
       ...prev,
@@ -59,7 +58,7 @@ function Evenements() {
       return;
     }
 
-    // Décodage du token pour récupérer l'email de l'utilisateur
+    // Décodage du token pour récupérer l'email
     let payload;
     try {
       payload = JSON.parse(atob(token.split('.')[1]));
@@ -69,9 +68,9 @@ function Evenements() {
       navigate("/login");
       return;
     }
-    const userEmail = payload.sub; // On considère ici que "sub" contient l'email
+    const userEmail = payload.sub; // "sub" contient l'email
 
-    // Demande du nombre de billets souhaités
+    // Demande du nombre de billets
     const billetsStr = window.prompt("Combien de billets souhaitez-vous réserver ?");
     const nombreBillets = parseInt(billetsStr, 10);
     if (isNaN(nombreBillets) || nombreBillets <= 0) {
@@ -79,10 +78,8 @@ function Evenements() {
       return;
     }
 
-    // Calcul du montant total de la réservation
+    // Calcul du montant total
     const totalPrice = evenement.prix * nombreBillets;
-
-    // Afficher le montant total et demander confirmation
     if (!window.confirm(`Le montant total de votre réservation est de ${formatPrice(totalPrice)}. Voulez-vous continuer ?`)) {
       return;
     }
@@ -95,9 +92,8 @@ function Evenements() {
       return;
     }
 
-    // Création de la réservation avec les informations validées
     try {
-      // Utilisation d'un chemin relatif pour la réservation
+      // Création de la réservation
       const response = await api.post(
         "reservations",
         { 
@@ -129,7 +125,6 @@ function Evenements() {
       return;
     }
 
-    // Utilisation d'un chemin relatif pour le paiement
     api.put(
       `reservations/${reservationId}/paiement`,
       JSON.stringify(modePaiement),
@@ -137,7 +132,7 @@ function Evenements() {
     )
     .then(() => {
       alert("Paiement effectué avec succès !");
-      navigate("/mes-reservations"); // Redirection vers la page MesReservations
+      navigate("/mes-reservations");
     })
     .catch(error => {
       console.error("Erreur lors du paiement :", error);
@@ -146,46 +141,54 @@ function Evenements() {
   };
 
   return (
-    <div className="evenements-container">
-      <h1>Événements disponibles</h1>
-      <Link to="/"><button className="btn-home">Retour à la page principale</button></Link>
+    <div className="container py-4">
+      <h1 className="mb-4 text-center">Événements JO 2024</h1>
+      <div className="mb-3 text-center">
+        <Link to="/">
+          <button className="btn btn-secondary">Retour à la page principale</button>
+        </Link>
+      </div>
 
       {evenements.length === 0 ? (
-        <p>Aucun événement disponible.</p>
+        <p className="text-center">Aucun événement disponible.</p>
       ) : (
-        <ul className="evenements-list">
-          {evenements.map((evenement) => (
-            <li key={evenement.id} className="evenement-item">
-              <div>
-                <strong>{evenement.titre}</strong>
-                <br />
-                {formatDate(evenement.dateEvenement)}
-                <br />
-                {evenement.lieu}
-                <br />
-                <span>Prix : {formatPrice(evenement.prix)}</span>
-                <br />
-                {/* Affichage de l'extrait ou de la description complète */}
-                {expandedDescriptions[evenement.id] ? (
-                  <p className="description">{evenement.description}</p>
-                ) : (
-                  <p className="description">
-                    {evenement.description.length > 100
-                      ? evenement.description.slice(0, 100) + '...'
-                      : evenement.description
-                    }
-                  </p>
-                )}
-                <button onClick={() => toggleDescription(evenement.id)}>
-                  {expandedDescriptions[evenement.id] ? 'Voir moins' : 'Voir plus'}
-                </button>
+        <div className="row">
+          {evenements.map(evenement => (
+            <div key={evenement.id} className="col-md-4 col-sm-6 mb-4">
+              <div className="card h-100 shadow-sm">
+                <div className="card-body d-flex flex-column">
+                  <h5 className="card-title">{evenement.titre}</h5>
+                  <h6 className="card-subtitle mb-2 text-muted">{formatDate(evenement.dateEvenement)}</h6>
+                  <p className="card-text">{evenement.lieu}</p>
+                  <p className="card-text">Prix : {formatPrice(evenement.prix)}</p>
+                  {expandedDescriptions[evenement.id] ? (
+                    <p className="card-text">{evenement.description}</p>
+                  ) : (
+                    <p className="card-text">
+                      {evenement.description.length > 100 
+                        ? evenement.description.slice(0, 100) + '...' 
+                        : evenement.description}
+                    </p>
+                  )}
+                  <button 
+                    className="btn btn-link p-0 align-self-start mb-3" 
+                    onClick={() => toggleDescription(evenement.id)}
+                  >
+                    {expandedDescriptions[evenement.id] ? 'Voir moins' : 'Voir plus'}
+                  </button>
+                  <div className="mt-auto">
+                    <button 
+                      className="btn btn-primary w-100" 
+                      onClick={() => handleReservation(evenement)}
+                    >
+                      Réserver
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="evenement-actions">
-                <button onClick={() => handleReservation(evenement)}>Réserver</button>
-              </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );
