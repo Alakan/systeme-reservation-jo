@@ -20,13 +20,31 @@ function AjouterReservation() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Modification : chemin relatif sans slash initial ("admin/reservations")
-      await api.post("admin/reservations", reservation, {
+      // Pour le champ dateReservation, si la valeur contient plus de 16 caractères,
+      // on la tronque pour obtenir le format "yyyy-MM-ddTHH:mm" (par exemple "2025-06-16T22:55").
+      let dateStr = reservation.dateReservation;
+      if (dateStr.length > 16) {
+        dateStr = dateStr.slice(0, 16);
+      }
+      
+      // Préparation du payload en veillant à convertir les champs numériques
+      const payload = {
+        utilisateurId: parseInt(reservation.utilisateurId, 10),
+        evenementId: parseInt(reservation.evenementId, 10),
+        dateReservation: dateStr,
+        nombreBillets: parseInt(reservation.nombreBillets, 10),
+        modePaiement: reservation.modePaiement,
+      };
+
+      // Envoi de la requête POST sur l'endpoint "admin/reservations"
+      await api.post("admin/reservations", payload, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
+
       alert("Réservation ajoutée avec succès !");
       navigate("/admin");
     } catch (error) {
+      console.error("Erreur lors de l'ajout de la réservation :", error);
       alert("Erreur lors de l'ajout de la réservation !");
     }
   };
@@ -36,14 +54,14 @@ function AjouterReservation() {
       <h2>Ajouter une réservation</h2>
       <form onSubmit={handleSubmit}>
         <input
-          type="text"
+          type="number"
           name="utilisateurId"
           placeholder="ID utilisateur"
           onChange={handleChange}
           required
         />
         <input
-          type="text"
+          type="number"
           name="evenementId"
           placeholder="ID événement"
           onChange={handleChange}
@@ -61,6 +79,7 @@ function AjouterReservation() {
           placeholder="Nombre de billets"
           onChange={handleChange}
           required
+          min="1"
         />
         <select name="modePaiement" onChange={handleChange} required>
           <option value="">Sélectionner un mode de paiement</option>
