@@ -9,7 +9,8 @@ function AjouterEvenement() {
     description: "",
     dateEvenement: "",
     lieu: "",
-    prix: ""  // Ajout de l'attribut "prix" afin de le transmettre au backend
+    prix: "",          // champ pour le prix
+    capaciteTotale: "" // champ pour la capacité totale
   });
   const navigate = useNavigate();
 
@@ -20,11 +21,12 @@ function AjouterEvenement() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Si la valeur de dateEvenement contient plus de 16 caractères, on la tronque pour obtenir le format "yyyy-MM-ddTHH:mm"
+      // Si la valeur de dateEvenement dépasse 16 caractères, on la tronque pour obtenir le format "yyyy-MM-ddTHH:mm"
       let dateStr = evenement.dateEvenement;
       if (dateStr.length > 16) {
         dateStr = dateStr.slice(0, 16);
       }
+      // Envoi de la requête POST avec l'ensemble des champs
       await api.post(
         "evenements",
         { ...evenement, dateEvenement: dateStr },
@@ -78,6 +80,14 @@ function AjouterEvenement() {
           placeholder="Prix"
           onChange={handleChange}
           required
+        />
+        <input
+          type="number"
+          name="capaciteTotale"
+          placeholder="Capacité totale"
+          onChange={handleChange}
+          required
+          min="1"
         />
         <button type="submit">Ajouter</button>
       </form>
