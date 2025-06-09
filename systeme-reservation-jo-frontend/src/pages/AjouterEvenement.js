@@ -9,6 +9,7 @@ function AjouterEvenement() {
     description: "",
     dateEvenement: "",
     lieu: "",
+    prix: ""  // Ajout de l'attribut "prix" afin de le transmettre au backend
   });
   const navigate = useNavigate();
 
@@ -19,15 +20,18 @@ function AjouterEvenement() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Si la valeur de dateEvenement contient plus de 16 caractères,
-      // cela signifie qu'elle fournit possiblement des secondes. On la tronque pour obtenir "yyyy-MM-ddTHH:mm".
+      // Si la valeur de dateEvenement contient plus de 16 caractères, on la tronque pour obtenir le format "yyyy-MM-ddTHH:mm"
       let dateStr = evenement.dateEvenement;
       if (dateStr.length > 16) {
         dateStr = dateStr.slice(0, 16);
       }
-      await api.post("evenements", { ...evenement, dateEvenement: dateStr }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      await api.post(
+        "evenements",
+        { ...evenement, dateEvenement: dateStr },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
       alert("Événement ajouté avec succès !");
       navigate("/admin");
     } catch (error) {
@@ -64,6 +68,14 @@ function AjouterEvenement() {
           type="text"
           name="lieu"
           placeholder="Lieu"
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="number"
+          step="0.01"
+          name="prix"
+          placeholder="Prix"
           onChange={handleChange}
           required
         />
