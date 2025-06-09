@@ -40,6 +40,22 @@ public class AdminController {
         return ResponseEntity.ok(utilisateurs);
     }
 
+    // Création d'un utilisateur par l'administrateur
+    @PostMapping("/utilisateurs")
+    public ResponseEntity<?> createUtilisateur(@Valid @RequestBody UtilisateurDTO utilisateurDTO) {
+        try {
+            // Convertir le DTO en entité Utilisateur
+            Utilisateur newUser = dtoToEntity(utilisateurDTO);
+            // Utiliser la méthode saveUtilisateur pour enregistrer le nouvel utilisateur
+            Utilisateur createdUser = utilisateurService.saveUtilisateur(newUser);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erreur lors de la création de l'utilisateur : " + e.getMessage());
+        }
+    }
+
+
     // Modification d'un utilisateur par l'admin
     @PutMapping("/utilisateurs/{id}")
     public ResponseEntity<?> updateUtilisateur(@PathVariable Long id,
@@ -99,7 +115,7 @@ public class AdminController {
         return ResponseEntity.ok(reservations);
     }
 
-    // Création d'une réservation via l'administration
+    // Création d'une réservation via l'administration (si nécessaire)
     @PostMapping("/reservations")
     public ResponseEntity<?> createReservation(@Valid @RequestBody Reservation reservation) {
         try {
