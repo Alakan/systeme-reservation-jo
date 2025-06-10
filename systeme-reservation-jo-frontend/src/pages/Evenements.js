@@ -9,7 +9,7 @@ function Evenements() {
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
   const navigate = useNavigate();
 
-  // Récupération des événements accessibles à tous (visiteurs)
+  // Récupération des événements accessibles aux visiteurs
   useEffect(() => {
     api.get("evenements")
       .then(response => {
@@ -41,7 +41,7 @@ function Evenements() {
     }).format(price);
   };
 
-  // Bascule de l'affichage complet/reduit de la description d'un événement
+  // Bascule l'affichage de la description complète ou d'un extrait
   const toggleDescription = (id) => {
     setExpandedDescriptions(prev => ({
       ...prev,
@@ -49,6 +49,7 @@ function Evenements() {
     }));
   };
 
+  // Gère la réservation d'un événement
   const handleReservation = async (evenement) => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -68,7 +69,7 @@ function Evenements() {
       navigate("/login");
       return;
     }
-    const userEmail = payload.sub; // "sub" contient l'email
+    const userEmail = payload.sub; // On considère "sub" comme l'email de l'utilisateur
 
     // Demande du nombre de billets
     const billetsStr = window.prompt("Combien de billets souhaitez-vous réserver ?");
@@ -104,13 +105,11 @@ function Evenements() {
         },
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );
-
       const reservationId = response.data.id;
       console.log("Réservation créée avec ID :", reservationId);
 
-      // Procéder au paiement
+      // Procède au paiement
       await handlePaiement(reservationId, modePaiement);
-
       alert(`Réservation effectuée pour ${evenement.titre} avec ${nombreBillets} billet(s) !`);
     } catch (error) {
       console.error("Erreur lors de la réservation :", error);
@@ -141,26 +140,25 @@ function Evenements() {
   };
 
   return (
-    <div className="container py-4">
-      <h1 className="mb-4 text-center">Événements JO 2024</h1>
-      <div className="mb-3 text-center">
+    <div className="container py-5">
+      <h1 className="mb-5 text-center">Événements JO 2024</h1>
+      <div className="text-center mb-4">
         <Link to="/">
-          <button className="btn btn-secondary">Retour à la page principale</button>
+          <button className="btn btn-outline-secondary">Retour à la page principale</button>
         </Link>
       </div>
-
       {evenements.length === 0 ? (
         <p className="text-center">Aucun événement disponible.</p>
       ) : (
         <div className="row">
           {evenements.map(evenement => (
-            <div key={evenement.id} className="col-md-4 col-sm-6 mb-4">
-              <div className="card h-100 shadow-sm">
+            <div key={evenement.id} className="col-lg-4 col-md-6 mb-4">
+              <div className="card h-100 border-0 shadow">
                 <div className="card-body d-flex flex-column">
-                  <h5 className="card-title">{evenement.titre}</h5>
-                  <h6 className="card-subtitle mb-2 text-muted">{formatDate(evenement.dateEvenement)}</h6>
-                  <p className="card-text">{evenement.lieu}</p>
-                  <p className="card-text">Prix : {formatPrice(evenement.prix)}</p>
+                  <h5 className="card-title text-primary">{evenement.titre}</h5>
+                  <h6 className="card-subtitle mb-3 text-muted">{formatDate(evenement.dateEvenement)}</h6>
+                  <p className="card-text mb-1"><strong>Lieu:</strong> {evenement.lieu}</p>
+                  <p className="card-text mb-1"><strong>Prix:</strong> {formatPrice(evenement.prix)}</p>
                   {expandedDescriptions[evenement.id] ? (
                     <p className="card-text">{evenement.description}</p>
                   ) : (
@@ -171,14 +169,14 @@ function Evenements() {
                     </p>
                   )}
                   <button 
-                    className="btn btn-link p-0 align-self-start mb-3" 
+                    className="btn btn-link p-0 text-decoration-none align-self-start"
                     onClick={() => toggleDescription(evenement.id)}
                   >
                     {expandedDescriptions[evenement.id] ? 'Voir moins' : 'Voir plus'}
                   </button>
                   <div className="mt-auto">
                     <button 
-                      className="btn btn-primary w-100" 
+                      className="btn btn-primary w-100 mt-3" 
                       onClick={() => handleReservation(evenement)}
                     >
                       Réserver
