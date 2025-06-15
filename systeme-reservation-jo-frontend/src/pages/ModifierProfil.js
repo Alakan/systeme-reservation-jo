@@ -15,7 +15,6 @@ function ModifierProfil() {
   const [error, setError]     = useState('');
   const navigate = useNavigate();
 
-  // 1) Charger email/username
   useEffect(() => {
     const load = async () => {
       const token = localStorage.getItem('token');
@@ -39,27 +38,29 @@ function ModifierProfil() {
   const handleChange = (e) =>
     setProfile(p => ({ ...p, [e.target.name]: e.target.value }));
 
-  // 2) Soumettre la mise à jour
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage(''); setError('');
+    setMessage(''); 
+    setError('');
 
     const token = localStorage.getItem('token');
     if (!token) return navigate('/login');
 
-    // Préparation du payload minimal
+    // 1) Validation côté client des champs mot de passe
+    const hasOld = profile.currentPassword.trim() !== '';
+    const hasNew = profile.newPassword.trim() !== '';
+
+    if (hasOld !== hasNew) {
+      setError('Pour changer le mot de passe, remplissez les deux champs.');
+      return;
+    }
+
+    // 2) Construction du payload
     const payload = {
       email:    profile.email,
       username: profile.username
     };
-
-    // Si l'utilisateur veut changer de mot de passe
-    if (profile.newPassword.trim() !== '') {
-      // currentPassword obligatoire
-      if (profile.currentPassword.trim() === '') {
-        setError('Vous devez fournir votre mot de passe actuel.');
-        return;
-      }
+    if (hasOld && hasNew) {
       payload.currentPassword = profile.currentPassword;
       payload.newPassword     = profile.newPassword;
     }
@@ -68,14 +69,16 @@ function ModifierProfil() {
       await api.put('/utilisateurs/me', payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
       setMessage('Profil mis à jour avec succès !');
-      // Si on a changé le mdp, on redirige
-      if (payload.newPassword) {
+
+      // 3) Redirection *uniquement* si mot de passe changé
+      if (hasNew) {
         setTimeout(() => navigate('/dashboard'), 1000);
       }
     } catch (err) {
       if (err.response?.status === 400) {
-        setError(err.response.data || 'Mot de passe incorrect.');
+        setError(err.response.data || 'Ancien mot de passe incorrect.');
       } else {
         setError('Erreur serveur, veuillez réessayer.');
       }
