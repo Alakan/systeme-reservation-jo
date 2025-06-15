@@ -36,7 +36,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Autowired
-    public SecurityConfig(UtilisateurDetailsServiceImpl utilisateurDetailsService, JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(UtilisateurDetailsServiceImpl utilisateurDetailsService,
+                          JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.utilisateurDetailsService = utilisateurDetailsService;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
@@ -44,12 +45,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // ne pas oublier de remettre actif (test en dev) mieux de laisser actif avec un niveau de sécurité
+                // Désactivation CSRF pour simplifier les tests et le dev
+                .csrf(csrf -> csrf.disable())
+                // CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // Pas de session, on utilise JWT
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(exceptionHandling -> exceptionHandling
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            // Ajout les en-têtes CORS même pour les réponses d'erreur
+                // Gestion des erreurs d'authentification
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authEx) -> {
                             String origin = request.getHeader("Origin");
                             if (origin != null) {
                                 response.setHeader("Access-Control-Allow-Origin", origin);
@@ -60,54 +64,43 @@ public class SecurityConfig {
                             response.getWriter().write("Unauthorized");
                         })
                 )
+                // Règles d'autorisation
                 .authorizeHttpRequests(auth -> auth
-                        // Autoriser les requêtes preflight OPTIONS
+                        // Autoriser les OPTIONS (preflight)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // Autoriser l'accès à /favicon.ico pour éviter que le navigateur ne reçoive un 401
+                        // Éléments publics
                         .requestMatchers(HttpMethod.GET, "/favicon.ico").permitAll()
-
-                        // Autoriser les endpoints publics
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/").permitAll()
-                        /*.requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()*/
-
-                        // Les endpoints publics pour les événements
+                        // Événements publics
                         .requestMatchers(HttpMethod.GET, "/api/evenements/**").permitAll()
-                        // Endpoints réservés aux administrateurs pour les événements
-                        .requestMatchers(HttpMethod.POST, "/api/evenements/**").hasRole("ADMINISTRATEUR")
-                        .requestMatchers(HttpMethod.PUT, "/api/evenements/**").hasRole("ADMINISTRATEUR")
+                        // Événements CRUD → ADMINISTRATEUR
+                        .requestMatchers(HttpMethod.POST,   "/api/evenements/**").hasRole("ADMINISTRATEUR")
+                        .requestMatchers(HttpMethod.PUT,    "/api/evenements/**").hasRole("ADMINISTRATEUR")
                         .requestMatchers(HttpMethod.DELETE, "/api/evenements/**").hasRole("ADMINISTRATEUR")
 
-                        // Les endpoints liés aux utilisateurs, réservés aux authentifiés ou administrateurs
-                        .requestMatchers(HttpMethod.GET, "/api/utilisateurs/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/utilisateurs/**").hasRole("ADMINISTRATEUR")
+                        // --------- CORRECTION ICI ---------
+                        // Autoriser tout utilisateur authentifié à voir/mettre à jour SON profil
+                        .requestMatchers(HttpMethod.GET, "/api/utilisateurs/me").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/utilisateurs/me").authenticated()
+                        // Autorisation générique sur les autres routes utilisateurs (CRUD → ADMIN)
+                        .requestMatchers(HttpMethod.GET,    "/api/utilisateurs/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT,    "/api/utilisateurs/**").hasRole("ADMINISTRATEUR")
                         .requestMatchers(HttpMethod.DELETE, "/api/utilisateurs/**").hasRole("ADMINISTRATEUR")
 
-                        // Endpoints liés aux réservations et billets/paiements (sécurisés)
+                        // Réservations / billets / paiements (nécessite d’être authentifié)
                         .requestMatchers("/api/reservations/**").authenticated()
-                        /*.requestMatchers(HttpMethod.GET, "/api/reservations/utilisateur/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/reservations/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/reservations/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/reservations/{id}/paiement").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/reservations/**").authenticated()*/
                         .requestMatchers("/api/billets/**").authenticated()
-                        /*.requestMatchers(HttpMethod.GET, "/api/billets/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/billets/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/billets/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/billets/**").authenticated()*/
                         .requestMatchers("/api/paiements/**").authenticated()
-                        /*.requestMatchers(HttpMethod.GET, "/api/paiements/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/paiements/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/paiements/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/paiements/**").authenticated()*/
-                        // Endpoints administrateur
+
+                        // Endpoints d'administration complets → ADMINISTRATEUR
                         .requestMatchers("/api/admin/**").hasRole("ADMINISTRATEUR")
 
+                        // Toute autre route est interdite
                         .anyRequest().denyAll()
                 )
+                // Ajout du filtre JWT avant le filtre de session standard
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -119,28 +112,26 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Autoriser les origines de développement et de production
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000",
                 "https://front-systeme-reservation-jo-be1e62ad3714.herokuapp.com"
         ));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
+        configuration.setAllowedMethods(Arrays.asList("GET","POST","PUT","DELETE","OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization","Content-Type","Accept"));
         configuration.setAllowCredentials(true);
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
-    // Ce bean garantit que le filtre CORS est exécuté en priorité maximale.
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public CorsFilter corsFilter() {
