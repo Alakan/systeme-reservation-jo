@@ -1,4 +1,5 @@
 body {
+  padding-top: 3.5rem;  /* ex. 56px si header fait ~56px de haut */
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
