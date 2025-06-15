@@ -7,10 +7,8 @@ export default function MenuRapide() {
   const [isOpen, setIsOpen] = useState(false)
   const { user, setUser }   = useContext(UserContext)
   const navigate            = useNavigate()
+  const isAuth              = Boolean(user)
 
-  const isAuthenticated = Boolean(user)
-
-  // Logout : efface token + reset contexte + redirige
   const handleLogout = () => {
     localStorage.removeItem('token')
     setUser(null)
@@ -18,37 +16,36 @@ export default function MenuRapide() {
     navigate('/login')
   }
 
-  // Protection des routes
+  // protège les pages privées
   useEffect(() => {
-    const protectedPaths = ['/mes-reservations', '/dashboard', '/modifier-profil']
-    if (!isAuthenticated && protectedPaths.includes(window.location.pathname)) {
+    const prot = ['/mes-reservations', '/dashboard', '/modifier-profil']
+    if (!isAuth && prot.includes(window.location.pathname)) {
       navigate('/login')
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuth, navigate])
 
   return (
-    <div className="menu-rapide-wrapper">
-      {/* Barre du haut : menu button à gauche + pseudo à droite */}
-      <div className="menu-top-bar">
-        <button
-          className="menu-button"
-          onClick={() => setIsOpen((o) => !o)}
-        >
-          ☰
-        </button>
+    <nav className="menu-rapide">
+      {/* GAUCHE : bouton ☰ */}
+      <button
+        className="menu-button"
+        onClick={() => setIsOpen(o => !o)}
+      >
+        ☰
+      </button>
 
-        {isAuthenticated ? (
-          <div className="user-info-top">
-            Salut, <strong>{user.username || user.sub}</strong> !
-          </div>
-        ) : (
-          <Link className="login-link" to="/login">
-            Connexion
-          </Link>
-        )}
-      </div>
+      {/* DROITE : pseudo ou lien Connexion */}
+      {isAuth ? (
+        <div className="user-info-top">
+          Salut, <strong>{user.username || user.sub}</strong> !
+        </div>
+      ) : (
+        <Link className="login-link" to="/login">
+          Connexion
+        </Link>
+      )}
 
-      {/* Le menu déroulant */}
+      {/* MENU DÉROULANT sous le bouton */}
       {isOpen && (
         <div className="menu-items">
           <button onClick={() => { setIsOpen(false); navigate('/') }}>
@@ -58,7 +55,7 @@ export default function MenuRapide() {
             Événements
           </button>
 
-          {isAuthenticated ? (
+          {isAuth ? (
             <>
               <div className="menu-separator" />
               <button onClick={() => { setIsOpen(false); navigate('/mes-reservations') }}>
@@ -83,6 +80,6 @@ export default function MenuRapide() {
           )}
         </div>
       )}
-    </div>
+    </nav>
   )
 }
