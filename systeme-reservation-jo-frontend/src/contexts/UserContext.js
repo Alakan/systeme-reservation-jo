@@ -1,27 +1,32 @@
-// src/contexts/UserContext.js
 import React, { createContext, useState, useEffect } from 'react';
 
-export const UserContext = createContext({ user: null });
+// On expose user + setUser pour pouvoir déconnecter “en dur”
+export const UserContext = createContext({
+  user: null,
+  setUser: () => {}
+})
 
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const token = localStorage.getItem('token');
+  const [user, setUser] = useState(null)
+  const token          = localStorage.getItem('token')
 
   useEffect(() => {
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        setUser(payload);
-      } catch (error) {
-        console.error("Erreur lors du décodage du token :", error);
-        setUser(null);
-      }
+    if (!token) {
+      setUser(null)
+      return
     }
-  }, [token]);
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      setUser(payload)
+    } catch (err) {
+      console.error('Décodage JWT impossible:', err)
+      setUser(null)
+    }
+  }, [token])
 
   return (
-    <UserContext.Provider value={{ user }}>
+    <UserContext.Provider value={{ user, setUser }}>
       {children}
     </UserContext.Provider>
-  );
-};
+  )
+}

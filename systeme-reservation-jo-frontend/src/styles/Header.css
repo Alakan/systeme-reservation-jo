@@ -1,0 +1,44 @@
+.main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+}
+
+.nav-links a {
+  margin-right: 1rem;
+  text-decoration: none;
+  color: #333;
+}
+
+.nav-links a:hover {
+  text-decoration: underline;
+}
+
+.user-panel {
+  display: flex;
+  align-items: center;
+}
+
+.user-panel span {
+  margin-right: 0.75rem;
+}
+
+.btn-logout,
+.btn-login {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #007bff;
+  background-color: #007bff;
+  color: white;
+  border-radius: 0.25rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-logout:hover,
+.btn-login:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
