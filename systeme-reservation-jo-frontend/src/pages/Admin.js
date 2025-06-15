@@ -1,18 +1,18 @@
 // src/pages/Admin.js
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../styles/Admin.css";
 import { useTheme } from "../contexts/ThemeContext";
 
 function Admin() {
-  const [activeTab, setActiveTab] = useState("utilisateurs"); // Onglet par défaut
-  const [data, setData] = useState([]); // Les données récupérées via l'API
+  const [activeTab, setActiveTab] = useState("utilisateurs");
+  const [data, setData] = useState([]);
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  // Vérification d'accès administrateur en décodant le token JWT
+  // 1) Vérifier que l'utilisateur est admin
   useEffect(() => {
     if (!token) {
       navigate("/login");
@@ -20,149 +20,101 @@ function Admin() {
     }
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
-      console.log("Token payload (Admin):", payload);
-      const rolesFromToken = payload.roles;
-      let isAdminFlag = false;
-      if (rolesFromToken) {
-        if (Array.isArray(rolesFromToken)) {
-          isAdminFlag = rolesFromToken.some((role) => {
-            const roleUpper = role.toString().toUpperCase();
-            return (
-              roleUpper === "ADMIN" ||
-              roleUpper === "ROLE_ADMIN" ||
-              roleUpper === "ROLE_ADMINISTRATEUR"
-            );
-          });
-        } else if (typeof rolesFromToken === "string") {
-          const roleUpper = rolesFromToken.toUpperCase();
-          isAdminFlag =
-            roleUpper === "ADMIN" ||
-            roleUpper === "ROLE_ADMIN" ||
-            roleUpper === "ROLE_ADMINISTRATEUR";
-        }
-      }
-      if (!isAdminFlag) {
+      const roles = payload.roles;
+      const isAdmin =
+        Array.isArray(roles)
+          ? roles.some((r) =>
+              ["ADMIN", "ROLE_ADMIN", "ROLE_ADMINISTRATEUR"].includes(r.toString().toUpperCase())
+            )
+          : ["ADMIN", "ROLE_ADMIN", "ROLE_ADMINISTRATEUR"].includes((roles || "").toString().toUpperCase());
+
+      if (!isAdmin) {
         alert("Accès refusé : vous n'êtes pas administrateur.");
         navigate("/");
       }
-    } catch (error) {
-      console.error("Erreur lors du décodage du token :", error);
+    } catch (err) {
+      console.error("Décodage token admin échoué :", err);
       navigate("/login");
     }
   }, [navigate, token]);
 
-  // Fonction pour charger les données en fonction de l'onglet actif
-  const fetchData = () => {
+  // 2) fetchData encapsulé pour gérer les deps ESLint
+  const fetchData = useCallback(async () => {
     if (!token) return;
-    let endpoint = "";
-    switch (activeTab) {
-      case "utilisateurs":
-        endpoint = "admin/utilisateurs";
-        break;
-      case "evenements":
-        endpoint = "admin/evenements";
-        break;
-      case "reservations":
-        endpoint = "admin/reservations";
-        break;
-      default:
-        break;
-    }
-    if (endpoint) {
-      api
-        .get(endpoint, { headers: { Authorization: `Bearer ${token}` } })
-        .then((res) => {
-          setData(res.data);
-        })
-        .catch((error) => {
-          console.error("Erreur lors du chargement des données:", error);
-        });
-    }
-  };
 
-  // Recharge les données quand l'onglet actif ou le token change
-  useEffect(() => {
-    fetchData();
+    let endpoint = "";
+    if (activeTab === "utilisateurs") endpoint = "admin/utilisateurs";
+    else if (activeTab === "evenements") endpoint = "admin/evenements";
+    else if (activeTab === "reservations") endpoint = "admin/reservations";
+
+    if (!endpoint) return;
+
+    try {
+      const res = await api.get(endpoint, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setData(res.data);
+    } catch (err) {
+      console.error("Erreur chargement données admin :", err);
+    }
   }, [activeTab, token]);
 
-  // Fonctions pour la gestion des Évènements
-  const handleDesactiverEvenement = (eventId) => {
-    if (window.confirm("Voulez-vous vraiment désactiver cet événement ?")) {
-      api
-        .put(
-          `admin/evenements/${eventId}/desactiver`,
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        .then(() => fetchData())
-        .catch((error) => {
-          console.error(
-            "Erreur lors de la désactivation de l'événement :",
-            error
-          );
-        });
+  // 3) Lancer fetchData quand activeTab (via fetchData) change
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // 4) Handlers pour activer/désactiver entités
+  const handleDesactiverEvenement = async (id) => {
+    if (!window.confirm("Désactiver cet événement ?")) return;
+    try {
+      await api.put(`admin/evenements/${id}/desactiver`, null, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchData();
+    } catch (err) {
+      console.error("Désactivation événement échouée :", err);
     }
   };
 
-  const handleReactiverEvenement = (eventId) => {
-    if (window.confirm("Voulez-vous réactiver cet événement ?")) {
-      api
-        .put(
-          `admin/evenements/${eventId}/reactiver`,
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        .then(() => fetchData())
-        .catch((error) => {
-          console.error(
-            "Erreur lors de la réactivation de l'événement :",
-            error
-          );
-        });
+  const handleReactiverEvenement = async (id) => {
+    if (!window.confirm("Réactiver cet événement ?")) return;
+    try {
+      await api.put(`admin/evenements/${id}/reactiver`, null, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchData();
+    } catch (err) {
+      console.error("Réactivation événement échouée :", err);
     }
   };
 
-  // Fonctions pour la gestion des Réservations
-  const handleDesactiverReservation = (reservationId) => {
-    if (window.confirm("Voulez-vous désactiver cette réservation ?")) {
-      api
-        .put(
-          `admin/reservations/${reservationId}/desactiver`,
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        .then(() => fetchData())
-        .catch((error) => {
-          console.error(
-            "Erreur lors de la désactivation de la réservation :",
-            error
-          );
-        });
+  const handleDesactiverReservation = async (id) => {
+    if (!window.confirm("Désactiver cette réservation ?")) return;
+    try {
+      await api.put(`admin/reservations/${id}/desactiver`, null, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchData();
+    } catch (err) {
+      console.error("Désactivation réservation échouée :", err);
     }
   };
 
-  const handleReactiverReservation = (reservationId) => {
-    if (window.confirm("Voulez-vous réactiver cette réservation ?")) {
-      api
-        .put(
-          `admin/reservations/${reservationId}/reactiver`,
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        .then(() => fetchData())
-        .catch((error) => {
-          console.error(
-            "Erreur lors de la réactivation de la réservation :",
-            error
-          );
-        });
+  const handleReactiverReservation = async (id) => {
+    if (!window.confirm("Réactiver cette réservation ?")) return;
+    try {
+      await api.put(`admin/reservations/${id}/reactiver`, null, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchData();
+    } catch (err) {
+      console.error("Réactivation réservation échouée :", err);
     }
   };
 
-  // Fonction pour basculer le thème
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
+  // 5) Gestion du thème
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
   return (
     <div className={`admin-container ${theme}`}>
@@ -170,64 +122,54 @@ function Admin() {
       <button onClick={toggleTheme} className="toggle-theme">
         Bascule thème ({theme === "dark" ? "Clair" : "Sombre"})
       </button>
+
       <nav className="admin-nav">
-        <button
-          className={activeTab === "utilisateurs" ? "active" : ""}
-          onClick={() => setActiveTab("utilisateurs")}
-        >
-          Utilisateurs
-        </button>
-        <button
-          className={activeTab === "evenements" ? "active" : ""}
-          onClick={() => setActiveTab("evenements")}
-        >
-          Évènements
-        </button>
-        <button
-          className={activeTab === "reservations" ? "active" : ""}
-          onClick={() => setActiveTab("reservations")}
-        >
-          Réservations
-        </button>
+        {["utilisateurs", "evenements", "reservations"].map((tab) => (
+          <button
+            key={tab}
+            className={activeTab === tab ? "active" : ""}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab === "utilisateurs"
+              ? "Utilisateurs"
+              : tab === "evenements"
+              ? "Évènements"
+              : "Réservations"}
+          </button>
+        ))}
       </nav>
+
       <div className="admin-content">
         {/* Gestion des Utilisateurs */}
         {activeTab === "utilisateurs" && (
           <div>
             <h2>Gestion des Utilisateurs</h2>
             <button onClick={() => navigate("/admin/ajouter-utilisateur")}>
-              Ajouter un utilisateur / administrateur
+              Ajouter un utilisateur
             </button>
-            {data && Array.isArray(data) && data.length > 0 ? (
+            {Array.isArray(data) && data.length > 0 ? (
               <ul>
-                {data.map((user) => (
-                  <li key={user.id}>
-                    {user.username} - {user.email}{" "}
+                {data.map((u) => (
+                  <li key={u.id}>
+                    {u.username} – {u.email}
                     <button
                       onClick={() =>
-                        navigate(`/admin/modifier-utilisateur/${user.id}`)
+                        navigate(`/admin/modifier-utilisateur/${u.id}`)
                       }
                     >
-                      Modifier le profil
+                      Modifier
                     </button>
                     <button
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            "Voulez-vous vraiment supprimer cet utilisateur ?"
-                          )
-                        ) {
-                          api
-                            .delete(`admin/utilisateurs/${user.id}`, {
-                              headers: { Authorization: `Bearer ${token}` },
-                            })
-                            .then(() => fetchData())
-                            .catch((error) =>
-                              console.error(
-                                "Erreur lors de la suppression de l'utilisateur :",
-                                error
-                              )
-                            );
+                      onClick={async () => {
+                        if (!window.confirm("Supprimer cet utilisateur ?"))
+                          return;
+                        try {
+                          await api.delete(`admin/utilisateurs/${u.id}`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                          });
+                          fetchData();
+                        } catch (err) {
+                          console.error("Suppression utilisateur échouée :", err);
                         }
                       }}
                     >
@@ -249,42 +191,33 @@ function Admin() {
             <button onClick={() => navigate("/admin/ajouter-evenement")}>
               Ajouter un événement
             </button>
-            {data && Array.isArray(data) && data.length > 0 ? (
+            {Array.isArray(data) && data.length > 0 ? (
               <ul>
-                {data.map((event) => (
-                  <li key={event.id}>
-                    {event.titre} -{" "}
-                    {new Date(event.dateEvenement).toLocaleString()}{" "}
-                    {event.actif ? (
-                      <span
-                        style={{ color: "green", fontWeight: "bold" }}
-                      >
+                {data.map((e) => (
+                  <li key={e.id}>
+                    {e.titre} – {new Date(e.dateEvenement).toLocaleString()}{" "}
+                    {e.actif ? (
+                      <span style={{ color: "green", fontWeight: "bold" }}>
                         [Actif]
                       </span>
                     ) : (
-                      <span
-                        style={{ color: "red", fontWeight: "bold" }}
-                      >
+                      <span style={{ color: "red", fontWeight: "bold" }}>
                         [Désactivé]
                       </span>
                     )}
                     <button
                       onClick={() =>
-                        navigate(`/admin/modifier-evenement/${event.id}`)
+                        navigate(`/admin/modifier-evenement/${e.id}`)
                       }
                     >
                       Modifier
                     </button>
-                    {event.actif ? (
-                      <button
-                        onClick={() => handleDesactiverEvenement(event.id)}
-                      >
+                    {e.actif ? (
+                      <button onClick={() => handleDesactiverEvenement(e.id)}>
                         Désactiver
                       </button>
                     ) : (
-                      <button
-                        onClick={() => handleReactiverEvenement(event.id)}
-                      >
+                      <button onClick={() => handleReactiverEvenement(e.id)}>
                         Réactiver
                       </button>
                     )}
@@ -301,24 +234,19 @@ function Admin() {
         {activeTab === "reservations" && (
           <div>
             <h2>Gestion des Réservations</h2>
-            {/* Bouton "Ajouter une réservation" retiré car les clients réservent eux-mêmes */}
-            {data && Array.isArray(data) && data.length > 0 ? (
+            {Array.isArray(data) && data.length > 0 ? (
               <ul>
                 {data.map((res) => (
                   <li key={res.id}>
                     Réservation #{res.id} pour{" "}
-                    {res.evenement?.titre || "Événement inconnu"} - Statut :{" "}
+                    {res.evenement?.titre || "Événement inconnu"} – Statut :{" "}
                     {res.statut}{" "}
                     {res.actif ? (
-                      <span
-                        style={{ color: "green", fontWeight: "bold" }}
-                      >
+                      <span style={{ color: "green", fontWeight: "bold" }}>
                         [Actif]
                       </span>
                     ) : (
-                      <span
-                        style={{ color: "red", fontWeight: "bold" }}
-                      >
+                      <span style={{ color: "red", fontWeight: "bold" }}>
                         [Désactivé]
                       </span>
                     )}
@@ -330,11 +258,15 @@ function Admin() {
                       Modifier
                     </button>
                     {res.actif ? (
-                      <button onClick={() => handleDesactiverReservation(res.id)}>
+                      <button
+                        onClick={() => handleDesactiverReservation(res.id)}
+                      >
                         Désactiver
                       </button>
                     ) : (
-                      <button onClick={() => handleReactiverReservation(res.id)}>
+                      <button
+                        onClick={() => handleReactiverReservation(res.id)}
+                      >
                         Réactiver
                       </button>
                     )}
