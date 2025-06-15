@@ -1,23 +1,26 @@
 // src/App.js
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { useEffect } from 'react';
 import AppRouter from './router/AppRouter';
 import MenuRapide from './components/MenuRapide';
+import InactivityHandler from './components/InactivityHandler';
 import { UserProvider } from './contexts/UserContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
-  // Ajout d'un useEffect pour loguer la valeur de REACT_APP_API_URL
   useEffect(() => {
-    console.log("REACT_APP_API_URL:", process.env.REACT_APP_API_URL);
+    console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
   }, []);
 
   return (
     <UserProvider>
       <ThemeProvider>
         <Router>
-          <MenuRapide />
-          <AppRouter />
+          {/* On wrappe MenuRapide + AppRouter pour gérer l'inactivité */}
+          <InactivityHandler timeout={15 * 60 * 1000}>
+            <MenuRapide />
+            <AppRouter />
+          </InactivityHandler>
         </Router>
       </ThemeProvider>
     </UserProvider>
