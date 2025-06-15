@@ -1,123 +1,81 @@
 // src/pages/MesReservations.js
-import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import api from '../services/api';
-import '../styles/MesReservations.css';
+import { useState, useEffect, useCallback } from 'react'
+import { Link, useNavigate }          from 'react-router-dom'
+import api                            from '../services/api'
+import '../styles/MesReservations.css'
 
 function MesReservations() {
-  const [reservations, setReservations] = useState([]);
-  const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+  const [reservations, setReservations] = useState([])
+  const navigate                        = useNavigate()
+  const token                           = localStorage.getItem('token')
 
   const formatPrice = (price) =>
     new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(price);
+      style:    'currency',
+      currency: 'EUR',
+    }).format(price)
 
-  // On crée fetchReservations avec useCallback pour le réutiliser et satisfaire ESLint
   const fetchReservations = useCallback(async () => {
     if (!token) {
-      navigate('/login');
-      return;
-    }
-
-    let userEmail;
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      userEmail = payload.email || payload.sub;
-    } catch (err) {
-      console.error('Erreur décodage token :', err);
-      alert("Erreur d'authentification. Veuillez vous reconnecter.");
-      navigate('/login');
-      return;
+      navigate('/login')
+      return
     }
 
     try {
-      const { data } = await api.get(
-        `reservations/utilisateur?email=${encodeURIComponent(userEmail)}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // 1) On interroge directement l’endpoint “/api/reservations/utilisateur”
+      //    qui renvoie les réservations liées au user issu du JWT
+      const { data } = await api.get('reservations/utilisateur', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
 
-      // Filtrer et enrichir chaque réservation
-      const valid = Array.isArray(data)
-        ? data.filter((r) => r && r.id)
-        : [];
-
-      const updated = await Promise.all(
-        valid.map(async (reservation) => {
-          if (!reservation.evenement || typeof reservation.evenement !== 'object') {
-            try {
-              const ev = await api.get(`evenements/${reservation.evenement}`, {
-                headers: { Authorization: `Bearer ${token}` }
-              });
-              return { ...reservation, evenement: ev.data };
-            } catch {
-              return {
-                ...reservation,
-                evenement: {
-                  id: reservation.evenement || 'ID inconnu',
-                  titre: 'Événement non chargé',
-                  dateEvenement: 'Date inconnue',
-                  lieu: 'Lieu indisponible'
-                }
-              };
-            }
-          }
-          return reservation;
-        })
-      );
-
-      setReservations(updated);
+      // 2) on s’assure que c’est un tableau
+      setReservations(Array.isArray(data) ? data : [])
     } catch (err) {
-      console.error('Erreur récupération réservations :', err);
-      alert("Impossible de récupérer vos réservations.");
+      console.error('Erreur récupération réservations :', err)
+      // 401 on force la reco si le token est expiré
+      if (err.response?.status === 401) {
+        alert('Votre session a expiré, veuillez vous reconnecter.')
+        navigate('/login')
+      } else {
+        alert("Impossible de récupérer vos réservations.")
+      }
     }
-  }, [navigate, token]);
+  }, [navigate, token])
 
-  // on lance fetchReservations au montage
   useEffect(() => {
-    fetchReservations();
-  }, [fetchReservations]);
+    fetchReservations()
+  }, [fetchReservations])
 
-  // Paiement et rafraîchissement
   const handlePayment = async (reservationId) => {
     if (!token) {
-      alert('Vous devez être connecté pour payer.');
-      navigate('/login');
-      return;
+      alert('Vous devez être connecté pour payer.')
+      navigate('/login')
+      return
     }
 
-    const choix = window
-      .prompt('Mode de paiement : CARTE, PAYPAL, VIREMENT')
-      ?.toUpperCase();
+    const choix = window.prompt('Mode de paiement : CARTE, PAYPAL, VIREMENT')
+      ?.toUpperCase()
     if (!['CARTE', 'PAYPAL', 'VIREMENT'].includes(choix)) {
-      alert('Mode invalide.');
-      return;
+      alert('Mode de paiement invalide.')
+      return
     }
 
     try {
       await api.put(
         `reservations/${reservationId}/paiement`,
-        JSON.stringify(choix),
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      alert('Paiement réussi !');
-      await fetchReservations();
+        { mode: choix },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      alert('Paiement réussi !')
+      fetchReservations()
     } catch (err) {
-      console.error('Erreur paiement :', err);
-      alert('Échec du paiement.');
+      console.error('Erreur paiement :', err)
+      alert('Échec du paiement.')
     }
-  };
+  }
 
-  const handleVoirBillet = (reservationId) => {
-    navigate(`/billet/${reservationId}`);
-  };
+  const handleVoirBillet = (reservationId) =>
+    navigate(`/billet/${reservationId}`)
 
   return (
     <div className="reservations-container">
@@ -133,31 +91,26 @@ function MesReservations() {
           {reservations.map((r) => (
             <li key={r.id} className="reservation-item">
               <div className="reservation-details">
-                <strong>
-                  {r.evenement?.titre || `Événement (${r.evenement?.id || 'ID'})`}
-                </strong>
+                <strong>{r.evenement.titre}</strong>
                 <div>
                   <strong>Numéro :</strong> {r.id}
                 </div>
                 <div>
                   <strong>Date réservation :</strong>{' '}
-                  {r.dateReservation
-                    ? new Date(r.dateReservation).toLocaleString('fr-FR')
-                    : 'N.C.'}
+                  {new Date(r.dateReservation).toLocaleString('fr-FR')}
                 </div>
                 <div>
                   <strong>Date événement :</strong>{' '}
-                  {r.evenement?.dateEvenement
-                    ? new Date(r.evenement.dateEvenement).toLocaleDateString('fr-FR')
-                    : 'N.C.'}
+                  {new Date(r.evenement.dateEvenement).toLocaleDateString(
+                    'fr-FR'
+                  )}
                 </div>
                 <div>
-                  <strong>Billets :</strong>{' '}
-                  {r.nombreBillets > 0 ? r.nombreBillets : 'N.C.'}
+                  <strong>Billets :</strong> {r.nombreBillets}
                 </div>
                 <div>
                   <strong>Prix total :</strong>{' '}
-                  {r.prixTotal ? formatPrice(r.prixTotal) : 'N.C.'}
+                  {formatPrice(r.prixTotal)}
                 </div>
                 <div>
                   <strong>Statut :</strong>{' '}
@@ -189,7 +142,7 @@ function MesReservations() {
         </ul>
       )}
     </div>
-  );
+  )
 }
 
-export default MesReservations;
+export default MesReservations
