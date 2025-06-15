@@ -1,37 +1,35 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import PrivateRoute                from './PrivateRoute';
+import PrivateRoute from './PrivateRoute';
 
-// pages
-import Home                    from '../pages/Home';
-import Evenements              from '../pages/Evenements';
-import Login                   from '../pages/Login';
-import Register                from '../pages/Register';
-import Admin                   from '../pages/Admin';
-import DashboardUtilisateurs   from '../pages/DashboardUtilisateurs';
-import MesReservations         from '../pages/MesReservations';
-import ModifierProfil          from '../pages/ModifierProfil';
-import Reservation             from '../pages/Reservation';
-import Billet                  from '../pages/Billet';
-// … autres pages admin/offices …
+import Home                   from '../pages/Home';
+import Evenements             from '../pages/Evenements';
+import Login                  from '../pages/Login';
+import Register               from '../pages/Register';
+import Admin                  from '../pages/Admin';
+import DashboardUtilisateurs  from '../pages/DashboardUtilisateurs';
+import MesReservations        from '../pages/MesReservations';
+import ModifierProfil         from '../pages/ModifierProfil';
+import Reservation            from '../pages/Reservation';
+import Billet                 from '../pages/Billet';
 
 const NotFound = () => (
   <div style={{ textAlign: 'center', padding: '50px' }}>
-    <h1>404 - Page non trouvée</h1>
-    <p>La page que vous recherchez n'existe pas.</p>
+    <h1>404 – Page non trouvée</h1>
+    <p>La page que vous recherchez n’existe pas.</p>
   </div>
 );
 
 export default function AppRouter() {
   return (
     <Routes>
-      {/* → PUBLIQUES ← */}
+      {/* PUBLIQUES */}
       <Route path="/"           element={<Home />} />
       <Route path="/evenements" element={<Evenements />} />
       <Route path="/login"      element={<Login />} />
       <Route path="/register"   element={<Register />} />
 
-      {/* → DASHBOARD UTILISATEUR ← */}
+      {/* DASHBOARD UTILISATEUR */}
       <Route
         path="/dashboard"
         element={
@@ -41,7 +39,7 @@ export default function AppRouter() {
         }
       />
 
-      {/* → DASHBOARD ADMIN ← */}
+      {/* DASHBOARD ADMIN */}
       <Route
         path="/admin"
         element={
@@ -51,7 +49,7 @@ export default function AppRouter() {
         }
       />
 
-      {/* → AUTRES ROUTES PROTÉGÉES ← */}
+      {/* AUTRES ROUTES PROTÉGÉES USUELLES */}
       <Route
         path="/mes-reservations"
         element={
@@ -85,18 +83,7 @@ export default function AppRouter() {
         }
       />
 
-      {/* → BACK-OFFICE ADMIN ← */}
-      {/* Exemple d’ajout : */}
-      {/* <Route
-            path="/admin/ajouter-utilisateur"
-            element={
-              <PrivateRoute allowedRoles={['ADMINISTRATEUR']}>
-                <AjouterUtilisateur />
-              </PrivateRoute>
-            }
-          /> */}
-
-      {/* → 404 ← */}
+      {/* 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

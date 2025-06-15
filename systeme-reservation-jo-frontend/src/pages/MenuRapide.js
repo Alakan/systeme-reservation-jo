@@ -1,22 +1,60 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useContext } from 'react';
+import { Link, useNavigate }           from 'react-router-dom';
+import { UserContext }                 from '../contexts/UserContext';
 import '../styles/MenuRapide.css';
 
-function MenuRapide() {
-    const [isOpen, setIsOpen] = useState(false);
+export default function MenuRapide() {
+  const [isOpen, setIsOpen] = useState(false);
+  const { isAuthenticated, roles } = useContext(UserContext);
+  const navigate                 = useNavigate();
 
-    return (
-        <div className="menu-rapide">
-            <button className="menu-button" onClick={() => setIsOpen(!isOpen)}>☰</button>
-            {isOpen && (
-                <div className="menu-items">
-                    <Link to="/evenements">Événements</Link>
-                    <Link to="/login">Mon compte</Link>
-                    <Link to="/">Accueil</Link>
-                </div>
-            )}
+  // Détermine la bonne route de dashboard selon rôle
+  const dashboardPath = roles.includes('ADMINISTRATEUR') 
+    ? '/admin' 
+    : '/dashboard';
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  };
+
+  return (
+    <nav className="menu-rapide">
+      <button 
+        className="menu-button" 
+        onClick={() => setIsOpen(o => !o)}
+      >
+        ☰
+      </button>
+
+      {isAuthenticated && (
+        <span className="user-info-top">
+          Salut, <strong>{roles.includes('ADMINISTRATEUR') ? 'Admin' : 'User'}</strong> !
+        </span>
+      )}
+
+      {isOpen && (
+        <div className="menu-items">
+          <Link to="/">Accueil</Link>
+          <Link to="/evenements">Événements</Link>
+
+          {isAuthenticated ? (
+            <>
+              <Link to={dashboardPath}>Dashboard</Link>
+              <Link to="/mes-reservations">Mes réservations</Link>
+              <Link to="/modifier-profil">Mon profil</Link>
+              <button className="logout-btn" onClick={handleLogout}>
+                Déconnexion
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login">Connexion</Link>
+              <Link to="/register">Créer un compte</Link>
+            </>
+          )}
         </div>
-    );
+      )}
+    </nav>
+);
 }
-
-export default MenuRapide;
