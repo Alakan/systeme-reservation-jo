@@ -8,15 +8,15 @@ const baseURL = process.env.REACT_APP_API_URL
 
 const api = axios.create({
   baseURL,
-- headers: {
--   'Content-Type': 'application/json',
-- },
-+ headers: {
-+   // On précise explicitement le charset pour que le navigateur
-+   // décode bien la réponse en UTF-8 et encode les requêtes en UTF-8
-+   'Content-Type': 'application/json; charset=UTF-8',
-+   'Accept':       'application/json; charset=UTF-8'
-+ },
+ headers: {
+   'Content-Type': 'application/json',
+ },
+ headers: {
+   // On précise explicitement le charset pour que le navigateur
+   // décode bien la réponse en UTF-8 et encode les requêtes en UTF-8
+   'Content-Type': 'application/json; charset=UTF-8',
+   'Accept':       'application/json; charset=UTF-8'
+ },
 });
 
 export default api;
