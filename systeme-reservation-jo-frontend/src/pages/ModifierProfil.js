@@ -8,77 +8,71 @@ function ModifierProfil() {
   const [profile, setProfile] = useState({
     email: '',
     username: '',
-    password: ''
+    password: ''          // nouveau mot de passe
   });
-  const [message, setMessage] = useState(null);
-  const [error, setError] = useState(null);
+  const [message, setMessage] = useState('');
+  const [error, setError]     = useState('');
   const navigate = useNavigate();
 
-  // 1) charger les infos au montage
+  // Charge l’email et le username au montage
   useEffect(() => {
-    const loadProfile = async () => {
+    const load = async () => {
       const token = localStorage.getItem('token');
-      if (!token) {
-        alert('Vous devez être connecté.');
-        navigate('/login');
-        return;
-      }
+      if (!token) return navigate('/login');
       try {
         const { data } = await api.get('/utilisateurs/me', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setProfile({
-          email: data.email || '',
-          username: data.username || '',
+          email:    data.email,
+          username: data.username,
           password: ''
         });
-      } catch (err) {
-        console.error(err);
+      } catch {
         alert("Impossible de récupérer le profil.");
       }
     };
-    loadProfile();
+    load();
   }, [navigate]);
 
-  const handleChange = (e) => {
+  const handleChange = (e) =>
     setProfile((p) => ({ ...p, [e.target.name]: e.target.value }));
-  };
 
-  // 2) soumettre la mise à jour
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage(null);
-    setError(null);
+    setMessage('');
+    setError('');
 
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('Vous devez être connecté.');
-      navigate('/login');
+    // 1) On exige un mot de passe non vide
+    if (!profile.password.trim()) {
+      setError('Le mot de passe ne peut pas être vide.');
       return;
     }
 
-    // Préparer le payload : n'ajoute password que s'il est non vide
-    const payload = {
-      email: profile.email,
-      username: profile.username
-    };
-    if (profile.password.trim() !== '') {
-      payload.password = profile.password;
-    }
+    const token = localStorage.getItem('token');
+    if (!token) return navigate('/login');
 
     try {
-      await api.put('/utilisateurs/me', payload, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // 2) Appel API : payload minimal (email, username, password)
+      await api.put(
+        '/utilisateurs/me',
+        {
+          email:    profile.email,
+          username: profile.username,
+          password: profile.password
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // 3) Succès → message + redirection
       setMessage('Profil mis à jour avec succès !');
-      // tu peux éventuellement forcer la déconnexion pour regénérer un token
       setTimeout(() => navigate('/dashboard'), 1000);
     } catch (err) {
-      console.error(err);
+      // 4) Échec → message d’erreur et on reste
       if (err.response?.status === 400) {
-        setError('Mot de passe actuel incorrect ou données invalides.');
+        setError(err.response.data || 'Mot de passe incorrect.');
       } else {
-        setError("Erreur serveur, veuillez réessayer plus tard.");
+        setError('Erreur serveur, veuillez réessayer.');
       }
     }
   };
@@ -86,23 +80,23 @@ function ModifierProfil() {
   return (
     <div className="modifier-profil-container">
       <h1>Modifier mon profil</h1>
+
       {message && <div className="alert success">{message}</div>}
       {error   && <div className="alert error">{error}</div>}
 
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Nom d'utilisateur</label>
+        <label>
+          Nom d'utilisateur
           <input
-            type="text"
             name="username"
             value={profile.username}
             onChange={handleChange}
             required
           />
-        </div>
+        </label>
 
-        <div className="form-group">
-          <label>Email</label>
+        <label>
+          Email
           <input
             type="email"
             name="email"
@@ -110,18 +104,19 @@ function ModifierProfil() {
             onChange={handleChange}
             required
           />
-        </div>
+        </label>
 
-        <div className="form-group">
-          <label>Nouveau mot de passe</label>
+        <label>
+          Nouveau mot de passe
           <input
             type="password"
             name="password"
             value={profile.password}
             onChange={handleChange}
-            placeholder="Laissez vide pour ne pas changer"
+            placeholder="Obligatoire pour changer"
+            required
           />
-        </div>
+        </label>
 
         <button type="submit">Mettre à jour</button>
       </form>
