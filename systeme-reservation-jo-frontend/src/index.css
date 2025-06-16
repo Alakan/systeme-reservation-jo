@@ -1,14 +1,38 @@
+/* theming via data-theme sur <html> */
+:root[data-theme='light'] {
+  --bg-color: #ffffff;
+  --text-color: #222222;
+  --primary-color: #007bff;
+  --menu-bg: #f5f5f5;
+  --menu-text: #333333;
+}
+
+:root[data-theme='dark'] {
+  --bg-color: #1e1e1e;
+  --text-color: #f5f5f5;
+  --primary-color: #66baff;
+  --menu-bg: #2a2a2a;
+  --menu-text: #dddddd;
+}
+
+/* global resets & font */
 body {
-  padding-top: 3.5rem;  /* ex. 56px si header fait ~56px de haut */
+  padding-top: 3.5rem;           /* décalage sous le header fixe */
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family:
+    -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+    'Cantarell', 'Fira Sans', 'Droid Sans',
+    'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas,
+    'Courier New', monospace;
 }

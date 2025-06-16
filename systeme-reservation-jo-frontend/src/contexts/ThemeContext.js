@@ -1,34 +1,48 @@
 // src/contexts/ThemeContext.js
-import { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { UserContext } from './UserContext';  // ajuste le chemin si besoin
 
 export const ThemeContext = createContext({
   theme: 'light',
   setTheme: () => {}
 });
 
-export const ThemeProvider = ({ children }) => {
-  const token = localStorage.getItem('token');
-  let defaultTheme = 'light';
+export function ThemeProvider({ children }) {
+  const { roles } = useContext(UserContext);
 
-  try {
-    if (token) {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload.roles && payload.roles.includes('ADMIN')) {
-        defaultTheme = 'dark';
-      }
+  // 1) Récupère le choix utilisateur en cache, sinon on déduit du rôle
+  const savedTheme = localStorage.getItem('theme');
+  const initialTheme = savedTheme
+    ? savedTheme
+    : roles.includes('ADMINISTRATEUR')
+      ? 'dark'
+      : 'light';
+
+  const [theme, setTheme] = useState(initialTheme);
+
+  // 2) À chaque changement de thème, on :
+  //    - Sauvegarde en localStorage
+  //    - Met à jour data-theme sur <html>
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  // 3) Si les rôles changent (login/logout), et que l’utilisateur
+  //    n’a pas déjà forcé son choix (savedTheme), on réinitialise
+  useEffect(() => {
+    if (!savedTheme) {
+      const roleBased = roles.includes('ADMINISTRATEUR') ? 'dark' : 'light';
+      setTheme(roleBased);
     }
-  } catch (error) {
-    console.error("Erreur lors du décodage du token :", error);
-  }
-
-  const [theme, setTheme] = useState(defaultTheme);
+  }, [roles, savedTheme]);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
-};
+}
 
-// Hook personnalisé pour utiliser le ThemeContext
+// Hook pour l’utiliser dans tes composants
 export const useTheme = () => useContext(ThemeContext);
