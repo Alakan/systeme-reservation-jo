@@ -13,21 +13,23 @@ import ModifierProfil         from '../pages/ModifierProfil';
 import Reservation            from '../pages/Reservation';
 import Billet                 from '../pages/Billet';
 
-const NotFound = () => (
-  <div style={{ textAlign: 'center', padding: '50px' }}>
-    <h1>404 – Page non trouvée</h1>
-    <p>La page que vous recherchez n’existe pas.</p>
-  </div>
-);
+function NotFound() {
+  return (
+    <div style={{ textAlign: 'center', padding: 50 }}>
+      <h1>404 – Page non trouvée</h1>
+      <p>La page demandée n’existe pas.</p>
+    </div>
+  );
+}
 
 export default function AppRouter() {
   return (
     <Routes>
       {/* PUBLIQUES */}
-      <Route path="/"           element={<Home />} />
+      <Route path="/" element={<Home />} />
       <Route path="/evenements" element={<Evenements />} />
-      <Route path="/login"      element={<Login />} />
-      <Route path="/register"   element={<Register />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
       {/* DASHBOARD UTILISATEUR */}
       <Route
@@ -49,7 +51,7 @@ export default function AppRouter() {
         }
       />
 
-      {/* AUTRES ROUTES PROTÉGÉES USUELLES */}
+      {/* AUTRES ROUTES PROTÉGÉES */}
       <Route
         path="/mes-reservations"
         element={

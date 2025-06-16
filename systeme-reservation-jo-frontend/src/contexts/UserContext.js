@@ -8,11 +8,14 @@ export const UserContext = createContext({
 });
 
 export function UserProvider({ children }) {
-  const [user, setUser]     = useState(null);
-  const token               = localStorage.getItem('token');
+  const [user, setUser] = useState(null);
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
-    if (!token) return setUser(null);
+    if (!token) {
+      setUser(null);
+      return;
+    }
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       setUser(payload);
@@ -22,12 +25,10 @@ export function UserProvider({ children }) {
   }, [token]);
 
   const isAuthenticated = Boolean(user);
-  const roles           = user?.roles || [];
+  const roles = user?.roles || [];
 
   return (
-    <UserContext.Provider value={{
-      user, setUser, isAuthenticated, roles
-    }}>
+    <UserContext.Provider value={{ user, setUser, isAuthenticated, roles }}>
       {children}
     </UserContext.Provider>
   );
