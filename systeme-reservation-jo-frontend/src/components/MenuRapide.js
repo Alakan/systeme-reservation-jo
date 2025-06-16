@@ -1,27 +1,37 @@
-import React, { useState, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { UserContext }       from '../contexts/UserContext';
-import '../styles/MenuRapide.css';
+// src/components/MenuRapide.js
+import React, { useState, useContext } from 'react'
+import { useNavigate }                 from 'react-router-dom'
+import { UserContext }                 from '../contexts/UserContext'
+import '../styles/MenuRapide.css'
 
 export default function MenuRapide() {
-  const [isOpen, setIsOpen]        = useState(false);
-  const { isAuthenticated, roles } = useContext(UserContext);
-  const navigate                   = useNavigate();
+  const [isOpen, setIsOpen]        = useState(false)
+  const { isAuthenticated, roles, setUser } = useContext(UserContext)
+  const navigate                   = useNavigate()
 
+  // ferme le menu ET navigue
+  const goTo = (path) => {
+    setIsOpen(false)
+    navigate(path, { replace: true })
+  }
+
+  // logout : supprime token, reset user, ferme menu, redirige
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    setUser(null)
+    goTo('/login')
+  }
+
+  // choisi le bon dashboard
   const dashboardPath = roles.includes('ADMINISTRATEUR')
     ? '/admin'
-    : '/dashboard';
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login', { replace: true });
-  };
+    : '/dashboard'
 
   return (
     <nav className="menu-rapide">
       <button
         className="menu-button"
-        onClick={() => setIsOpen((o) => !o)}
+        onClick={() => setIsOpen(o => !o)}
       >
         ☰
       </button>
@@ -36,28 +46,38 @@ export default function MenuRapide() {
 
       {isOpen && (
         <div className="menu-items">
-          <Link to="/">Accueil</Link>
-          <Link to="/evenements">Événements</Link>
+          <button onClick={() => goTo('/')}>Accueil</button>
+          <button onClick={() => goTo('/evenements')}>Événements</button>
 
           {isAuthenticated ? (
             <>
-              <Link to={dashboardPath}>Dashboard</Link>
+              <button onClick={() => goTo(dashboardPath)}>
+                Dashboard
+              </button>
               {roles.includes('UTILISATEUR') && (
-                <Link to="/mes-reservations">Mes réservations</Link>
+                <button onClick={() => goTo('/mes-reservations')}>
+                  Mes réservations
+                </button>
               )}
-              <Link to="/modifier-profil">Mon profil</Link>
+              <button onClick={() => goTo('/modifier-profil')}>
+                Mon profil
+              </button>
               <button className="logout-btn" onClick={handleLogout}>
                 Déconnexion
               </button>
             </>
           ) : (
             <>
-              <Link to="/login">Connexion</Link>
-              <Link to="/register">Créer un compte</Link>
+              <button onClick={() => goTo('/login')}>
+                Connexion
+              </button>
+              <button onClick={() => goTo('/register')}>
+                Créer un compte
+              </button>
             </>
           )}
         </div>
       )}
     </nav>
-  );
+  )
 }
