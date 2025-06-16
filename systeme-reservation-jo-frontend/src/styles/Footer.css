@@ -1,0 +1,12 @@
+.footer {
+  background: var(--menu-bg);
+  color: var(--menu-text);
+  text-align: center;
+  padding: 1rem;
+  font-size: .9rem;
+}
+.footer .rings img {
+  height: 24px;
+  margin: 0 4px;
+  opacity: .7;
+}
