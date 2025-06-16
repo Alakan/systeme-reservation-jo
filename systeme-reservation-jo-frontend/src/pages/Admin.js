@@ -1,3 +1,4 @@
+// src/pages/Admin.js
 import React, { useState, useEffect } from "react";
 import { useNavigate }                from "react-router-dom";
 import api                             from "../services/api";
@@ -38,8 +39,8 @@ export default function Admin() {
     if (activeTab === "utilisateurs")   endpoint = "admin/utilisateurs";
     if (activeTab === "evenements")     endpoint = "admin/evenements";
     if (activeTab === "reservations")   endpoint = "admin/reservations";
-
     if (!endpoint) return;
+
     api.get(endpoint, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setData(res.data))
       .catch(err => console.error("API error:", err));
@@ -112,28 +113,31 @@ export default function Admin() {
               + Ajouter un utilisateur
             </button>
             {data.length > 0 ? (
-              <ul className="admin-list">
+              <ul>
                 {data.map(u => (
                   <li key={u.id}>
-                    {u.username} ({u.email})
-                    <button
-                      onClick={() =>
-                        navigate(`/admin/utilisateurs/modifier/${u.id}`)
-                      }
-                    >
-                      Modifier
-                    </button>
-                    <button
-                      onClick={() =>
-                        window
-                          .confirm("Supprimer cet utilisateur ?") &&
-                        api.delete(`admin/utilisateurs/${u.id}`, {
-                          headers: { Authorization: `Bearer ${token}` }
-                        }).then(fetchData)
-                      }
-                    >
-                      Supprimer
-                    </button>
+                    <div className="item-info">
+                      {u.username} <span>({u.email})</span>
+                    </div>
+                    <div className="actions">
+                      <button
+                        onClick={() =>
+                          navigate(`/admin/utilisateurs/modifier/${u.id}`)
+                        }
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        onClick={() =>
+                          window.confirm("Supprimer cet utilisateur ?") &&
+                          api.delete(`admin/utilisateurs/${u.id}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                          }).then(fetchData)
+                        }
+                      >
+                        Supprimer
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -153,29 +157,34 @@ export default function Admin() {
               + Ajouter un événement
             </button>
             {data.length > 0 ? (
-              <ul className="admin-list">
+              <ul>
                 {data.map(ev => (
                   <li key={ev.id}>
-                    {ev.titre} — {new Date(ev.dateEvenement).toLocaleString()}
-                    <span className={`status ${ev.actif ? "active" : "disabled"}`}>
-                      [{ev.actif ? "Actif" : "Désactivé"}]
-                    </span>
-                    <button
-                      onClick={() =>
-                        navigate(`/admin/evenements/modifier/${ev.id}`)
-                      }
-                    >
-                      Modifier
-                    </button>
-                    {ev.actif ? (
-                      <button onClick={() => handleDesactiverEvenement(ev.id)}>
-                        Désactiver
+                    <div className="item-info">
+                      {ev.titre} —{" "}
+                      {new Date(ev.dateEvenement).toLocaleString()}{" "}
+                      <span className={`status ${ev.actif ? "active" : "disabled"}`}>
+                        [{ev.actif ? "Actif" : "Désactivé"}]
+                      </span>
+                    </div>
+                    <div className="actions">
+                      <button
+                        onClick={() =>
+                          navigate(`/admin/evenements/modifier/${ev.id}`)
+                        }
+                      >
+                        Modifier
                       </button>
-                    ) : (
-                      <button onClick={() => handleReactiverEvenement(ev.id)}>
-                        Réactiver
-                      </button>
-                    )}
+                      {ev.actif ? (
+                        <button onClick={() => handleDesactiverEvenement(ev.id)}>
+                          Désactiver
+                        </button>
+                      ) : (
+                        <button onClick={() => handleReactiverEvenement(ev.id)}>
+                          Réactiver
+                        </button>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -189,29 +198,33 @@ export default function Admin() {
           <section>
             <h2>Gestion des Réservations</h2>
             {data.length > 0 ? (
-              <ul className="admin-list">
+              <ul>
                 {data.map(r => (
                   <li key={r.id}>
-                    Réservation #{r.id} pour {r.evenement?.titre || "N/A"}
-                    <span className={`status ${r.actif ? "active" : "disabled"}`}>
-                      [{r.actif ? "Actif" : "Désactivé"}]
-                    </span>
-                    <button
-                      onClick={() =>
-                        navigate(`/admin/reservations/modifier/${r.id}`)
-                      }
-                    >
-                      Modifier
-                    </button>
-                    {r.actif ? (
-                      <button onClick={() => handleDesactiverReservation(r.id)}>
-                        Désactiver
+                    <div className="item-info">
+                      Réservation #{r.id} pour {r.evenement?.titre || "N/A"}{" "}
+                      <span className={`status ${r.actif ? "active" : "disabled"}`}>
+                        [{r.actif ? "Actif" : "Désactivé"}]
+                      </span>
+                    </div>
+                    <div className="actions">
+                      <button
+                        onClick={() =>
+                          navigate(`/admin/reservations/modifier/${r.id}`)
+                        }
+                      >
+                        Modifier
                       </button>
-                    ) : (
-                      <button onClick={() => handleReactiverReservation(r.id)}>
-                        Réactiver
-                      </button>
-                    )}
+                      {r.actif ? (
+                        <button onClick={() => handleDesactiverReservation(r.id)}>
+                          Désactiver
+                        </button>
+                      ) : (
+                        <button onClick={() => handleReactiverReservation(r.id)}>
+                          Réactiver
+                        </button>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>
