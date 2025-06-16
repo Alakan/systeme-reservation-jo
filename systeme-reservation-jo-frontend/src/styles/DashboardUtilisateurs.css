@@ -1,56 +1,64 @@
+/* src/styles/DashboardUtilisateurs.css */
+
+/* Conteneur principal */
 .dashboard-container {
   max-width: 800px;
-  margin: 2rem auto;
-  padding: 1.5rem;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.1);
+  margin: 40px auto;
+  padding: 20px;
+  background: var(--bg-color);   /* clair ou sombre */
+  color: var(--text-color);      /* texte bien contrasté */
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  font-family: sans-serif;
 }
 
+/* Titre */
 .dashboard-container h1 {
   margin-bottom: 1rem;
   font-size: 2rem;
-  color: var(--primary);
+  color: var(--primary);        /* couleur accentuée */
 }
 
+/* Bloc profil */
 .profile-info {
-  background-color: var(--menu-bg);
-  color: var(--menu-text);
-  padding: 1rem;
+  background: var(--menu-bg);    /* utilise le fond de menu (dégradé ou uni) */
+  color: var(--menu-text);       /* texte visible dessus */
+  padding: 20px;
+  margin-bottom: 20px;
+  line-height: 1.6;
   border-radius: 4px;
-  margin-bottom: 1.5rem;
 }
 
+/* Labels en gras et alignés */
 .profile-info p {
   margin: 0.5rem 0;
-  font-size: 1.1rem;
 }
 
 .profile-info p strong {
   display: inline-block;
   width: 80px;
+  color: var(--primary);
 }
 
+/* Liens / boutons */
 .dashboard-links {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 1rem;
 }
 
-.dashboard-links a,
 .dashboard-links button {
-  text-decoration: none;
-}
-
-.dashboard-links button {
-  background-color: var(--primary);
+  margin: 10px;
+  padding: 10px 15px;
+  background: var(--primary);
   color: #fff;
   border: none;
-  padding: 0.75rem 1.25rem;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: filter .2s;
+  font-size: 16px;
+  transition: filter 0.3s ease;
 }
 
 .dashboard-links button:hover {
