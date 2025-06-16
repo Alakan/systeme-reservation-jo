@@ -1,44 +1,38 @@
-import React, { useState, useContext } from 'react';
-import { useNavigate }                 from 'react-router-dom';
-import { UserContext }                 from '../contexts/UserContext';
-import '../styles/MenuRapide.css';
+import React, { useState, useContext } from 'react'
+import { useNavigate }                 from 'react-router-dom'
+import { UserContext }                 from '../contexts/UserContext'
+import '../styles/MenuRapide.css'
 
 export default function MenuRapide() {
-  const [isOpen, setIsOpen]        = useState(false);
-  const { isAuthenticated, roles, setUser } = useContext(UserContext);
-  const navigate                   = useNavigate();
+  const [isOpen, setIsOpen]           = useState(false)
+  const { isAuthenticated, user, roles, setUser } = useContext(UserContext)
+  const navigate                      = useNavigate()
 
-  // navigation + fermeture du menu
-  const goTo = (path) => {
-    setIsOpen(false);
-    navigate(path, { replace: true });
-  };
+  const goTo = path => {
+    setIsOpen(false)
+    navigate(path, { replace: true })
+  }
 
-  // déconnexion
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-    goTo('/login');
-  };
+    localStorage.removeItem('token')
+    setUser(null)
+    goTo('/login')
+  }
 
-  // route Dashboard selon rôle
   const dashboardPath = roles.includes('ADMINISTRATEUR')
     ? '/admin'
-    : '/dashboard';
+    : '/dashboard'
 
   return (
     <nav className="menu-rapide">
-      <button
-        className="menu-button"
-        onClick={() => setIsOpen(o => !o)}
-      >
+      <button className="menu-button" onClick={() => setIsOpen(o => !o)}>
         ☰
       </button>
 
       {isAuthenticated && (
         <span className="user-info-top">
           Salut, <strong>
-            {roles.includes('ADMINISTRATEUR') ? 'Admin' : 'User'}
+            {user.username || user.sub}
           </strong> !
         </span>
       )}
@@ -76,5 +70,5 @@ export default function MenuRapide() {
         </div>
       )}
     </nav>
-  );
+)
 }

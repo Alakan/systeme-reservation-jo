@@ -1,35 +1,42 @@
-import React, { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import api from '../services/api';
-import { UserContext } from '../contexts/UserContext';
-import '../styles/Login.css';
+import React, { useState, useContext } from 'react'
+import { useNavigate, Link }           from 'react-router-dom'
+import api                             from '../services/api'
+import { UserContext }                 from '../contexts/UserContext'
+import '../styles/Login.css'
 
 export default function Login() {
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError]       = useState('');
-  const { setUser }             = useContext(UserContext);
-  const navigate                = useNavigate();
+  const [email, setEmail]       = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError]       = useState('')
+  const { setUser }             = useContext(UserContext)
+  const navigate                = useNavigate()
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+  const handleSubmit = async e => {
+    e.preventDefault()
+    setError('')
     try {
-      const { data } = await api.post('auth/login', { email, password });
-      localStorage.setItem('token', data.token);
+      const { data } = await api.post('auth/login', { email, password })
+      const token     = data.token
+      localStorage.setItem('token', token)
 
-      const payload = JSON.parse(atob(data.token.split('.')[1]));
-      setUser(payload);
+      // on décode le payload **surtout** avant setUser
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const rawRoles = payload.roles || []
+      const normalized = rawRoles.map(r =>
+        r.toString().toUpperCase().replace(/^ROLE_/, '')
+      )
+      setUser({ ...payload, roles: normalized })
 
-      if (payload.roles?.includes('ADMINISTRATEUR')) {
-        navigate('/admin', { replace: true });
+      // redirection
+      if (normalized.includes('ADMINISTRATEUR')) {
+        navigate('/admin', { replace: true })
       } else {
-        navigate('/dashboard', { replace: true });
+        navigate('/dashboard', { replace: true })
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Identifiants invalides.');
+      setError(err.response?.data?.message || 'Échec de la connexion.')
     }
-  };
+  }
 
   return (
     <div className="login-container">
@@ -40,14 +47,14 @@ export default function Login() {
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={e => setEmail(e.target.value)}
           required
         />
         <input
           type="password"
           placeholder="Mot de passe"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={e => setPassword(e.target.value)}
           required
         />
         <button type="submit">Se connecter</button>
@@ -57,5 +64,5 @@ export default function Login() {
       </p>
       <Link to="/"><button className="btn-home">Accueil</button></Link>
     </div>
-  );
+  )
 }
