@@ -1,38 +1,50 @@
+/* src/App.css */
+
+/* ───────── BASE ───────── */
 .App {
   text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-color);
+  color:            var(--text-color);
+  transition:       background-color .3s, color .3s;
 }
 
+.App-header {
+  flex:            1;
+  display:         flex;
+  flex-direction:  column;
+  align-items:     center;
+  justify-content: center;
+  padding:         2rem;
+}
+
+/* Logo animé */
 .App-logo {
-  height: 40vmin;
-  pointer-events: none;
+  height:           20vmin;
+  max-height:       200px;
+  pointer-events:   none;
+  margin-bottom:    1rem;
 }
-
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
   }
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
+/* Liens */
 .App-link {
-  color: #61dafb;
+  color:            var(--primary);
+  text-decoration:  none;
+  font-weight:      bold;
+}
+.App-link:hover {
+  text-decoration: underline;
 }
 
+/* ───────── KEYFRAMES ───────── */
 @keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
