@@ -2,16 +2,21 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import PrivateRoute     from './PrivateRoute';
 
-import Home                  from '../pages/Home';
-import Evenements            from '../pages/Evenements';
-import Login                 from '../pages/Login';
-import Register              from '../pages/Register';
-import Admin                 from '../pages/Admin';
-import DashboardUtilisateurs from '../pages/DashboardUtilisateurs';
-import MesReservations       from '../pages/MesReservations';
-import ModifierProfil        from '../pages/ModifierProfil';
-import Reservation           from '../pages/Reservation';
-import Billet                from '../pages/Billet';
+import Home                      from '../pages/Home';
+import Evenements                from '../pages/Evenements';
+import Login                     from '../pages/Login';
+import Register                  from '../pages/Register';
+import Admin                     from '../pages/Admin';
+import DashboardUtilisateurs     from '../pages/DashboardUtilisateurs';
+import MesReservations           from '../pages/MesReservations';
+import ModifierProfil            from '../pages/ModifierProfil';
+import Reservation               from '../pages/Reservation';
+import Billet                    from '../pages/Billet';
+import AjouterEvenement          from '../pages/AjouterEvenement';
+import AjouterUtilisateur        from '../pages/AjouterUtilisateur';
+import ModifierEvenement         from '../pages/ModifierEvenement';      // à créer ou ajuster
+import ModifierUtilisateur       from '../pages/ModifierUtilisateur';    // à créer ou ajuster
+import ModifierReservation       from '../pages/ModifierReservation';    // à créer ou ajuster
 
 function NotFound() {
   return (
@@ -47,6 +52,52 @@ export default function AppRouter() {
         element={
           <PrivateRoute allowedRoles={['ADMINISTRATEUR']}>
             <Admin />
+          </PrivateRoute>
+        }
+      />
+
+      {/* ADMIN – CRUD Utilisateurs */}
+      <Route
+        path="/admin/utilisateurs/ajouter"
+        element={
+          <PrivateRoute allowedRoles={['ADMINISTRATEUR']}>
+            <AjouterUtilisateur />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin/utilisateurs/modifier/:id"
+        element={
+          <PrivateRoute allowedRoles={['ADMINISTRATEUR']}>
+            <ModifierUtilisateur />
+          </PrivateRoute>
+        }
+      />
+
+      {/* ADMIN – CRUD Évènements */}
+      <Route
+        path="/admin/evenements/ajouter"
+        element={
+          <PrivateRoute allowedRoles={['ADMINISTRATEUR']}>
+            <AjouterEvenement />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin/evenements/modifier/:id"
+        element={
+          <PrivateRoute allowedRoles={['ADMINISTRATEUR']}>
+            <ModifierEvenement />
+          </PrivateRoute>
+        }
+      />
+
+      {/* ADMIN – CRUD Réservations */}
+      <Route
+        path="/admin/reservations/modifier/:id"
+        element={
+          <PrivateRoute allowedRoles={['ADMINISTRATEUR']}>
+            <ModifierReservation />
           </PrivateRoute>
         }
       />

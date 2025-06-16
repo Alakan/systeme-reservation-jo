@@ -1,70 +1,95 @@
-// src/pages/ModifierEvenement.js
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import api from "../services/api";
+import { useParams, useNavigate }      from "react-router-dom";
+import api                              from "../services/api";
 import "../styles/ModifierEvenement.css";
 
-function ModifierEvenement() {
-  const { id } = useParams(); // Récupère l'ID de l'événement sélectionné
-  const navigate = useNavigate();
-  const [evenement, setEvenement] = useState({
+export default function ModifierEvenement() {
+  const { id }      = useParams();
+  const navigate    = useNavigate();
+  const [form, setForm] = useState({
     titre: "",
     description: "",
     dateEvenement: "",
-    lieu: "",
+    lieu: ""
   });
+  const [file, setFile] = useState(null);
 
-  // Récupérer les infos de l'événement via l'API
   useEffect(() => {
-    api.get(`admin/evenements/${id}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-    })
-      .then((res) => setEvenement(res.data))
-      .catch(() => alert("Erreur lors du chargement de l'événement."));
+    api
+      .get(`/admin/evenements/${id}`)
+      .then(res => {
+        const ev = res.data;
+        setForm({
+          titre: ev.titre,
+          description: ev.description,
+          dateEvenement: ev.dateEvenement.slice(0, 16),
+          lieu: ev.lieu
+        });
+      })
+      .catch(() => alert("Erreur lors du chargement"));
   }, [id]);
 
-  const handleChange = (e) => {
-    setEvenement({ ...evenement, [e.target.name]: e.target.value });
+  const handleChange = e => {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
+  const handleFile   = e => setFile(e.target.files[0] || null);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
-    try {
-      api.put(`admin/evenements/${id}`, evenement, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    const data = new FormData();
+    data.append("titre", form.titre);
+    data.append("description", form.description);
+    data.append("dateEvenement", form.dateEvenement.slice(0, 16));
+    data.append("lieu", form.lieu);
+    if (file) data.append("image", file);
+
+    api
+      .put(`/admin/evenements/${id}`, data, {
+        headers: { "Content-Type": "multipart/form-data" }
       })
       .then(() => {
         alert("Événement modifié !");
         navigate("/admin");
       })
-      .catch(() => {
-        alert("Erreur lors de la modification !");
-      });
-    } catch (error) {
-      alert("Erreur lors de la modification !");
-    }
+      .catch(() => alert("Erreur lors de la modification"));
   };
 
   return (
-    <div className="modifier-evenement-container">
+    <div className="form-admin">
       <h2>Modifier un événement</h2>
       <form onSubmit={handleSubmit}>
-        <label>Titre :</label>
-        <input type="text" name="titre" value={evenement.titre} onChange={handleChange} required />
-
-        <label>Description :</label>
-        <textarea name="description" value={evenement.description} onChange={handleChange} required />
-
-        <label>Date :</label>
-        <input type="datetime-local" name="dateEvenement" value={evenement.dateEvenement} onChange={handleChange} required />
-
-        <label>Lieu :</label>
-        <input type="text" name="lieu" value={evenement.lieu} onChange={handleChange} required />
+        <input
+          name="titre"
+          value={form.titre}
+          onChange={handleChange}
+          required
+        />
+        <textarea
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="datetime-local"
+          name="dateEvenement"
+          value={form.dateEvenement}
+          onChange={handleChange}
+          required
+        />
+        <input
+          name="lieu"
+          value={form.lieu}
+          onChange={handleChange}
+          required
+        />
+        <label>
+          Nouvelle image (optionnelle) :
+          <input type="file" accept="image/*" onChange={handleFile} />
+        </label>
 
         <button type="submit">Modifier</button>
       </form>
     </div>
   );
 }
-
-export default ModifierEvenement;

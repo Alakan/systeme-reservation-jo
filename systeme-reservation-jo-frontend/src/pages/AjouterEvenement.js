@@ -1,60 +1,58 @@
-// src/pages/AjouterEvenement.js
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../services/api";
+import { useNavigate }      from "react-router-dom";
+import api                  from "../services/api";
 
-function AjouterEvenement() {
-  const [evenement, setEvenement] = useState({
+export default function AjouterEvenement() {
+  const [form, setForm] = useState({
     titre: "",
     description: "",
     dateEvenement: "",
     lieu: "",
-    prix: "",          // champ pour le prix
-    capaciteTotale: "" // champ pour la capacité totale
+    prix: "",
+    capaciteTotale: ""
   });
-  const navigate = useNavigate();
+  const [file, setFile] = useState(null);
+  const navigate        = useNavigate();
 
-  const handleChange = (e) => {
-    setEvenement({ ...evenement, [e.target.name]: e.target.value });
+  const handleChange = e => {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+  const handleFile = e => {
+    setFile(e.target.files[0] || null);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     try {
-      // Si la valeur de dateEvenement dépasse 16 caractères, on la tronque pour obtenir le format "yyyy-MM-ddTHH:mm"
-      let dateStr = evenement.dateEvenement;
-      if (dateStr.length > 16) {
-        dateStr = dateStr.slice(0, 16);
-      }
-      // Envoi de la requête POST avec l'ensemble des champs
-      await api.post(
-        "evenements",
-        { ...evenement, dateEvenement: dateStr },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
+      // Prépare l'objet FormData
+      const data = new FormData();
+      // tronque la date locale au format yyyy-MM-ddTHH:mm
+      let dateStr = form.dateEvenement.slice(0, 16);
+      data.append("titre", form.titre);
+      data.append("description", form.description);
+      data.append("dateEvenement", dateStr);
+      data.append("lieu", form.lieu);
+      data.append("prix", form.prix);
+      data.append("capaciteTotale", form.capaciteTotale);
+      if (file) data.append("image", file);
+
+      await api.post("/admin/evenements", data, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
       alert("Événement ajouté avec succès !");
       navigate("/admin");
-    } catch (error) {
-      console.error("Erreur lors de l'ajout de l'événement :", error);
-      alert("Erreur lors de l'ajout de l'événement !");
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de l'ajout de l'événement.");
     }
   };
 
   return (
-    <div>
+    <div className="form-admin">
       <h2>Ajouter un événement</h2>
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="titre"
-          placeholder="Titre"
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="text"
+        <input name="titre"        placeholder="Titre"         onChange={handleChange} required />
+        <textarea
           name="description"
           placeholder="Description"
           onChange={handleChange}
@@ -66,18 +64,12 @@ function AjouterEvenement() {
           onChange={handleChange}
           required
         />
-        <input
-          type="text"
-          name="lieu"
-          placeholder="Lieu"
-          onChange={handleChange}
-          required
-        />
+        <input name="lieu"         placeholder="Lieu"          onChange={handleChange} required />
         <input
           type="number"
-          step="0.01"
           name="prix"
-          placeholder="Prix"
+          step="0.01"
+          placeholder="Prix (€)"
           onChange={handleChange}
           required
         />
@@ -85,14 +77,18 @@ function AjouterEvenement() {
           type="number"
           name="capaciteTotale"
           placeholder="Capacité totale"
+          min="1"
           onChange={handleChange}
           required
-          min="1"
         />
+
+        <label>
+          Image (optionnelle) :
+          <input type="file" accept="image/*" onChange={handleFile} />
+        </label>
+
         <button type="submit">Ajouter</button>
       </form>
     </div>
   );
 }
-
-export default AjouterEvenement;

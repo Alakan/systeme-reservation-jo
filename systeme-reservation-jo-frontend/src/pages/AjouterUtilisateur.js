@@ -1,40 +1,35 @@
-// src/pages/AjouterUtilisateur.js
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import React, { useState } from "react";
+import { useNavigate }      from "react-router-dom";
+import api                  from "../services/api";
 
-function AjouterUtilisateur() {
-  const [user, setUser] = useState({
-    username: '',
-    email: '',
-    password: ''
+export default function AjouterUtilisateur() {
+  const [user, setUser]   = useState({
+    username: "",
+    email: "",
+    password: ""
   });
-  const navigate = useNavigate();
+  const navigate          = useNavigate();
 
-  const handleChange = (e) => {
-    setUser({ ...user, [e.target.name]: e.target.value });
+  const handleChange = e => {
+    setUser(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     try {
-      // Modification : utilisation d'un chemin relatif sans le slash initial
-      await api.post('admin/utilisateurs', user, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      await api.post("/admin/utilisateurs", user);
       alert("Utilisateur ajouté avec succès !");
-      navigate('/admin'); // Retour à la liste des utilisateurs
-    } catch (error) {
-      alert("Erreur lors de l'ajout de l'utilisateur !");
+      navigate("/admin");
+    } catch {
+      alert("Erreur lors de l'ajout de l'utilisateur");
     }
   };
 
   return (
-    <div>
+    <div className="form-admin">
       <h2>Ajouter un utilisateur</h2>
       <form onSubmit={handleSubmit}>
         <input
-          type="text"
           name="username"
           placeholder="Nom d'utilisateur"
           onChange={handleChange}
@@ -59,5 +54,3 @@ function AjouterUtilisateur() {
     </div>
   );
 }
-
-export default AjouterUtilisateur;
