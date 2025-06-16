@@ -1,31 +1,30 @@
-// src/components/MenuRapide.js
-import React, { useState, useContext } from 'react'
-import { useNavigate }                 from 'react-router-dom'
-import { UserContext }                 from '../contexts/UserContext'
-import '../styles/MenuRapide.css'
+import React, { useState, useContext } from 'react';
+import { useNavigate }                 from 'react-router-dom';
+import { UserContext }                 from '../contexts/UserContext';
+import '../styles/MenuRapide.css';
 
 export default function MenuRapide() {
-  const [isOpen, setIsOpen]        = useState(false)
-  const { isAuthenticated, roles, setUser } = useContext(UserContext)
-  const navigate                   = useNavigate()
+  const [isOpen, setIsOpen]        = useState(false);
+  const { isAuthenticated, roles, setUser } = useContext(UserContext);
+  const navigate                   = useNavigate();
 
-  // ferme le menu ET navigue
+  // navigation + fermeture du menu
   const goTo = (path) => {
-    setIsOpen(false)
-    navigate(path, { replace: true })
-  }
+    setIsOpen(false);
+    navigate(path, { replace: true });
+  };
 
-  // logout : supprime token, reset user, ferme menu, redirige
+  // déconnexion
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    setUser(null)
-    goTo('/login')
-  }
+    localStorage.removeItem('token');
+    setUser(null);
+    goTo('/login');
+  };
 
-  // choisi le bon dashboard
+  // route Dashboard selon rôle
   const dashboardPath = roles.includes('ADMINISTRATEUR')
     ? '/admin'
-    : '/dashboard'
+    : '/dashboard';
 
   return (
     <nav className="menu-rapide">
@@ -68,9 +67,7 @@ export default function MenuRapide() {
             </>
           ) : (
             <>
-              <button onClick={() => goTo('/login')}>
-                Connexion
-              </button>
+              <button onClick={() => goTo('/login')}>Connexion</button>
               <button onClick={() => goTo('/register')}>
                 Créer un compte
               </button>
@@ -79,5 +76,5 @@ export default function MenuRapide() {
         </div>
       )}
     </nav>
-  )
+  );
 }
