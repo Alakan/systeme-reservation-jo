@@ -1,38 +1,41 @@
 /* src/styles/ModifierUtilisateur.css */
+
 .modifier-utilisateur-container {
   max-width: 600px;
   margin: 40px auto;
   padding: 20px;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-color);
+  color:            var(--text-color);
+  border-radius:    8px;
+  box-shadow:       0 4px 12px rgba(0, 0, 0, 0.1);
 }
-
 .modifier-utilisateur-container h2 {
   text-align: center;
+  color: var(--primary);
+  margin-bottom: 1rem;
 }
-
 .modifier-utilisateur-container form {
   display: flex;
   flex-direction: column;
+  gap: 1rem;
 }
-
-.modifier-utilisateur-container input {
+.modifier-utilisateur-container input,
+.modifier-utilisateur-container textarea {
   padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #ccc;
+  border: 1px solid var(--menu-bg);
   border-radius: 5px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
 }
-
 .modifier-utilisateur-container button {
-  background-color: #007bff;
-  color: white;
+  background-color: var(--primary);
+  color: #fff;
   padding: 10px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  transition: filter 0.2s;
 }
-
 .modifier-utilisateur-container button:hover {
-  background-color: #0056b3;
+  filter: brightness(1.1);
 }
