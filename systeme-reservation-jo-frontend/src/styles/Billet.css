@@ -1,59 +1,61 @@
-/* src/styles/Billet.css */
+/* Conteneur principal : couleurs dynamiques selon :root[data-theme] */
 .billet-container {
   max-width: 700px;
-  margin: 40px auto;
-  padding: 20px;
-  background: #ffffff;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background-color: var(--bg-color);
+  color: var(--text-color);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   font-family: sans-serif;
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s, color 0.3s;
 }
 
-.billet-container.dark {
-  background: #1e1e1e;
-  color: #ddd;
+.billet-container h1 {
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  color: var(--primary);
+  text-align: center;
 }
 
-.billet-container.dark h1,
-.billet-container.dark h2 {
-  color: #fff;
+/* Liste de détails en definition list */
+.billet-details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  row-gap: 0.75rem;
+  column-gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-.billet-info {
-  margin-top: 20px;
-  padding: 15px;
-  background: #f9f9f9;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  transition: background 0.3s ease;
+.billet-details dt {
+  font-weight: bold;
+  color: var(--primary);
 }
 
-.billet-container.dark .billet-info {
-  background: #2a2a2a;
-  color: #ccc;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+.billet-details dd {
+  margin: 0;
+  color: var(--text-color);
 }
 
-.billet-info p {
-  margin: 10px 0;
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-.btn-back {
+/* Bouton Retour */
+.billet-back {
   display: inline-block;
-  margin-top: 20px;
-  padding: 10px 16px;
-  background: #007bff;
+  padding: 0.6rem 1.2rem;
+  background-color: var(--primary);
   color: #fff;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.3s;
-  text-decoration: none;
+  transition: filter 0.2s;
 }
 
-.btn-back:hover {
-  background: #0056b3;
+.billet-back:hover {
+  filter: brightness(1.1);
+}
+
+/* État de chargement */
+.billet-loading {
+  text-align: center;
+  margin: 2rem;
+  color: var(--text-color);
 }

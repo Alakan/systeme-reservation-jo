@@ -1,75 +1,75 @@
-// src/pages/Billet.js
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import api from "../services/api";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate }      from "react-router-dom";
+import api                             from "../services/api";
 import "../styles/Billet.css";
 
-function Billet() {
-  const { id } = useParams(); // Ici, id correspond à l'ID de la réservation associée
+export default function Billet() {
+  const { id }       = useParams();
+  const navigate     = useNavigate();
   const [billet, setBillet] = useState(null);
-  const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const token        = localStorage.getItem("token");
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
+  // formate en EUR
+  const formatPrice = (price) =>
+    new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "EUR",
     }).format(price);
-  };
 
   useEffect(() => {
     if (!token) {
       navigate("/login");
       return;
     }
-
-    // Utilisation d'un chemin relatif sans slash initial
-    api.get(`billets/reservation/${id}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((response) => {
-        setBillet(response.data);
+    api
+      .get(`billets/reservation/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
       })
-      .catch((error) => {
-        console.error("Erreur lors du chargement du billet :", error);
-        navigate("/404");
-      });
+      .then((res) => setBillet(res.data))
+      .catch(() => navigate("/404"));
   }, [id, token, navigate]);
 
   if (!billet) {
-    return <div>Chargement du billet...</div>;
+    return <p className="billet-loading">Chargement du billet…</p>;
   }
 
   return (
     <div className="billet-container">
       <h1>Détails du Billet</h1>
-      <div className="billet-info">
-        <p>
-          <strong>Numéro de billet :</strong> {billet.numeroBillet}
-        </p>
-        <p>
-          <strong>Date de création :</strong> {new Date(billet.dateReservation).toLocaleString("fr-FR")}
-        </p>
-        <p>
-          <strong>Statut :</strong> {billet.statut}
-        </p>
-        <p>
-          <strong>Type de billet :</strong> {billet.type}
-        </p>
-        <p>
-          <strong>Événement :</strong> {billet.evenement ? billet.evenement.titre : "N/A"}
-        </p>
-        <p>
-          <strong>Lieu :</strong> {billet.evenement ? billet.evenement.lieu : "N/A"}
-        </p>
-        <p>
-          <strong>Prix total du billet :</strong>{" "}
-          {billet.prixTotal ? formatPrice(billet.prixTotal) : "Non renseigné"}
-        </p>
-      </div>
-      <button onClick={() => navigate("/mesreservations")} className="btn-back">
-        Retour à mes réservations
+
+      <dl className="billet-details">
+        <dt>Numéro de billet :</dt>
+        <dd>{billet.numeroBillet}</dd>
+
+        <dt>Date de création :</dt>
+        <dd>{new Date(billet.dateReservation).toLocaleString("fr-FR")}</dd>
+
+        <dt>Statut :</dt>
+        <dd>{billet.statut}</dd>
+
+        <dt>Type de billet :</dt>
+        <dd>{billet.type}</dd>
+
+        <dt>Événement :</dt>
+        <dd>{billet.evenement?.titre || "N/A"}</dd>
+
+        <dt>Lieu :</dt>
+        <dd>{billet.evenement?.lieu || "N/A"}</dd>
+
+        <dt>Prix total du billet :</dt>
+        <dd>
+          {billet.prixTotal != null
+            ? formatPrice(billet.prixTotal)
+            : "Non renseigné"}
+        </dd>
+      </dl>
+
+      <button
+        className="billet-back"
+        onClick={() => navigate("/mes-reservations")}
+      >
+        ← Retour à mes réservations
       </button>
     </div>
   );
 }
-
-export default Billet;
