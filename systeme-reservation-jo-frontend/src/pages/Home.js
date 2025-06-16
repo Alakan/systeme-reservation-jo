@@ -6,13 +6,17 @@ import '../styles/Home.css';
 
 export default function Home() {
   const navigate = useNavigate();
-  // 1) COMPTE À REBOURS
-  const targetDate = new Date('2025-07-26T20:00:00'); // date de la cérémonie d'ouverture
+
+  // 1) COMPTE À REBOURS (targetDate DANS l’effet pour éviter la dépendance manquante)
   const [countdown, setCountdown] = useState({ d: 0, h: 0, m: 0, s: 0 });
   useEffect(() => {
+    const targetDate = new Date('2025-07-26T20:00:00');
     const tick = () => {
       const diff = targetDate - new Date();
-      if (diff <= 0) return clearInterval(timer);
+      if (diff <= 0) {
+        clearInterval(timer);
+        return;
+      }
       const d = Math.floor(diff / 86400000);
       const h = Math.floor((diff % 86400000) / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
@@ -47,10 +51,16 @@ export default function Home() {
         <h1>Bienvenue aux Jeux Olympiques 2025 ! 🎉</h1>
         <p>Ne manquez pas les grands événements ! Réservez votre place dès maintenant.</p>
         <div className="hero-buttons">
-          <button className="btn-primary" onClick={() => navigate('/evenements')}>
+          <button
+            className="btn-primary"
+            onClick={() => navigate('/evenements')}
+          >
             Voir les événements
           </button>
-          <button className="btn-access" onClick={() => navigate('/login')}>
+          <button
+            className="btn-access"
+            onClick={() => navigate('/login')}
+          >
             Accéder à mon compte
           </button>
         </div>
@@ -61,10 +71,22 @@ export default function Home() {
         <section className="countdown">
           <h2>Compte à rebours</h2>
           <div className="timer">
-            <div><strong>{countdown.d}</strong><span>Jours</span></div>
-            <div><strong>{countdown.h}</strong><span>Heures</span></div>
-            <div><strong>{countdown.m}</strong><span>Minutes</span></div>
-            <div><strong>{countdown.s}</strong><span>Secondes</span></div>
+            <div>
+              <strong>{countdown.d}</strong>
+              <span>Jours</span>
+            </div>
+            <div>
+              <strong>{countdown.h}</strong>
+              <span>Heures</span>
+            </div>
+            <div>
+              <strong>{countdown.m}</strong>
+              <span>Minutes</span>
+            </div>
+            <div>
+              <strong>{countdown.s}</strong>
+              <span>Secondes</span>
+            </div>
           </div>
         </section>
 
