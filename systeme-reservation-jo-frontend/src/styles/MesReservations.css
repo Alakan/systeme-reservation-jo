@@ -1,99 +1,117 @@
-/* src/styles/MesReservations.css */
-
-/* Conteneur principal */
+/* Container */
 .reservations-container {
   max-width: 900px;
-  margin: 20px auto;
-  padding: 20px;
-  background-color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background-color: var(--bg-color);
+  color:            var(--text-color);
+  border-radius:    8px;
+  box-shadow:       0 2px 8px rgba(0,0,0,0.1);
+  transition:       background-color .3s, color .3s;
 }
 
-/* Titre principal */
+/* Titre */
 .reservations-container h1 {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 1.5rem;
   font-size: 2.5rem;
-  color: #333;
+  color: var(--primary);
 }
 
-/* Bouton de retour */
+/* Action bar */
+.actions {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Bouton retour */
 .btn-back {
-  background-color: #f2f2f2;
-  color: #333;
-  padding: 10px 20px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  cursor: pointer;
-  text-decoration: none;
-  margin-bottom: 20px;
-  transition: background-color 0.3s ease;
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  background-color: var(--btn-access);
+  color:            var(--btn-access-text);
+  border-radius:    6px;
+  text-decoration:  none;
+  font-weight:      500;
+  transition:       filter .2s;
 }
 .btn-back:hover {
-  background-color: #e6e6e6;
+  filter: brightness(1.1);
 }
 
-/* Liste des réservations */
+/* Message vide */
+.empty {
+  text-align: center;
+  font-size: 1.1rem;
+  color: var(--text-color);
+}
+
+/* Liste en grid pour responsive */
 .reservations-list {
-  list-style: none;
+  display: grid;
+  gap: 1.5rem;
   padding: 0;
-  margin: 0;
+  list-style: none;
 }
 
 /* Carte de réservation */
 .reservation-item {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  background-color: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 20px;
-  margin-bottom: 20px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-color: var(--menu-bg);
+  color:            var(--menu-text);
+  border-radius:    6px;
+  padding:          1rem;
+  transition:       box-shadow .2s, transform .2s;
 }
 .reservation-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-/* Détails de la réservation */
+/* Détails */
 .reservation-details {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
 }
-.reservation-details strong {
-  font-size: 1.2rem;
-  color: #444;
+.reservation-details .event-title {
+  grid-column: span 2;
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+  color: var(--primary);
+}
+.reservation-details span {
+  font-weight: bold;
+  color: var(--primary);
 }
 .reservation-details div {
-  font-size: 1rem;
-  color: #555;
+  color: var(--menu-text);
 }
 
-/* Statut de la réservation */
+/* Statuts */
 .confirmed {
-  color: green;
+  color:   #28a745;
   font-weight: bold;
 }
 .not-confirmed {
-  color: red;
+  color:   #dc3545;
   font-weight: bold;
 }
 
-/* Bouton de paiement */
-.btn-pay {
-  background-color: #007bff;
-  color: #fff;
-  padding: 12px 20px;
-  border: none;
+/* Boutons d’action */
+.btn-pay,
+.btn-ticket {
+  padding:       0.6rem 1.2rem;
+  background:    var(--primary);
+  color:         #fff;
+  border:        none;
   border-radius: 6px;
-  cursor: pointer;
-  width: fit-content;
-  transition: background-color 0.3s ease;
+  cursor:        pointer;
+  transition:    filter .2s;
+  align-self:    start;
 }
-.btn-pay:hover {
-  background-color: #0056b3;
+.btn-pay:hover,
+.btn-ticket:hover {
+  filter: brightness(1.1);
 }

@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [ dev, main ]
+  pull_request:
+    branches: [ dev, main ]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Récupérer le code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2) Installer Node.js avec cache npm
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          # cache: 'npm'
+
+      # 3) Installer les dépendances du frontend
+      - name: Install dependencies
+        run: |
+          cd systeme-reservation-jo-frontend
+          npm ci
+
+      # 4) Lint
+      - name: Lint
+        run: |
+          cd systeme-reservation-jo-frontend
+          npm run lint
+
+      # 5) Tests unitaires
+      - name: Test
+        run: |
+          cd systeme-reservation-jo-frontend
+          npm test -- --watchAll=false --bail
+
+      # 6) Build production
+      - name: Build
+        run: |
+          cd systeme-reservation-jo-frontend
+          npm run build

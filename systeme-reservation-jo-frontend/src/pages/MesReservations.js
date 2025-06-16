@@ -1,193 +1,133 @@
-// src/pages/MesReservations.js
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate }                     from 'react-router-dom';
+import api                                        from '../services/api';
 import '../styles/MesReservations.css';
 
-function MesReservations() {
+export default function MesReservations() {
   const [reservations, setReservations] = useState([]);
-  const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const navigate                        = useNavigate();
+  const token                           = localStorage.getItem('token');
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
+  const formatPrice = (price) =>
+    new Intl.NumberFormat('fr-FR', {
+      style:    'currency',
+      currency: 'EUR',
     }).format(price);
-  };
 
-  // Fonction de récupération des réservations pour l'utilisateur
-  const fetchReservations = () => {
+  const fetchReservations = useCallback(async () => {
     if (!token) {
-      navigate("/login");
+      navigate('/login');
       return;
     }
-
-    let userEmail = "";
     try {
-      // Extraction du payload pour récupérer l'email (ou un identifiant) de l'utilisateur
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      userEmail = payload.email || payload.sub;
-      console.log("Email récupéré :", userEmail);
-    } catch (error) {
-      console.error("Erreur lors du décodage du token :", error);
-      alert("Erreur d'authentification. Veuillez vous reconnecter.");
-      navigate("/login");
-      return;
-    }
-
-    // Récupère toutes les réservations de l'utilisateur via l'API
-    api.get(`reservations/utilisateur?email=${encodeURIComponent(userEmail)}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(response => {
-        console.log("Données brutes reçues :", response.data);
-
-        // Filtrer uniquement les réservations valides (ayant un id)
-        const reservationsFiltrees = Array.isArray(response.data)
-          ? response.data.filter(reservation =>
-              reservation && typeof reservation === 'object' && reservation.id
-            )
-          : [];
-
-        // Pour chaque réservation, si "evenement" n'est pas un objet, tenter de récupérer ses détails via un appel supplémentaire
-        Promise.all(
-          reservationsFiltrees.map(async reservation => {
-            if (!reservation.evenement || typeof reservation.evenement !== 'object') {
-              console.warn(`ID événement trouvé : ${reservation.evenement}. Récupération des détails...`);
-              try {
-                const eventResponse = await api.get(`evenements/${reservation.evenement}`, {
-                  headers: { Authorization: `Bearer ${token}` }
-                });
-                return { ...reservation, evenement: eventResponse.data };
-              } catch (error) {
-                console.error("Erreur lors de la récupération de l'événement :", error);
-                return {
-                  ...reservation,
-                  evenement: {
-                    id: reservation.evenement || "ID inconnu",
-                    titre: "Événement non chargé correctement",
-                    dateEvenement: "Date inconnue",
-                    lieu: "Lieu indisponible"
-                  }
-                };
-              }
-            }
-            return reservation;
-          })
-        )
-        .then(updatedReservations => {
-          console.log("Réservations après mise à jour :", updatedReservations);
-          setReservations(updatedReservations);
-        })
-        .catch(error => {
-          console.error("Erreur lors de la mise à jour des réservations :", error);
-          alert("Une erreur est survenue lors du chargement de vos réservations.");
-        });
-      })
-      .catch(error => {
-        console.error("Erreur lors de la récupération des réservations :", error.response?.data || error);
-        alert("Impossible de récupérer vos réservations.");
+      const { data } = await api.get('reservations/utilisateur', {
+        headers: { Authorization: `Bearer ${token}` },
       });
-  };
+      setReservations(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Erreur récupération réservations :', err);
+      if (err.response?.status === 401) {
+        alert('Session expirée, reconnectez-vous.');
+        navigate('/login');
+      } else {
+        alert("Impossible de récupérer vos réservations.");
+      }
+    }
+  }, [navigate, token]);
 
   useEffect(() => {
     fetchReservations();
-  }, [navigate, token]);
+  }, [fetchReservations]);
 
-  // Fonction de paiement d'une réservation en attente (non confirmée)
   const handlePayment = async (reservationId) => {
     if (!token) {
-      alert("Vous devez être connecté pour payer.");
-      navigate("/login");
+      alert('Vous devez être connecté pour payer.');
+      navigate('/login');
       return;
     }
-    const modePaiementInput = window.prompt("Choisissez votre mode de paiement : CARTE, PAYPAL, VIREMENT");
-    const modePaiement = modePaiementInput ? modePaiementInput.toUpperCase() : "";
-    if (!["CARTE", "PAYPAL", "VIREMENT"].includes(modePaiement)) {
-      alert("Mode de paiement invalide.");
+    const choix = window
+      .prompt('Mode de paiement : CARTE, PAYPAL, VIREMENT')
+      ?.toUpperCase();
+    if (!['CARTE', 'PAYPAL', 'VIREMENT'].includes(choix)) {
+      alert('Mode de paiement invalide.');
       return;
     }
     try {
       await api.put(
         `reservations/${reservationId}/paiement`,
-        JSON.stringify(modePaiement),
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+        { mode: choix },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("Paiement effectué avec succès !");
+      alert('Paiement réussi !');
       fetchReservations();
-    } catch (error) {
-      console.error("Erreur lors du paiement :", error);
-      alert("Erreur lors du paiement.");
+    } catch (err) {
+      console.error('Erreur paiement :', err);
+      alert('Échec du paiement.');
     }
   };
 
-  // Fonction pour consulter le billet en cas de réservation confirmée
-  const handleVoirBillet = (reservationId) => {
-    console.log("Navigation vers le billet pour la réservation ID:", reservationId);
+  const handleVoirBillet = (reservationId) =>
     navigate(`/billet/${reservationId}`);
-  };
 
   return (
     <div className="reservations-container">
       <h1>Mes Réservations</h1>
-      <Link to="/evenements">
-        <button className="btn-back">Retour aux événements</button>
-      </Link>
+
+      <div className="actions">
+        <Link to="/evenements" className="btn-back">
+          ← Retour aux événements
+        </Link>
+      </div>
 
       {reservations.length === 0 ? (
-        <p>Vous n'avez aucune réservation en cours.</p>
+        <p className="empty">Vous n'avez aucune réservation en cours.</p>
       ) : (
         <ul className="reservations-list">
-          {reservations.map((reservation) => (
-            <li key={reservation.id} className="reservation-item">
+          {reservations.map((r) => (
+            <li key={r.id} className="reservation-item">
               <div className="reservation-details">
-                <strong>
-                  {reservation.evenement && reservation.evenement.titre
-                    ? reservation.evenement.titre
-                    : `Événement inconnu (${reservation.evenement?.id || "ID manquant"})`}
-                </strong>
+                <strong className="event-title">{r.evenement.titre}</strong>
                 <div>
-                  <strong>Numéro de réservation :</strong> {reservation.id || "Non renseigné"}
+                  <span>Numéro :</span> {r.id}
                 </div>
                 <div>
-                  <strong>Date de réservation :</strong>{" "}
-                  {reservation.dateReservation
-                    ? new Date(reservation.dateReservation).toLocaleString('fr-FR')
-                    : "Date non renseignée"}
+                  <span>Date réservation :</span>{' '}
+                  {new Date(r.dateReservation).toLocaleString('fr-FR')}
                 </div>
                 <div>
-                  <strong>Date de l'événement :</strong>{" "}
-                  {reservation.evenement && reservation.evenement.dateEvenement
-                    ? new Date(reservation.evenement.dateEvenement).toLocaleDateString('fr-FR')
-                    : "Date non renseignée"}
+                  <span>Date événement :</span>{' '}
+                  {new Date(r.evenement.dateEvenement).toLocaleDateString(
+                    'fr-FR'
+                  )}
                 </div>
                 <div>
-                  <strong>Billets :</strong> {reservation.nombreBillets > 0 ? reservation.nombreBillets : "Non renseigné"}
+                  <span>Billets :</span> {r.nombreBillets}
                 </div>
                 <div>
-                  <strong>Prix unitaire :</strong>{" "}
-                  {reservation.prixUnitaire ? formatPrice(reservation.prixUnitaire) : "Non renseigné"}
+                  <span>Prix total :</span> {formatPrice(r.prixTotal)}
                 </div>
                 <div>
-                  <strong>Prix total :</strong>{" "}
-                  {reservation.prixTotal ? formatPrice(reservation.prixTotal) : "Non renseigné"}
-                </div>
-                <div>
-                  <strong>Statut :</strong>{" "}
-                  {reservation.statut === "CONFIRMEE" ? (
+                  <span>Statut :</span>{' '}
+                  {r.statut === 'CONFIRMEE' ? (
                     <span className="confirmed">Confirmée</span>
                   ) : (
                     <span className="not-confirmed">Non confirmée</span>
                   )}
                 </div>
               </div>
-              {reservation.statut === "CONFIRMEE" ? (
-                <button onClick={() => handleVoirBillet(reservation.id)} className="btn-ticket">
+
+              {r.statut === 'CONFIRMEE' ? (
+                <button
+                  onClick={() => handleVoirBillet(r.id)}
+                  className="btn-ticket"
+                >
                   Voir mon billet
                 </button>
               ) : (
-                <button onClick={() => handlePayment(reservation.id)} className="btn-pay">
+                <button
+                  onClick={() => handlePayment(r.id)}
+                  className="btn-pay"
+                >
                   Payer
                 </button>
               )}
@@ -198,5 +138,3 @@ function MesReservations() {
     </div>
   );
 }
-
-export default MesReservations;

@@ -1,59 +1,184 @@
 /* src/styles/Home.css */
-.home-container {
-  max-width: 800px;
-  margin: 40px auto;
-  padding: 20px;
+
+/* Hero banner JO */
+.hero {
+  height: 60vh;
+  background: var(--olymp-gradient);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   text-align: center;
-  background: #f5f5f5;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  font-family: sans-serif;
+  padding: 1rem;
+  transition: background 0.3s ease;
 }
 
-.home-container h1 {
-  font-size: 28px;
-  color: #333;
-  margin-bottom: 20px;
+.hero h1 {
+  font-family: 'Roboto Slab', serif;
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
-.home-container p {
-  font-size: 18px;
-  color: #555;
-  line-height: 1.6;
+.hero p {
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
-.home-buttons {
-  margin-top: 20px;
+.hero-buttons {
+  display: flex;
+  gap: 0.5rem;
 }
 
-.home-buttons button {
-  background: #007bff;
-  color: #fff;
-  font-size: 16px;
-  padding: 10px 15px;
-  margin: 10px;
+.hero-buttons button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: filter 0.2s ease;
 }
 
-.home-buttons button:hover {
-  background: #0056b3;
-}
-
-.btn-access {
-  background: #ff9800;
+/* Bouton principal */
+.hero-buttons .btn-primary {
+  background-color: var(--primary);
   color: #fff;
-  font-size: 16px;
-  padding: 10px 15px;
-  margin: 10px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
 }
 
-.btn-access:hover {
-  background: #e68900;
+.hero-buttons .btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+/* Bouton accès */
+.hero-buttons .btn-access {
+  background-color: var(--btn-access);
+  color: var(--btn-access-text);
+}
+
+.hero-buttons .btn-access:hover {
+  filter: brightness(1.1);
+}
+
+/* Container principal */
+.home-container {
+  padding: 2rem 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Compte à rebours */
+.countdown {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+.countdown h2 {
+  font-size: 2rem;
+  color: var(--primary);
+  margin-bottom: 1rem;
+}
+.timer {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+.timer div {
+  background: var(--menu-bg);
+  color: var(--menu-text);
+  padding: 1rem;
+  border-radius: 6px;
+  min-width: 80px;
+}
+.timer strong {
+  display: block;
+  font-size: 1.5rem;
+}
+.timer span {
+  font-size: 0.9rem;
+}
+
+/* Événements à la une */
+.featured-events {
+  margin-bottom: 3rem;
+}
+.featured-events h2 {
+  font-size: 2rem;
+  color: var(--primary);
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.featured-events .cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+.featured-events .card {
+  background: var(--bg-color);
+  color: var(--text-color);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.featured-events .card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+.featured-events .card h3 {
+  margin: 0.75rem 1rem 0;
+  font-size: 1.1rem;
+}
+.featured-events .card p {
+  margin: 0.25rem 1rem 1rem;
+  color: var(--text-color);
+}
+.featured-events .card button {
+  margin: 0 1rem 1rem;
+  padding: 0.5rem;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+.featured-events .card button:hover {
+  filter: brightness(1.1);
+}
+
+/* Newsletter */
+.newsletter {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: var(--menu-bg);
+  color: var(--menu-text);
+  border-radius: 6px;
+}
+.newsletter h2 {
+  margin-bottom: 1rem;
+  color: var(--primary);
+}
+.newsletter form {
+  display: inline-flex;
+  gap: 0.5rem;
+}
+.newsletter input {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  width: 250px;
+}
+.newsletter button {
+  padding: 0.5rem 1rem;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+.newsletter button:hover {
+  filter: brightness(1.1);
 }

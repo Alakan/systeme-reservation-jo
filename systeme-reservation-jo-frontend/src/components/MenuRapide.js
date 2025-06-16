@@ -1,47 +1,81 @@
-// src/components/MenuRapide.js
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useContext } from 'react';
+import { useNavigate }                 from 'react-router-dom';
+import { UserContext }                 from '../contexts/UserContext';
+import Settings                        from './Settings';
 import '../styles/MenuRapide.css';
 
-function MenuRapide() {
-  const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
-  const isAuthenticated = !!localStorage.getItem("token");
+export default function MenuRapide() {
+  const [isOpen, setIsOpen]             = useState(false);
+  const { isAuthenticated, user, roles, setUser } = useContext(UserContext);
+  const navigate                        = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
+  // Extrait le pseudo (avant @) ou renvoie le login intact
+  const getDisplayName = () => {
+    const login = user?.username || user?.sub || user?.email || '';
+    const idx   = login.indexOf('@');
+    return idx > 0 ? login.slice(0, idx) : login;
   };
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const pagesProtegees = ["/reservations", "/modifier-profil", "/dashboard", "/mes-reservations"];
-    if (!token && pagesProtegees.includes(window.location.pathname)) {
-      navigate("/login");
-    }
-  }, [navigate]);
+  const goTo = (path) => {
+    setIsOpen(false);
+    navigate(path, { replace: true });
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    goTo('/login');
+  };
+
+  const dashboardPath = roles.includes('ADMINISTRATEUR')
+    ? '/admin'
+    : '/dashboard';
 
   return (
     <nav className="menu-rapide">
-      <button className="menu-button" onClick={() => setIsOpen(!isOpen)}>☰</button>
+      <button
+        className="menu-button"
+        onClick={() => setIsOpen(o => !o)}
+      >
+        ☰
+      </button>
+
+      {isAuthenticated && (
+        <span className="user-info-top">
+          Salut, <strong>{getDisplayName()}</strong> !
+        </span>
+      )}
+
       {isOpen && (
         <div className="menu-items">
-          <button onClick={() => { setIsOpen(false); navigate("/") }}>Accueil</button>
-          <button onClick={() => { setIsOpen(false); navigate("/evenements") }}>Événements</button>
+          <Settings />
+
+          <button onClick={() => goTo('/')}>Accueil</button>
+          <button onClick={() => goTo('/evenements')}>Événements</button>
+
           {isAuthenticated ? (
             <>
-              <button onClick={() => { setIsOpen(false); navigate("/dashboard") }}>Dashboard</button>
-              <button onClick={() => { setIsOpen(false); navigate("/mes-reservations") }}>Mes Réservations</button>
-              {/* Lien vers modifier le profil */}
-              <button onClick={() => { setIsOpen(false); navigate("/modifier-profil") }}>Modifier mon profil</button>
-              <button onClick={() => { setIsOpen(false); handleLogout(); }}>Déconnexion</button>
+              <button onClick={() => goTo(dashboardPath)}>
+                Dashboard
+              </button>
+              {roles.includes('UTILISATEUR') && (
+                <button onClick={() => goTo('/mes-reservations')}>
+                  Mes réservations
+                </button>
+              )}
+              <button onClick={() => goTo('/modifier-profil')}>
+                Mon profil
+              </button>
+              <button className="logout-btn" onClick={handleLogout}>
+                Déconnexion
+              </button>
             </>
           ) : (
             <>
-              <button onClick={() => { setIsOpen(false); navigate("/login"); }}>Mon compte</button>
-              <Link to="/register">
-                <button onClick={() => setIsOpen(false)}>Créer un compte</button>
-              </Link>
+              <button onClick={() => goTo('/login')}>Connexion</button>
+              <button onClick={() => goTo('/register')}>
+                Créer un compte
+              </button>
             </>
           )}
         </div>
@@ -49,5 +83,3 @@ function MenuRapide() {
     </nav>
   );
 }
-
-export default MenuRapide;

@@ -1,32 +1,66 @@
 /* src/styles/DashboardUtilisateurs.css */
+
+/* Conteneur principal */
 .dashboard-container {
   max-width: 800px;
   margin: 40px auto;
   padding: 20px;
-  background: #ffffff;
+  background: var(--bg-color);   /* clair ou sombre */
+  color: var(--text-color);      /* texte bien contrasté */
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
   font-family: sans-serif;
 }
 
+/* Titre */
+.dashboard-container h1 {
+  margin-bottom: 1rem;
+  font-size: 2rem;
+  color: var(--primary);        /* couleur accentuée */
+}
+
+/* Bloc profil */
 .profile-info {
+  background: var(--menu-bg);    /* utilise le fond de menu (dégradé ou uni) */
+  color: var(--menu-text);       /* texte visible dessus */
+  padding: 20px;
   margin-bottom: 20px;
   line-height: 1.6;
+  border-radius: 4px;
+}
+
+/* Labels en gras et alignés */
+.profile-info p {
+  margin: 0.5rem 0;
+}
+
+.profile-info p strong {
+  display: inline-block;
+  width: 80px;
+  color: var(--primary);
+}
+
+/* Liens / boutons */
+.dashboard-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
 }
 
 .dashboard-links button {
   margin: 10px;
   padding: 10px 15px;
-  background: #007bff;
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.3s ease;
   font-size: 16px;
+  transition: filter 0.3s ease;
 }
 
 .dashboard-links button:hover {
-  background: #0056b3;
+  filter: brightness(1.1);
 }
