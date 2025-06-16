@@ -9,6 +9,13 @@ export default function MenuRapide() {
   const { isAuthenticated, user, roles, setUser } = useContext(UserContext);
   const navigate                        = useNavigate();
 
+  // Extrait le pseudo (avant @) ou renvoie le login intact
+  const getDisplayName = () => {
+    const login = user?.username || user?.sub || user?.email || '';
+    const idx   = login.indexOf('@');
+    return idx > 0 ? login.slice(0, idx) : login;
+  };
+
   const goTo = (path) => {
     setIsOpen(false);
     navigate(path, { replace: true });
@@ -35,18 +42,16 @@ export default function MenuRapide() {
 
       {isAuthenticated && (
         <span className="user-info-top">
-          Salut, <strong>{user.username || user.sub}</strong> !
+          Salut, <strong>{getDisplayName()}</strong> !
         </span>
       )}
 
       {isOpen && (
-        <div className="menu-items" data-theme={null /* inutile ici, géré en index.css */}>
-          {/* Liens principaux */}
+        <div className="menu-items">
+          <Settings />
+
           <button onClick={() => goTo('/')}>Accueil</button>
           <button onClick={() => goTo('/evenements')}>Événements</button>
-
-          {/* Sélecteur de thème */}
-          <Settings />
 
           {isAuthenticated ? (
             <>
