@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <>
       <header className="hero">
-        <h1>Bienvenue aux Jeux Olympiques 2025 ! 🎉</h1>
+        <h1>Bienvenue aux Jeux Olympiques 2024 ! 🎉</h1>
         <p>
           Ne manquez pas les grands événements&nbsp;! Découvrez les compétitions
           et réservez votre place dès maintenant.
