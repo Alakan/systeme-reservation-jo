@@ -4,40 +4,41 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--olymp-gradient);
+
+  /* THEMED */
+  background: var(--menu-bg);
+  color:      var(--menu-text);
+
   padding: .5rem 1rem;
   border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,.1);
   z-index: 1000;
-  color: #fff;
 }
 
 .menu-button {
   background: transparent;
-  color: #fff;
-  font-size: 20px;
-  padding: 8px 12px;
-  border: 2px solid #fff;
+  color:      var(--menu-text);
+  font-size:  20px;
+  padding:    8px 12px;
+  border:     2px solid var(--menu-text);
   border-radius: 6px;
-  cursor: pointer;
 }
 
 .menu-button:hover {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,.2);
 }
 
 .user-info-top {
   font-size: 1rem;
   font-weight: 600;
-  color: #fff;
 }
 
 .menu-items {
   position: absolute;
   top: 3rem; left: 1rem;
-  background: rgba(0,0,0,0.8);
+  background: rgba(0,0,0,.7);
   border-radius: 6px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px rgba(0,0,0,.2);
   padding: .5rem 0;
   display: flex;
   flex-direction: column;
@@ -50,12 +51,10 @@
   border: none;
   text-align: left;
   color: #fff;
-  cursor: pointer;
-  transition: background-color .2s;
 }
 
 .menu-items button:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,.1);
 }
 
 .logout-btn {

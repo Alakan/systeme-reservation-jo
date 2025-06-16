@@ -1,8 +1,7 @@
-/* Hero banner JO */
 .hero {
   height: 60vh;
   background: var(--olymp-gradient);
-  color: #fff;
+  color:      #fff;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -14,8 +13,8 @@
 .hero h1 {
   font-family: 'Roboto Slab', serif;
   font-size: 3rem;
-  margin-bottom: 0.5rem;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  margin-bottom: .5rem;
+  text-shadow: 0 1px 3px rgba(0,0,0,.5);
 }
 
 .hero p {
@@ -29,30 +28,29 @@
   font-size: 1rem;
   border: none;
   border-radius: 4px;
-  cursor: pointer;
-  transition: background-color .2s;
 }
 
+/* Bouton principal = primary (bleu ou custom) */
 .hero-buttons .btn-primary {
-  background-color: var(--olymp-ring-blue);
+  background-color: var(--primary);
   color: #fff;
 }
 
 .hero-buttons .btn-primary:hover {
-  background-color: var(--olymp-ring-black);
+  filter: brightness(1.1);
 }
 
+/* Bouton accès = couleur contextuelle */
 .hero-buttons .btn-access {
-  background-color: var(--olymp-ring-yellow);
-  color: #333;
+  background-color: var(--btn-access);
+  color: var(--btn-access-text);
 }
 
 .hero-buttons .btn-access:hover {
-  background-color: var(--olymp-ring-red);
-  color: #fff;
+  filter: brightness(1.1);
 }
 
-/* Container pour d’autres sections si besoin */
+/* Content area */
 .home-container {
   padding: 2rem 1rem;
   max-width: 1200px;
