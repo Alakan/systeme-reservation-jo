@@ -1,55 +1,88 @@
+// src/pages/AjouterUtilisateur.js
 import React, { useState } from "react";
 import { useNavigate }      from "react-router-dom";
 import api                  from "../services/api";
+import "../styles/AjouterUtilisateur.css";
 
 export default function AjouterUtilisateur() {
-  const [user, setUser]   = useState({
-    username: "",
-    email: "",
-    password: ""
-  });
-  const navigate          = useNavigate();
+  const [form, setForm]       = useState({ username: "", email: "", password: "" });
+  const [error, setError]     = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate              = useNavigate();
 
   const handleChange = e => {
-    setUser(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setError("");
   };
 
   const handleSubmit = async e => {
     e.preventDefault();
+    // validations front
+    if (form.username.trim().length < 3) {
+      setError("Le nom d'utilisateur doit contenir au moins 3 caractères.");
+      return;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) {
+      setError("Merci de saisir un email valide.");
+      return;
+    }
+    if (form.password.length < 6) {
+      setError("Le mot de passe doit contenir au moins 6 caractères.");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      await api.post("/admin/utilisateurs", user);
-      alert("Utilisateur ajouté avec succès !");
+      await api.post("/admin/utilisateurs", form);
       navigate("/admin");
-    } catch {
-      alert("Erreur lors de l'ajout de l'utilisateur");
+    } catch (err) {
+      setError(err.response?.data?.message || "Erreur lors de l'ajout de l'utilisateur.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="form-admin">
+    <div className="ajouter-utilisateur-container">
       <h2>Ajouter un utilisateur</h2>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
+        <label htmlFor="username">Nom d’utilisateur</label>
         <input
+          id="username"
           name="username"
-          placeholder="Nom d'utilisateur"
+          value={form.username}
           onChange={handleChange}
+          placeholder="Entrez le nom d’utilisateur"
           required
         />
+
+        <label htmlFor="email">Email</label>
         <input
+          id="email"
           type="email"
           name="email"
-          placeholder="Email"
+          value={form.email}
           onChange={handleChange}
+          placeholder="exemple@domaine.com"
           required
         />
+
+        <label htmlFor="password">Mot de passe</label>
         <input
+          id="password"
           type="password"
           name="password"
-          placeholder="Mot de passe"
+          value={form.password}
           onChange={handleChange}
+          placeholder="••••••••"
           required
         />
-        <button type="submit">Ajouter</button>
+
+        {error && <p className="error-msg">{error}</p>}
+
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Ajout en cours..." : "Ajouter"}
+        </button>
       </form>
     </div>
   );

@@ -1,9 +1,11 @@
+// src/pages/AjouterEvenement.js
 import React, { useState } from "react";
 import { useNavigate }      from "react-router-dom";
 import api                  from "../services/api";
+import "../styles/AjouterEvenement.css";
 
 export default function AjouterEvenement() {
-  const [form, setForm] = useState({
+  const [form, setForm]           = useState({
     titre: "",
     description: "",
     dateEvenement: "",
@@ -11,23 +13,48 @@ export default function AjouterEvenement() {
     prix: "",
     capaciteTotale: ""
   });
-  const [file, setFile] = useState(null);
-  const navigate        = useNavigate();
+  const [file, setFile]           = useState(null);
+  const [error, setError]         = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate                  = useNavigate();
 
   const handleChange = e => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setError("");
   };
   const handleFile = e => {
     setFile(e.target.files[0] || null);
+    setError("");
   };
 
   const handleSubmit = async e => {
     e.preventDefault();
+    // validations frontend
+    if (form.titre.trim().length < 5) {
+      setError("Le titre doit faire au moins 5 caractères.");
+      return;
+    }
+    if (form.description.trim().length < 10) {
+      setError("La description doit faire au moins 10 caractères.");
+      return;
+    }
+    if (!form.dateEvenement) {
+      setError("Merci de sélectionner une date et une heure.");
+      return;
+    }
+    if (form.prix === "" || Number(form.prix) < 0) {
+      setError("Le prix doit être un nombre positif.");
+      return;
+    }
+    if (!form.capaciteTotale || Number(form.capaciteTotale) < 1) {
+      setError("La capacité doit être au moins 1.");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      // Prépare l'objet FormData
       const data = new FormData();
-      // tronque la date locale au format yyyy-MM-ddTHH:mm
-      let dateStr = form.dateEvenement.slice(0, 16);
+      const dateStr = form.dateEvenement.slice(0, 16);
       data.append("titre", form.titre);
       data.append("description", form.description);
       data.append("dateEvenement", dateStr);
@@ -39,55 +66,96 @@ export default function AjouterEvenement() {
       await api.post("/admin/evenements", data, {
         headers: { "Content-Type": "multipart/form-data" }
       });
-      alert("Événement ajouté avec succès !");
       navigate("/admin");
     } catch (err) {
-      console.error(err);
-      alert("Erreur lors de l'ajout de l'événement.");
+      setError(err.response?.data?.message || "Erreur lors de l'ajout de l'événement.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="form-admin">
+    <div className="ajouter-evenement-container">
       <h2>Ajouter un événement</h2>
-      <form onSubmit={handleSubmit}>
-        <input name="titre"        placeholder="Titre"         onChange={handleChange} required />
-        <textarea
-          name="description"
-          placeholder="Description"
+      <form onSubmit={handleSubmit} noValidate>
+        <label htmlFor="titre">Titre</label>
+        <input
+          id="titre"
+          name="titre"
+          value={form.titre}
           onChange={handleChange}
+          placeholder="Titre de l'événement"
           required
         />
+
+        <label htmlFor="description">Description</label>
+        <textarea
+          id="description"
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+          placeholder="Description détaillée"
+          rows="4"
+          required
+        />
+
+        <label htmlFor="dateEvenement">Date & heure</label>
         <input
+          id="dateEvenement"
           type="datetime-local"
           name="dateEvenement"
+          value={form.dateEvenement}
           onChange={handleChange}
           required
         />
-        <input name="lieu"         placeholder="Lieu"          onChange={handleChange} required />
+
+        <label htmlFor="lieu">Lieu</label>
         <input
+          id="lieu"
+          name="lieu"
+          value={form.lieu}
+          onChange={handleChange}
+          placeholder="Lieu"
+          required
+        />
+
+        <label htmlFor="prix">Prix (€)</label>
+        <input
+          id="prix"
           type="number"
           name="prix"
           step="0.01"
-          placeholder="Prix (€)"
+          value={form.prix}
           onChange={handleChange}
+          placeholder="0.00"
           required
         />
+
+        <label htmlFor="capaciteTotale">Capacité totale</label>
         <input
+          id="capaciteTotale"
           type="number"
           name="capaciteTotale"
-          placeholder="Capacité totale"
-          min="1"
+          value={form.capaciteTotale}
           onChange={handleChange}
+          placeholder="Nombre de places"
+          min="1"
           required
         />
 
-        <label>
-          Image (optionnelle) :
-          <input type="file" accept="image/*" onChange={handleFile} />
-        </label>
+        <label htmlFor="image">Image (optionnelle)</label>
+        <input
+          id="image"
+          type="file"
+          accept="image/*"
+          onChange={handleFile}
+        />
 
-        <button type="submit">Ajouter</button>
+        {error && <p className="error-msg">{error}</p>}
+
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Ajout en cours..." : "Ajouter"}
+        </button>
       </form>
     </div>
   );
