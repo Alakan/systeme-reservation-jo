@@ -1,90 +1,116 @@
-/* src/styles/Admin.css */
-
-/* LIGHT MODE (défaut) */
-.admin-container {
-  max-width:     900px;
-  margin:        40px auto;
-  padding:       20px;
-  background:    var(--bg-color);
-  color:         var(--text-color);
-  border-radius: 8px;
-  box-shadow:    0 4px 12px rgba(0,0,0,0.1);
-  font-family:   sans-serif;
-  transition:    background 0.3s, color 0.3s;
+/* ────────────── NAVIGATION DES ONGLETS ────────────── */
+.admin-nav {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid var(--card-bg);
 }
-
-.admin-container h1,
-.admin-container h2 {
+.admin-nav button {
+  background: none;
   color: var(--text-color);
+  border: none;
+  padding: .5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  position: relative;
+  transition: color .2s;
+}
+.admin-nav button:hover {
+  color: var(--primary);
+}
+.admin-nav button.active {
+  color: var(--primary);
+}
+.admin-nav button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--primary);
 }
 
-/* bascule thème */
-.toggle-theme {
-  margin-bottom: 15px;
-  padding:       8px 12px;
-  background:    var(--primary);
-  color:         var(--bg-color);
-  border: none;
-  border-radius: 6px;
+/* ────────────── SECTION HEADER ────────────── */
+.admin-content section {
+  margin-bottom: 2rem;
 }
-.toggle-theme:hover {
+.admin-content .section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.admin-content .section-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--primary);
+}
+.admin-content .section-header .btn-add {
+  background: var(--primary);
+  color: var(--bg-color);
+  border: none;
+  padding: .5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: filter .2s;
+}
+.admin-content .section-header .btn-add:hover {
   filter: brightness(1.1);
 }
 
-/* onglets */
-.admin-nav button {
-  background:    var(--primary);
-  color:         var(--bg-color);
+/* ────────────── TABLEAU RESPONSIVE ────────────── */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
 }
-.admin-nav button.active {
-  background:    var(--bg-color);
-  color:         var(--primary);
-  font-weight:   bold;
-}
-
-/* liste */
-.admin-content li {
-  display:         flex;
-  align-items:     center;
-  justify-content: space-between;
-  background:      var(--card-bg);
-  color:           var(--card-text);
-  padding:         10px;
-  border-radius:   6px;
-  box-shadow:      0 2px 6px rgba(0,0,0,0.1);
-  transition:      background 0.3s, color 0.3s;
-}
-
-.admin-content li .item-info span { color: var(--text-color); }
-
-.admin-content li .actions button {
-  background:    var(--primary);
-  color:         var(--bg-color);
-}
-
-/* DARK MODE */
-.admin-container.dark {
-  background: var(--bg-color);
-  color:      var(--text-color);
-}
-.admin-container.dark .toggle-theme {
-  background: var(--primary);
-  color:      var(--bg-color);
-}
-.admin-container.dark .admin-nav button {
-  background: var(--menu-bg);
-  color:      var(--menu-text);
-}
-.admin-container.dark .admin-nav button.active {
-  background: var(--primary);
-  color:      var(--bg-color);
-}
-
-.admin-container.dark .admin-content li {
+.admin-table thead {
   background: var(--card-bg);
-  color:      var(--card-text);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
-.admin-container.dark .admin-content li .actions button {
+.admin-table th,
+.admin-table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--card-bg);
+}
+.admin-table th {
+  font-weight: 600;
+  color: var(--text-color);
+}
+.admin-table tbody tr:hover {
+  background: var(--card-bg);
+}
+
+/* ────────────── BADGES & ACTIONS ────────────── */
+.status {
+  display: inline-block;
+  padding: 0 8px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  border-radius: 12px;
+}
+.status.active {
+  background: #28a745;
+  color: #fff;
+}
+.status.disabled {
+  background: #dc3545;
+  color: #fff;
+}
+.admin-table .actions {
+  display: flex;
+  gap: .5rem;
+}
+.admin-table .actions button {
   background: var(--primary);
+  color: var(--bg-color);
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: filter .2s;
+}
+.admin-table .actions button:hover {
+  filter: brightness(1.1);
 }
