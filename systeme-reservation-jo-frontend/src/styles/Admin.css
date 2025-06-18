@@ -1,166 +1,90 @@
 /* src/styles/Admin.css */
 
-/* ───────── LIGHT MODE (défaut) ───────── */
+/* LIGHT MODE (défaut) */
 .admin-container {
-  max-width:      900px;
-  margin:         40px auto;
-  padding:        20px;
-  background:     #ffffff;
-  color:          #333333;
-  border-radius:  8px;
-  box-shadow:     0 4px 12px rgba(0,0,0,0.1);
-  font-family:    sans-serif;
-  transition:     background 0.3s ease, color 0.3s ease;
+  max-width:     900px;
+  margin:        40px auto;
+  padding:       20px;
+  background:    var(--bg-color);
+  color:         var(--text-color);
+  border-radius: 8px;
+  box-shadow:    0 4px 12px rgba(0,0,0,0.1);
+  font-family:   sans-serif;
+  transition:    background 0.3s, color 0.3s;
 }
 
 .admin-container h1,
 .admin-container h2 {
-  color: #222222;
+  color: var(--text-color);
 }
 
-/* Bouton bascule thème */
+/* bascule thème */
 .toggle-theme {
   margin-bottom: 15px;
-  padding: 8px 12px;
-  background: #007bff;
-  color:      #fff;
+  padding:       8px 12px;
+  background:    var(--primary);
+  color:         var(--bg-color);
   border: none;
   border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.3s;
 }
 .toggle-theme:hover {
-  background: #0056b3;
+  filter: brightness(1.1);
 }
 
-/* Onglets */
-.admin-nav {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 30px;
-}
+/* onglets */
 .admin-nav button {
-  padding: 10px 20px;
-  background: #007bff;
-  color:      #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background 0.3s;
-}
-.admin-nav button:hover {
-  background: #0056b3;
+  background:    var(--primary);
+  color:         var(--bg-color);
 }
 .admin-nav button.active {
-  background:  #0056b3;
-  font-weight: bold;
+  background:    var(--bg-color);
+  color:         var(--primary);
+  font-weight:   bold;
 }
 
-/* Contenu */
-.admin-content {
-  padding: 10px;
-}
-.admin-content h2 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #222222;
-}
-
-/* Liste */
-.admin-content ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 10px;
-}
-
-/* Chaque ligne en flex, info à gauche, actions à droite */
+/* liste */
 .admin-content li {
   display:         flex;
   align-items:     center;
   justify-content: space-between;
-  background:      #f9f9f9;
-  color:           #333333;
+  background:      var(--card-bg);
+  color:           var(--card-text);
   padding:         10px;
   border-radius:   6px;
   box-shadow:      0 2px 6px rgba(0,0,0,0.1);
-  font-size:       16px;
   transition:      background 0.3s, color 0.3s;
 }
 
-/* Bloc texte */
-.admin-content li .item-info {
-  flex: 1;
-  line-height: 1.4;
-}
-.admin-content li .item-info span {
-  font-weight: normal;
-  color: #666;
-}
+.admin-content li .item-info span { color: var(--text-color); }
 
-/* Bloc boutons */
-.admin-content li .actions {
-  display: flex;
-  gap: 6px;
-}
-
-/* Boutons d’action */
 .admin-content li .actions button {
-  background: #007bff;
-  color:      #fff;
-  border:     none;
-  padding:    6px 10px;
-  border-radius: 4px;
-  cursor:    pointer;
-  transition: filter 0.2s;
-}
-.admin-content li .actions button:hover {
-  filter: brightness(1.1);
+  background:    var(--primary);
+  color:         var(--bg-color);
 }
 
-/* Statuts */
-.status {
-  margin-left: 10px;
-  font-weight: bold;
-}
-.status.active   { color: #28a745; }
-.status.disabled { color: #dc3545; }
-
-/* ───────── DARK MODE ───────── */
+/* DARK MODE */
 .admin-container.dark {
-  background: #1e1e1e;
-  color:      #ddd;
-}
-.admin-container.dark h1,
-.admin-container.dark h2 {
-  color: #fff;
+  background: var(--bg-color);
+  color:      var(--text-color);
 }
 .admin-container.dark .toggle-theme {
-  background: #444;
-  color:      #fff;
+  background: var(--primary);
+  color:      var(--bg-color);
 }
 .admin-container.dark .admin-nav button {
-  background: #333;
-  color:      #ccc;
+  background: var(--menu-bg);
+  color:      var(--menu-text);
 }
 .admin-container.dark .admin-nav button.active {
-  background: #555;
-  color:      #fff;
+  background: var(--primary);
+  color:      var(--bg-color);
 }
+
 .admin-container.dark .admin-content li {
-  background: #2a2a2a;
-  color:      #ccc;
+  background: var(--card-bg);
+  color:      var(--card-text);
   box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
-.admin-container.dark .admin-content li .item-info span {
-  color: #aaa;
-}
 .admin-container.dark .admin-content li .actions button {
-  background: #3399ff;
-}
-.admin-container.dark .admin-content li .actions button:hover {
-  filter: brightness(1.2);
+  background: var(--primary);
 }
