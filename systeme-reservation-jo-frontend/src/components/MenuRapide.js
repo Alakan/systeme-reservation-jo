@@ -67,9 +67,6 @@ export default function MenuRapide() {
                   Mes réservations
                 </button>
               )}
-              /*<button onClick={() => goTo('/modifier-profil')}>
-                Mon profil
-              </button>*/
               <button className="logout-btn" onClick={handleLogout}>
                 Déconnexion
               </button>
