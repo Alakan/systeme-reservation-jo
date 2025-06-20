@@ -1,3 +1,4 @@
+// src/pages/CartPage.js
 import React, { useState } from 'react';
 import { useCart }          from '../contexts/CartContext';
 import { useNavigate }      from 'react-router-dom';
@@ -17,47 +18,42 @@ function CartPage() {
   const handleCheckout = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      if (
-        window.confirm(
-          'Vous devez être connecté·e pour passer commande. Voulez-vous vous connecter ?'
-        )
-      ) {
+      if (window.confirm('Vous devez être connecté·e… Voulez-vous vous connecter ?')) {
         return navigate('/login');
       }
       return;
     }
 
-    // Décodage du token pour récupérer l'email
+    // Décodage pour récupérer l'email
     let payload;
     try {
       payload = JSON.parse(atob(token.split('.')[1]));
     } catch {
-      alert('Token invalide, veuillez vous reconnecter.');
+      alert('Token invalide, reconnectez-vous.');
       return navigate('/login');
     }
     const userEmail = payload.sub;
 
-    // Saisie du mode de paiement
-    const modeInput = window.prompt(
-      'Mode de paiement : CARTE, PAYPAL ou VIREMENT'
-    );
-    const mode = modeInput ? modeInput.toUpperCase() : '';
-    if (!['CARTE', 'PAYPAL', 'VIREMENT'].includes(mode)) {
+    // Mode de paiement
+    const modeInput = window.prompt('Mode de paiement : CARTE, PAYPAL ou VIREMENT');
+    const mode      = modeInput ? modeInput.toUpperCase() : '';
+    if (!['CARTE','PAYPAL','VIREMENT'].includes(mode)) {
       return alert('Mode de paiement invalide. Annulation.');
     }
 
     setIsLoading(true);
+
     try {
-      // Création d'une réservation par item dans le panier
+      // Pour chaque ligne du panier, on crée + paie
       for (const item of cart) {
-        await api.post(
+        // 1️⃣ Création
+        const res = await api.post(
           'reservations',
           {
             utilisateur:     { email: userEmail },
             evenement:       { id: item.id },
             dateReservation: new Date().toISOString(),
-            nombreBillets:   item.quantity,
-            modePaiement:    mode
+            nombreBillets:   item.quantity
           },
           {
             headers: {
@@ -66,14 +62,27 @@ function CartPage() {
             }
           }
         );
+        const reservationId = res.data.id;
+
+        // 2️⃣ Paiement -> mettra à jour le statut en confirmed
+        await api.put(
+          `reservations/${reservationId}/paiement`,
+          JSON.stringify(mode),
+          {
+            headers: {
+              Authorization: 'Bearer ' + token,
+              'Content-Type':  'application/json'
+            }
+          }
+        );
       }
 
-      alert('Réservation(s) créée(s) avec succès !');
+      alert('Réservation(s) confirmée(s) !');      
       clearCart();
       navigate('/mes-reservations');
     } catch (err) {
-      console.error('Checkout error:', err);
-      alert('Erreur lors de la création de votre réservation.');
+      console.error('Erreur checkout :', err);
+      alert('Erreur lors de la réservation ou du paiement.');
     } finally {
       setIsLoading(false);
     }
