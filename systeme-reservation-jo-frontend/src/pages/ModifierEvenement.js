@@ -13,23 +13,40 @@ export default function ModifierEvenement() {
     dateEvenement: "",
     lieu: ""
   });
-  const [file, setFile]         = useState(null);
-  const [error, setError]       = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [file, setFile]             = useState(null);
+  const [error, setError]           = useState("");
+  const [loading, setLoading]       = useState(true);
+  const [isSubmitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    api.get(`/admin/evenements/${id}`)
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Vous devez être connecté·e");
+      return navigate("/login");
+    }
+
+    api
+      .get(`/admin/evenements/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       .then(res => {
+        console.log("données reçues pour modification :", res.data);
         const ev = res.data;
         setForm({
-          titre: ev.titre,
-          description: ev.description,
-          dateEvenement: ev.dateEvenement.slice(0, 16),
-          lieu: ev.lieu
+          titre: ev.titre || "",
+          description: ev.description || "",
+          dateEvenement: ev.dateEvenement
+            ? ev.dateEvenement.slice(0, 16)
+            : "",
+          lieu: ev.lieu || ""
         });
       })
-      .catch(() => setError("Erreur lors du chargement de l’événement."));
-  }, [id]);
+      .catch(err => {
+        console.error("Erreur chargement événement :", err);
+        setError("Impossible de charger l’événement.");
+      })
+      .finally(() => setLoading(false));
+  }, [id, navigate]);
 
   const handleChange = e => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -42,47 +59,65 @@ export default function ModifierEvenement() {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    // validations front-end
+    // ==== validations ====
     if (form.titre.trim().length < 5) {
-      setError("Le titre doit contenir au moins 5 caractères.");
-      return;
+      return setError("Le titre doit contenir au moins 5 caractères.");
     }
     if (form.description.trim().length < 10) {
-      setError("La description doit contenir au moins 10 caractères.");
-      return;
+      return setError("La description doit contenir au moins 10 caractères.");
     }
     if (!form.dateEvenement) {
-      setError("Veuillez sélectionner une date et une heure.");
-      return;
+      return setError("Veuillez sélectionner une date et une heure.");
     }
-    if (form.lieu.trim().length === 0) {
-      setError("Le lieu ne peut pas être vide.");
-      return;
+    if (form.lieu.trim() === "") {
+      return setError("Le lieu ne peut pas être vide.");
     }
 
-    setIsSubmitting(true);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Vous devez être connecté·e");
+      return navigate("/login");
+    }
+
+    setSubmitting(true);
     try {
       const data = new FormData();
       data.append("titre", form.titre);
       data.append("description", form.description);
-      data.append("dateEvenement", form.dateEvenement.slice(0,16));
+      data.append("dateEvenement", form.dateEvenement);
       data.append("lieu", form.lieu);
       if (file) data.append("image", file);
 
       await api.put(`/admin/evenements/${id}`, data, {
-        headers: { "Content-Type": "multipart/form-data" }
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        }
       });
       navigate("/admin");
     } catch (err) {
-      setError(err.response?.data?.message || "Erreur lors de la modification.");
+      console.error("Erreur mise à jour événement :", err);
+      setError(
+        err.response?.data?.message ||
+        "Erreur lors de la modification de l’événement."
+      );
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="modifier-evenement-container">
+        <p>Chargement de l’événement…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="modifier-evenement-container">
       <h2>Modifier un événement</h2>
+
       <form onSubmit={handleSubmit} noValidate>
         <label htmlFor="titre">Titre</label>
         <input
@@ -90,7 +125,6 @@ export default function ModifierEvenement() {
           name="titre"
           value={form.titre}
           onChange={handleChange}
-          placeholder="Titre de l'événement"
           required
         />
 
@@ -100,7 +134,6 @@ export default function ModifierEvenement() {
           name="description"
           value={form.description}
           onChange={handleChange}
-          placeholder="Description détaillée"
           rows="4"
           required
         />
@@ -121,7 +154,6 @@ export default function ModifierEvenement() {
           name="lieu"
           value={form.lieu}
           onChange={handleChange}
-          placeholder="Lieu"
           required
         />
 
