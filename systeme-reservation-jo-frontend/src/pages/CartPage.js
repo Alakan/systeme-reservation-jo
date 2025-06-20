@@ -6,7 +6,7 @@ import '../styles/CartPage.css';
 
 function CartPage() {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
-  const navigate = useNavigate();
+  const navigate     = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
   const totalPrice = cart.reduce(
@@ -19,10 +19,10 @@ function CartPage() {
     if (!token) {
       if (
         window.confirm(
-          "Vous devez être connecté·e pour passer commande. Voulez-vous vous connecter ?"
+          'Vous devez être connecté·e pour passer commande. Voulez-vous vous connecter ?'
         )
       ) {
-        navigate('/login');
+        return navigate('/login');
       }
       return;
     }
@@ -41,7 +41,7 @@ function CartPage() {
     const modeInput = window.prompt(
       'Mode de paiement : CARTE, PAYPAL ou VIREMENT'
     );
-    const mode = modeInput?.toUpperCase() || '';
+    const mode = modeInput ? modeInput.toUpperCase() : '';
     if (!['CARTE', 'PAYPAL', 'VIREMENT'].includes(mode)) {
       return alert('Mode de paiement invalide. Annulation.');
     }
@@ -53,15 +53,15 @@ function CartPage() {
         await api.post(
           'reservations',
           {
-            utilisateur: { email: userEmail },
-            evenement:   { id: item.id },
+            utilisateur:     { email: userEmail },
+            evenement:       { id: item.id },
             dateReservation: new Date().toISOString(),
             nombreBillets:   item.quantity,
-            modePaiement:     mode
+            modePaiement:    mode
           },
           {
             headers: {
-              Authorization: `Bearer ${token}`,
+              Authorization: 'Bearer ' + token,
               'Content-Type': 'application/json'
             }
           }
@@ -73,7 +73,7 @@ function CartPage() {
       navigate('/mes-reservations');
     } catch (err) {
       console.error('Checkout error:', err);
-      alert("Erreur lors de la création de votre réservation.");
+      alert('Erreur lors de la création de votre réservation.');
     } finally {
       setIsLoading(false);
     }
@@ -122,4 +122,3 @@ function CartPage() {
 }
 
 export default CartPage;
-```
