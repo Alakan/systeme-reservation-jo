@@ -2,21 +2,22 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import PrivateRoute     from './PrivateRoute';
 
-import Home                      from '../pages/Home';
-import Evenements                from '../pages/Evenements';
-import Login                     from '../pages/Login';
-import Register                  from '../pages/Register';
-import Admin                     from '../pages/Admin';
-import DashboardUtilisateurs     from '../pages/DashboardUtilisateurs';
-import MesReservations           from '../pages/MesReservations';
-import ModifierProfil            from '../pages/ModifierProfil';
-import Reservation               from '../pages/Reservation';
-import Billet                    from '../pages/Billet';
-import AjouterEvenement          from '../pages/AjouterEvenement';
-import AjouterUtilisateur        from '../pages/AjouterUtilisateur';
-import ModifierEvenement         from '../pages/ModifierEvenement';      // à créer ou ajuster
-import ModifierUtilisateur       from '../pages/ModifierUtilisateur';    // à créer ou ajuster
-import ModifierReservation       from '../pages/ModifierReservation';    // à créer ou ajuster
+import Home                    from '../pages/Home';
+import Evenements              from '../pages/Evenements';
+import Login                   from '../pages/Login';
+import Register                from '../pages/Register';
+import Admin                   from '../pages/Admin';
+import DashboardUtilisateurs   from '../pages/DashboardUtilisateurs';
+import MesReservations         from '../pages/MesReservations';
+import ModifierProfil          from '../pages/ModifierProfil';
+import Reservation             from '../pages/Reservation';
+import Billet                  from '../pages/Billet';
+import AjouterEvenement        from '../pages/AjouterEvenement';
+import AjouterUtilisateur      from '../pages/AjouterUtilisateur';
+import ModifierEvenement       from '../pages/ModifierEvenement';
+import ModifierUtilisateur     from '../pages/ModifierUtilisateur';
+import ModifierReservation     from '../pages/ModifierReservation';
+import CartPage                from '../pages/CartPage';         // ← nouveau
 
 function NotFound() {
   return (
@@ -35,6 +36,9 @@ export default function AppRouter() {
       <Route path="/evenements" element={<Evenements />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+
+      {/* PANIER (public) */}
+      <Route path="/panier" element={<CartPage />} />
 
       {/* DASHBOARD UTILISATEUR */}
       <Route
