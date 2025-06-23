@@ -30,8 +30,8 @@ public class AdminController {
     private final ReservationService  reservationService;
 
     public AdminController(UtilisateurService utilisateurService,
-                           EvenementService evenementService,
-                           ReservationService reservationService) {
+                           EvenementService   evenementService,
+                           ReservationService  reservationService) {
         this.utilisateurService = utilisateurService;
         this.evenementService   = evenementService;
         this.reservationService  = reservationService;
@@ -39,12 +39,28 @@ public class AdminController {
 
     // --- UTILISATEURS ----------------------------------------------------
 
+    /** GET /api/admin/utilisateurs */
     @GetMapping("/utilisateurs")
     public ResponseEntity<List<Utilisateur>> getAllUtilisateurs() {
-        List<Utilisateur> list = utilisateurService.getAllUtilisateurs();
-        return ResponseEntity.ok(list);
+        return ResponseEntity.ok(utilisateurService.getAllUtilisateurs());
     }
 
+    /** GET /api/admin/utilisateurs/{id} */
+    @GetMapping("/utilisateurs/{id}")
+    public ResponseEntity<UtilisateurDTO> getUtilisateurById(@PathVariable Long id) {
+        return utilisateurService
+                .getUtilisateurById(id)
+                .map(u -> {
+                    UtilisateurDTO dto = new UtilisateurDTO();
+                    dto.setUsername(u.getUsername());
+                    dto.setEmail(u.getEmail());
+                    // mappez d'autres champs si besoin
+                    return ResponseEntity.ok(dto);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /** POST /api/admin/utilisateurs */
     @PostMapping("/utilisateurs")
     public ResponseEntity<?> createUtilisateur(
             @Valid @RequestBody UtilisateurDTO dto) {
@@ -54,9 +70,7 @@ public class AdminController {
             u.setEmail(dto.getEmail());
             u.setPassword(dto.getPassword());
             Utilisateur created = utilisateurService.saveUtilisateur(u);
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(created);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
@@ -64,6 +78,7 @@ public class AdminController {
         }
     }
 
+    /** PUT /api/admin/utilisateurs/{id} */
     @PutMapping("/utilisateurs/{id}")
     public ResponseEntity<?> updateUtilisateur(
             @PathVariable Long id,
@@ -82,6 +97,7 @@ public class AdminController {
         }
     }
 
+    /** DELETE /api/admin/utilisateurs/{id} */
     @DeleteMapping("/utilisateurs/{id}")
     public ResponseEntity<String> deleteUtilisateur(@PathVariable Long id) {
         utilisateurService.deleteUtilisateur(id);
@@ -90,12 +106,13 @@ public class AdminController {
 
     // --- EVENEMENTS ------------------------------------------------------
 
+    /** GET /api/admin/evenements */
     @GetMapping("/evenements")
     public ResponseEntity<List<Evenement>> getAllEvenements() {
-        List<Evenement> list = evenementService.getAllEvenements();
-        return ResponseEntity.ok(list);
+        return ResponseEntity.ok(evenementService.getAllEvenements());
     }
 
+    /** POST /api/admin/evenements */
     @PostMapping("/evenements")
     public ResponseEntity<?> createEvenementAdmin(
             @Valid @RequestBody EvenementDTO dto) {
@@ -108,9 +125,7 @@ public class AdminController {
             ev.setPrix(dto.getPrix());
             ev.setCapaciteTotale(dto.getCapaciteTotale());
             Evenement created = evenementService.createEvenement(ev);
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(created);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
@@ -118,6 +133,7 @@ public class AdminController {
         }
     }
 
+    /** PUT /api/admin/evenements/{id} */
     @PutMapping("/evenements/{id}")
     public ResponseEntity<?> updateEvenementAdmin(
             @PathVariable Long id,
@@ -139,6 +155,7 @@ public class AdminController {
         }
     }
 
+    /** PUT /api/admin/evenements/{id}/desactiver */
     @PutMapping("/evenements/{id}/desactiver")
     public ResponseEntity<?> desactiverEvenement(@PathVariable Long id) {
         try {
@@ -151,6 +168,7 @@ public class AdminController {
         }
     }
 
+    /** PUT /api/admin/evenements/{id}/reactiver */
     @PutMapping("/evenements/{id}/reactiver")
     public ResponseEntity<?> reactiverEvenement(@PathVariable Long id) {
         try {
@@ -165,20 +183,19 @@ public class AdminController {
 
     // --- RESERVATIONS ----------------------------------------------------
 
+    /** GET /api/admin/reservations */
     @GetMapping("/reservations")
     public ResponseEntity<List<Reservation>> getAllReservations() {
-        List<Reservation> list = reservationService.getAllReservations();
-        return ResponseEntity.ok(list);
+        return ResponseEntity.ok(reservationService.getAllReservations());
     }
 
+    /** POST /api/admin/reservations */
     @PostMapping("/reservations")
     public ResponseEntity<?> createReservationAdmin(
             @Valid @RequestBody Reservation reservation) {
         try {
             Reservation created = reservationService.createReservation(reservation);
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(created);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
@@ -186,6 +203,7 @@ public class AdminController {
         }
     }
 
+    /** PUT /api/admin/reservations/{id}/desactiver */
     @PutMapping("/reservations/{id}/desactiver")
     public ResponseEntity<?> desactiverReservation(@PathVariable Long id) {
         try {
@@ -198,6 +216,7 @@ public class AdminController {
         }
     }
 
+    /** PUT /api/admin/reservations/{id}/reactiver */
     @PutMapping("/reservations/{id}/reactiver")
     public ResponseEntity<?> reactiverReservation(@PathVariable Long id) {
         try {

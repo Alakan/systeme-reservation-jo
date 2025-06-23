@@ -12,16 +12,31 @@ export default function ModifierUtilisateur() {
     email: "",
     password: ""
   });
-  const [error, setError]       = useState("");
+  const [error, setError]         = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Charge l'utilisateur au montage
   useEffect(() => {
-    api.get(`/admin/utilisateurs/${id}`)
-      .then(res => {
-        const u = res.data;
-        setUser({ username: u.username, email: u.email, password: "" });
-      })
-      .catch(() => setError("Erreur lors du chargement de l’utilisateur."));
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res   = await api.get(
+          `/admin/utilisateurs/${id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setUser({
+          username: res.data.username,
+          email:    res.data.email,
+          password: ""
+        });
+      } catch {
+        setError("Erreur lors du chargement de l’utilisateur.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchUser();
   }, [id]);
 
   const handleChange = e => {
@@ -47,20 +62,35 @@ export default function ModifierUtilisateur() {
 
     setIsSubmitting(true);
     try {
+      const token   = localStorage.getItem("token");
       const payload = { username: user.username, email: user.email };
       if (user.password) payload.password = user.password;
-      await api.put(`/admin/utilisateurs/${id}`, payload);
+
+      await api.put(
+        `/admin/utilisateurs/${id}`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       navigate("/admin");
     } catch (err) {
-      setError(err.response?.data?.message || "Erreur lors de la modification.");
+      setError(err.response?.data || "Erreur lors de la modification.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="modifier-utilisateur-container">
+        <p>Chargement…</p>
+      </div>
+    );
+  }
+
   return (
     <div className="modifier-utilisateur-container">
       <h2>Modifier un utilisateur</h2>
+      {error && <p className="error-msg">{error}</p>}
       <form onSubmit={handleSubmit} noValidate>
         <label htmlFor="username">Nom d’utilisateur</label>
         <input
@@ -90,8 +120,6 @@ export default function ModifierUtilisateur() {
           value={user.password}
           onChange={handleChange}
         />
-
-        {error && <p className="error-msg">{error}</p>}
 
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Modification en cours…" : "Modifier"}
