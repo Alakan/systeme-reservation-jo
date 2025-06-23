@@ -23,7 +23,6 @@ export default function ModifierEvenement() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Vous devez être connecté·e");
       navigate("/login");
       return;
     }
@@ -37,20 +36,13 @@ export default function ModifierEvenement() {
         setForm({
           titre: ev.titre || "",
           description: ev.description || "",
-          dateEvenement: ev.dateEvenement
-            ? ev.dateEvenement.slice(0, 16)
-            : "",
+          dateEvenement: ev.dateEvenement?.slice(0, 16) || "",
           lieu: ev.lieu || "",
-          prix: ev.prix != null ? ev.prix.toString() : "",
-          capaciteTotale: ev.capaciteTotale != null
-            ? ev.capaciteTotale.toString()
-            : ""
+          prix: ev.prix?.toString() || "",
+          capaciteTotale: ev.capaciteTotale?.toString() || ""
         });
       })
-      .catch(err => {
-        console.error("Erreur chargement événement :", err);
-        setError("Impossible de charger l’événement.");
-      })
+      .catch(() => setError("Impossible de charger l’événement."))
       .finally(() => setLoading(false));
   }, [id, navigate]);
 
@@ -61,30 +53,25 @@ export default function ModifierEvenement() {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    // ---- validations ----
-    if (form.titre.trim().length < 5) {
+
+    // validations
+    if (form.titre.trim().length < 5)
       return setError("Le titre doit contenir au moins 5 caractères.");
-    }
-    if (form.description.trim().length < 10) {
+    if (form.description.trim().length < 10)
       return setError("La description doit contenir au moins 10 caractères.");
-    }
-    if (!form.dateEvenement) {
-      return setError("Veuillez sélectionner une date et une heure.");
-    }
-    if (form.lieu.trim() === "") {
+    if (!form.dateEvenement)
+      return setError("Merci de sélectionner une date et une heure.");
+    if (!form.lieu.trim())
       return setError("Le lieu ne peut pas être vide.");
-    }
-    if (form.prix === "" || Number(form.prix) <= 0) {
+    if (!form.prix || Number(form.prix) <= 0)
       return setError("Le prix doit être un nombre positif.");
-    }
-    if (!form.capaciteTotale || Number(form.capaciteTotale) < 1) {
+    if (!form.capaciteTotale || Number(form.capaciteTotale) < 1)
       return setError("La capacité doit être au moins 1.");
-    }
 
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Vous devez être connecté·e");
-      return navigate("/login");
+      navigate("/login");
+      return;
     }
 
     setSubmitting(true);
@@ -108,11 +95,7 @@ export default function ModifierEvenement() {
       );
       navigate("/admin");
     } catch (err) {
-      console.error("Erreur mise à jour événement :", err);
-      setError(
-        err.response?.data ||
-        "Erreur lors de la modification de l’événement."
-      );
+      setError(err.response?.data || "Erreur lors de la modification.");
     } finally {
       setSubmitting(false);
     }
