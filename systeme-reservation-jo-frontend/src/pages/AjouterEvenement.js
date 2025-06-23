@@ -5,7 +5,7 @@ import api                  from "../services/api";
 import "../styles/AjouterEvenement.css";
 
 export default function AjouterEvenement() {
-  const [form, setForm]           = useState({
+  const [form, setForm] = useState({
     titre: "",
     description: "",
     dateEvenement: "",
@@ -13,15 +13,16 @@ export default function AjouterEvenement() {
     prix: "",
     capaciteTotale: ""
   });
-  const [file, setFile]           = useState(null);
-  const [error, setError]         = useState("");
+  const [file, setFile] = useState(null);
+  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate                  = useNavigate();
+  const navigate = useNavigate();
 
   const handleChange = e => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
     setError("");
   };
+
   const handleFile = e => {
     setFile(e.target.files[0] || null);
     setError("");
@@ -29,26 +30,21 @@ export default function AjouterEvenement() {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    // validations frontend
+
     if (form.titre.trim().length < 5) {
-      setError("Le titre doit faire au moins 5 caractères.");
-      return;
+      return setError("Le titre doit faire au moins 5 caractères.");
     }
     if (form.description.trim().length < 10) {
-      setError("La description doit faire au moins 10 caractères.");
-      return;
+      return setError("La description doit faire au moins 10 caractères.");
     }
     if (!form.dateEvenement) {
-      setError("Merci de sélectionner une date et une heure.");
-      return;
+      return setError("Merci de sélectionner une date et une heure.");
     }
     if (form.prix === "" || Number(form.prix) < 0) {
-      setError("Le prix doit être un nombre positif.");
-      return;
+      return setError("Le prix doit être un nombre positif.");
     }
     if (!form.capaciteTotale || Number(form.capaciteTotale) < 1) {
-      setError("La capacité doit être au moins 1.");
-      return;
+      return setError("La capacité doit être au moins 1.");
     }
 
     setIsSubmitting(true);
@@ -63,9 +59,14 @@ export default function AjouterEvenement() {
       data.append("capaciteTotale", form.capaciteTotale);
       if (file) data.append("image", file);
 
+      const token = localStorage.getItem("token");
       await api.post("/admin/evenements", data, {
-        headers: { "Content-Type": "multipart/form-data" }
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        }
       });
+
       navigate("/admin");
     } catch (err) {
       setError(err.response?.data?.message || "Erreur lors de l'ajout de l'événement.");

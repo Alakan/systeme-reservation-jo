@@ -5,10 +5,10 @@ import api                  from "../services/api";
 import "../styles/AjouterUtilisateur.css";
 
 export default function AjouterUtilisateur() {
-  const [form, setForm]       = useState({ username: "", email: "", password: "" });
-  const [error, setError]     = useState("");
+  const [form, setForm] = useState({ username: "", email: "", password: "" });
+  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate              = useNavigate();
+  const navigate = useNavigate();
 
   const handleChange = e => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -17,23 +17,27 @@ export default function AjouterUtilisateur() {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    // validations front
+
+    // validations front-end
     if (form.username.trim().length < 3) {
-      setError("Le nom d'utilisateur doit contenir au moins 3 caractères.");
-      return;
+      return setError("Le nom d'utilisateur doit contenir au moins 3 caractères.");
     }
     if (!/^\S+@\S+\.\S+$/.test(form.email)) {
-      setError("Merci de saisir un email valide.");
-      return;
+      return setError("Merci de saisir un email valide.");
     }
     if (form.password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères.");
-      return;
+      return setError("Le mot de passe doit contenir au moins 6 caractères.");
     }
 
     setIsSubmitting(true);
     try {
-      await api.post("/admin/utilisateurs", form);
+      const token = localStorage.getItem("token");
+      await api.post("/admin/utilisateurs", form, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
       navigate("/admin");
     } catch (err) {
       setError(err.response?.data?.message || "Erreur lors de l'ajout de l'utilisateur.");
