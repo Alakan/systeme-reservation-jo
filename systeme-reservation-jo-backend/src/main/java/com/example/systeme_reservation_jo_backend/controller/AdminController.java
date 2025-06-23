@@ -39,31 +39,27 @@ public class AdminController {
 
     // --- UTILISATEURS ----------------------------------------------------
 
-    /** GET /api/admin/utilisateurs */
     @GetMapping("/utilisateurs")
     public ResponseEntity<List<Utilisateur>> getAllUtilisateurs() {
         return ResponseEntity.ok(utilisateurService.getAllUtilisateurs());
     }
 
-    /** GET /api/admin/utilisateurs/{id} */
     @GetMapping("/utilisateurs/{id}")
     public ResponseEntity<UtilisateurDTO> getUtilisateurById(@PathVariable Long id) {
-        return utilisateurService
-                .getUtilisateurById(id)
+        return utilisateurService.getUtilisateurById(id)
                 .map(u -> {
                     UtilisateurDTO dto = new UtilisateurDTO();
+                    dto.setId(u.getId());
                     dto.setUsername(u.getUsername());
                     dto.setEmail(u.getEmail());
-                    // mappez d'autres champs si besoin
+                    // Le mot de passe reste write-only
                     return ResponseEntity.ok(dto);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /** POST /api/admin/utilisateurs */
     @PostMapping("/utilisateurs")
-    public ResponseEntity<?> createUtilisateur(
-            @Valid @RequestBody UtilisateurDTO dto) {
+    public ResponseEntity<?> createUtilisateur(@Valid @RequestBody UtilisateurDTO dto) {
         try {
             Utilisateur u = new Utilisateur();
             u.setUsername(dto.getUsername());
@@ -72,13 +68,11 @@ public class AdminController {
             Utilisateur created = utilisateurService.saveUtilisateur(u);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Erreur création utilisateur : " + e.getMessage());
         }
     }
 
-    /** PUT /api/admin/utilisateurs/{id} */
     @PutMapping("/utilisateurs/{id}")
     public ResponseEntity<?> updateUtilisateur(
             @PathVariable Long id,
@@ -91,13 +85,11 @@ public class AdminController {
             Utilisateur updated = utilisateurService.updateUtilisateur(id, u);
             return ResponseEntity.ok(updated);
         } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Erreur mise à jour utilisateur : " + e.getMessage());
         }
     }
 
-    /** DELETE /api/admin/utilisateurs/{id} */
     @DeleteMapping("/utilisateurs/{id}")
     public ResponseEntity<String> deleteUtilisateur(@PathVariable Long id) {
         utilisateurService.deleteUtilisateur(id);
@@ -106,13 +98,28 @@ public class AdminController {
 
     // --- EVENEMENTS ------------------------------------------------------
 
-    /** GET /api/admin/evenements */
     @GetMapping("/evenements")
     public ResponseEntity<List<Evenement>> getAllEvenements() {
         return ResponseEntity.ok(evenementService.getAllEvenements());
     }
 
-    /** POST /api/admin/evenements */
+    @GetMapping("/evenements/{id}")
+    public ResponseEntity<EvenementDTO> getEvenementById(@PathVariable Long id) {
+        return evenementService.getEvenementById(id)
+                .map(ev -> {
+                    EvenementDTO dto = new EvenementDTO();
+                    dto.setId(ev.getId());
+                    dto.setTitre(ev.getTitre());
+                    dto.setDescription(ev.getDescription());
+                    dto.setDateEvenement(ev.getDateEvenement());
+                    dto.setLieu(ev.getLieu());
+                    dto.setPrix(ev.getPrix());
+                    dto.setCapaciteTotale(ev.getCapaciteTotale());
+                    return ResponseEntity.ok(dto);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping("/evenements")
     public ResponseEntity<?> createEvenementAdmin(
             @Valid @RequestBody EvenementDTO dto) {
@@ -127,13 +134,11 @@ public class AdminController {
             Evenement created = evenementService.createEvenement(ev);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Erreur création événement : " + e.getMessage());
         }
     }
 
-    /** PUT /api/admin/evenements/{id} */
     @PutMapping("/evenements/{id}")
     public ResponseEntity<?> updateEvenementAdmin(
             @PathVariable Long id,
@@ -149,47 +154,40 @@ public class AdminController {
             Evenement updated = evenementService.updateEvenement(id, ev);
             return ResponseEntity.ok(updated);
         } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Erreur mise à jour événement : " + e.getMessage());
         }
     }
 
-    /** PUT /api/admin/evenements/{id}/desactiver */
     @PutMapping("/evenements/{id}/desactiver")
     public ResponseEntity<?> desactiverEvenement(@PathVariable Long id) {
         try {
             Evenement ev = evenementService.desactiverEvenement(id);
             return ResponseEntity.ok(ev);
         } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Erreur désactivation événement : " + e.getMessage());
         }
     }
 
-    /** PUT /api/admin/evenements/{id}/reactiver */
     @PutMapping("/evenements/{id}/reactiver")
     public ResponseEntity<?> reactiverEvenement(@PathVariable Long id) {
         try {
             Evenement ev = evenementService.reactiverEvenement(id);
             return ResponseEntity.ok(ev);
         } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Erreur réactivation événement : " + e.getMessage());
         }
     }
 
     // --- RESERVATIONS ----------------------------------------------------
 
-    /** GET /api/admin/reservations */
     @GetMapping("/reservations")
     public ResponseEntity<List<Reservation>> getAllReservations() {
         return ResponseEntity.ok(reservationService.getAllReservations());
     }
 
-    /** POST /api/admin/reservations */
     @PostMapping("/reservations")
     public ResponseEntity<?> createReservationAdmin(
             @Valid @RequestBody Reservation reservation) {
@@ -197,34 +195,29 @@ public class AdminController {
             Reservation created = reservationService.createReservation(reservation);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Erreur création réservation : " + e.getMessage());
         }
     }
 
-    /** PUT /api/admin/reservations/{id}/desactiver */
     @PutMapping("/reservations/{id}/desactiver")
     public ResponseEntity<?> desactiverReservation(@PathVariable Long id) {
         try {
             Reservation r = reservationService.desactiverReservation(id);
             return ResponseEntity.ok(r);
         } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Erreur désactivation réservation : " + e.getMessage());
         }
     }
 
-    /** PUT /api/admin/reservations/{id}/reactiver */
     @PutMapping("/reservations/{id}/reactiver")
     public ResponseEntity<?> reactiverReservation(@PathVariable Long id) {
         try {
             Reservation r = reservationService.reactiverReservation(id);
             return ResponseEntity.ok(r);
         } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Erreur réactivation réservation : " + e.getMessage());
         }
     }
