@@ -77,7 +77,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         }
 
         // Mise à jour éventuelle des rôles (si nécessaire)
-        utilisateur.setRoles(utilisateurDetails.getRoles());
+        //utilisateur.setRoles(utilisateurDetails.getRoles());
         return utilisateurRepository.save(utilisateur);
     }
 
