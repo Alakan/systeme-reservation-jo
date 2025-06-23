@@ -7,13 +7,15 @@ import "../styles/ModifierEvenement.css";
 export default function ModifierEvenement() {
   const { id }       = useParams();
   const navigate     = useNavigate();
+
   const [form, setForm] = useState({
     titre: "",
     description: "",
     dateEvenement: "",
-    lieu: ""
+    lieu: "",
+    prix: "",
+    capaciteTotale: ""
   });
-  const [file, setFile]             = useState(null);
   const [error, setError]           = useState("");
   const [loading, setLoading]       = useState(true);
   const [isSubmitting, setSubmitting] = useState(false);
@@ -22,7 +24,8 @@ export default function ModifierEvenement() {
     const token = localStorage.getItem("token");
     if (!token) {
       alert("Vous devez être connecté·e");
-      return navigate("/login");
+      navigate("/login");
+      return;
     }
 
     api
@@ -30,7 +33,6 @@ export default function ModifierEvenement() {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(res => {
-        console.log("données reçues pour modification :", res.data);
         const ev = res.data;
         setForm({
           titre: ev.titre || "",
@@ -38,7 +40,11 @@ export default function ModifierEvenement() {
           dateEvenement: ev.dateEvenement
             ? ev.dateEvenement.slice(0, 16)
             : "",
-          lieu: ev.lieu || ""
+          lieu: ev.lieu || "",
+          prix: ev.prix != null ? ev.prix.toString() : "",
+          capaciteTotale: ev.capaciteTotale != null
+            ? ev.capaciteTotale.toString()
+            : ""
         });
       })
       .catch(err => {
@@ -52,14 +58,10 @@ export default function ModifierEvenement() {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
     setError("");
   };
-  const handleFile = e => {
-    setFile(e.target.files[0] || null);
-    setError("");
-  };
 
   const handleSubmit = async e => {
     e.preventDefault();
-    // ==== validations ====
+    // ---- validations ----
     if (form.titre.trim().length < 5) {
       return setError("Le titre doit contenir au moins 5 caractères.");
     }
@@ -72,6 +74,12 @@ export default function ModifierEvenement() {
     if (form.lieu.trim() === "") {
       return setError("Le lieu ne peut pas être vide.");
     }
+    if (form.prix === "" || Number(form.prix) <= 0) {
+      return setError("Le prix doit être un nombre positif.");
+    }
+    if (!form.capaciteTotale || Number(form.capaciteTotale) < 1) {
+      return setError("La capacité doit être au moins 1.");
+    }
 
     const token = localStorage.getItem("token");
     if (!token) {
@@ -81,24 +89,28 @@ export default function ModifierEvenement() {
 
     setSubmitting(true);
     try {
-      const data = new FormData();
-      data.append("titre", form.titre);
-      data.append("description", form.description);
-      data.append("dateEvenement", form.dateEvenement);
-      data.append("lieu", form.lieu);
-      if (file) data.append("image", file);
-
-      await api.put(`/admin/evenements/${id}`, data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data"
+      await api.put(
+        `/admin/evenements/${id}`,
+        {
+          titre: form.titre,
+          description: form.description,
+          dateEvenement: form.dateEvenement,
+          lieu: form.lieu,
+          prix: parseFloat(form.prix),
+          capaciteTotale: parseInt(form.capaciteTotale, 10)
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
         }
-      });
+      );
       navigate("/admin");
     } catch (err) {
       console.error("Erreur mise à jour événement :", err);
       setError(
-        err.response?.data?.message ||
+        err.response?.data ||
         "Erreur lors de la modification de l’événement."
       );
     } finally {
@@ -117,6 +129,7 @@ export default function ModifierEvenement() {
   return (
     <div className="modifier-evenement-container">
       <h2>Modifier un événement</h2>
+      {error && <p className="error-msg">{error}</p>}
 
       <form onSubmit={handleSubmit} noValidate>
         <label htmlFor="titre">Titre</label>
@@ -157,15 +170,27 @@ export default function ModifierEvenement() {
           required
         />
 
-        <label htmlFor="image">Nouvelle image (optionnelle)</label>
+        <label htmlFor="prix">Prix (€)</label>
         <input
-          id="image"
-          type="file"
-          accept="image/*"
-          onChange={handleFile}
+          id="prix"
+          name="prix"
+          type="number"
+          step="0.01"
+          value={form.prix}
+          onChange={handleChange}
+          required
         />
 
-        {error && <p className="error-msg">{error}</p>}
+        <label htmlFor="capaciteTotale">Capacité totale</label>
+        <input
+          id="capaciteTotale"
+          name="capaciteTotale"
+          type="number"
+          min="1"
+          value={form.capaciteTotale}
+          onChange={handleChange}
+          required
+        />
 
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Modification en cours…" : "Modifier"}
