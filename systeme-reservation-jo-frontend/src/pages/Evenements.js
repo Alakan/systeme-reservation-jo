@@ -11,20 +11,12 @@ function Evenements() {
   const navigate                                = useNavigate();
   const { addToCart }                           = useCart();
 
-  // 1️⃣ Récupération des événements
   useEffect(() => {
     api.get('evenements')
-      .then(res => {
-        if (Array.isArray(res.data)) {
-          setEvenements(res.data);
-        } else {
-          console.error('Réponse API inattendue :', res.data);
-        }
-      })
+      .then(res => Array.isArray(res.data) && setEvenements(res.data))
       .catch(err => console.error('Erreur fetch événements :', err));
   }, []);
 
-  // 2️⃣ Helpers : formatage date & prix
   const formatDate = ds =>
     new Date(ds).toLocaleDateString('fr-FR', {
       year:   'numeric',
@@ -40,101 +32,98 @@ function Evenements() {
       currency: 'EUR'
     }).format(p);
 
-  // 3️⃣ Toggle description complète / résumé
   const toggleDescription = id =>
     setExpandedDescriptions(prev => ({
       ...prev,
       [id]: !prev[id]
     }));
 
-  // 4️⃣ Ajout au panier avec quantité
   const handleAddToCart = ev => {
     const token = localStorage.getItem('token');
     if (!token) {
-      if (
-        window.confirm(
-          'Vous devez être connecté·e pour ajouter au panier. Se connecter maintenant ?'
-        )
-      ) {
-        navigate('/login');
-      }
+      if (window.confirm(
+        'Vous devez être connecté·e. Se connecter ?'
+      )) navigate('/login');
       return;
     }
-
-    const qtyStr = window.prompt(`Combien de billets pour “${ev.titre}” ?`);
-    const qty    = parseInt(qtyStr, 10);
-    if (isNaN(qty) || qty <= 0) {
-      return alert('Veuillez entrer un nombre entier > 0.');
+    const qty = parseInt(window.prompt(`Combien de billets pour “${ev.titre}” ?`), 10);
+    if (isNaN(qty) || qty < 1) {
+      return alert('Nombre invalide.');
     }
-
-    addToCart(
-      { id: ev.id, name: ev.titre, price: ev.prix },
-      qty
-    );
-    alert(`${qty} billet${qty > 1 ? 's' : ''} ajouté${qty > 1 ? 's' : ''} au panier.`);
+    addToCart({ id: ev.id, name: ev.titre, price: ev.prix }, qty);
+    alert(`${qty} billet${qty > 1 ? 's' : ''} ajouté${qty > 1 ? 's' : ''}.`);
   };
+
+  // génère le nom de fichier à partir du titre, ex: "100 m" → "100m"
+  const imageFileName = titre =>
+    titre
+      .toLowerCase()
+      .replace(/\s+/g, '')        // supprime les espaces
+      .replace(/[^\w-]/g, '');    // retire caractères spéciaux
 
   return (
     <div className="container py-5">
       <h1 className="mb-5 text-center">Événements JO 2024</h1>
-
       <div className="text-center mb-4">
-        <Link to="/">
-          <button className="btn btn-outline-secondary">
-            Retour à l’accueil
-          </button>
-        </Link>
+        <Link to="/"><button className="btn btn-outline-secondary">Retour à l’accueil</button></Link>
       </div>
 
-      {evenements.length === 0 ? (
-        <p className="text-center">Aucun événement disponible.</p>
-      ) : (
-        <div className="row">
-          {evenements.map(ev => (
-            <div key={ev.id} className="col-lg-4 col-md-6 mb-4">
-              <div className="card h-100 shadow-sm">
-                <div className="card-body d-flex flex-column">
-                  <h5 className="card-title text-primary">{ev.titre}</h5>
-                  <h6 className="card-subtitle mb-3 text-muted">
-                    {formatDate(ev.dateEvenement)}
-                  </h6>
-                  <p className="card-text mb-1">
-                    <strong>Lieu :</strong> {ev.lieu}
-                  </p>
-                  <p className="card-text mb-3">
-                    <strong>Prix :</strong> {formatPrice(ev.prix)}
-                  </p>
+      {evenements.length === 0
+        ? <p className="text-center">Aucun événement disponible.</p>
+        : (
+          <div className="row">
+            {evenements.map(ev => {
+              const slug = imageFileName(ev.titre);
+              const imgSrc = `/images/events/${slug}.jpeg`;
+              return (
+                <div key={ev.id} className="col-lg-4 col-md-6 mb-4">
+                  <div className="card h-100 shadow-sm">
 
-                  {expandedDescriptions[ev.id] ? (
-                    <p className="card-text">{ev.description}</p>
-                  ) : (
-                    <p className="card-text">
-                      {ev.description.length > 100
-                        ? ev.description.slice(0, 100) + '…'
-                        : ev.description}
-                    </p>
-                  )}
+                    {/* Affichage du visuel */}
+                    <img
+                      className="card-img-top"
+                      src={imgSrc}
+                      alt={ev.titre}
+                      onError={e => {
+                        // fallback si le fichier n'existe pas
+                        e.currentTarget.src = '/images/events/placeholder.jpg';
+                      }}
+                    />
 
-                  <button
-                    type="button"
-                    className="btn btn-link p-0 mb-3 align-self-start"
-                    onClick={() => toggleDescription(ev.id)}
-                  >
-                    {expandedDescriptions[ev.id] ? 'Voir moins' : 'Voir plus'}
-                  </button>
+                    <div className="card-body d-flex flex-column">
+                      <h5 className="card-title text-primary">{ev.titre}</h5>
+                      <h6 className="card-subtitle mb-3 text-muted">
+                        {formatDate(ev.dateEvenement)}
+                      </h6>
+                      <p className="card-text mb-1"><strong>Lieu :</strong> {ev.lieu}</p>
+                      <p className="card-text mb-3"><strong>Prix :</strong> {formatPrice(ev.prix)}</p>
 
-                  <button
-                    type="button"
-                    className="btn btn-success mt-auto"
-                    onClick={() => handleAddToCart(ev)}
-                  >
-                    Ajouter au panier
-                  </button>
+                      <p className="card-text">
+                        {expandedDescriptions[ev.id]
+                          ? ev.description
+                          : ev.description.length > 100
+                            ? ev.description.slice(0, 100) + '…'
+                            : ev.description}
+                      </p>
+                      <button
+                        className="btn btn-link p-0 mb-3 align-self-start"
+                        onClick={() => toggleDescription(ev.id)}
+                      >
+                        {expandedDescriptions[ev.id] ? 'Voir moins' : 'Voir plus'}
+                      </button>
+
+                      <button
+                        className="btn btn-success mt-auto"
+                        onClick={() => handleAddToCart(ev)}
+                      >
+                        Ajouter au panier
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
       )}
     </div>
   );
