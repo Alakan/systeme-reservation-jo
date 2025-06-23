@@ -86,9 +86,7 @@ export default function Admin() {
   return (
     <div className="admin-container" data-theme={theme}>
       <h1>Tableau de bord Administrateur</h1>
-     // <button onClick={toggleTheme} className="toggle-theme">
-     //   Thème : {theme === "dark" ? "Clair" : "Sombre"}
-    //  </button>
+    
 
       {/* Navigation Onglets */}
       <nav className="admin-nav">
