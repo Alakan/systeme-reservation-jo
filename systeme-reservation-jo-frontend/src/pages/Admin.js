@@ -1,9 +1,9 @@
 // src/pages/Admin.js
 import React, { useState, useEffect } from "react";
 import { useNavigate }                from "react-router-dom";
-import api                             from "../services/api";
+import api                            from "../services/api";
 import "../styles/Admin.css";
-import { useTheme }                    from "../contexts/ThemeContext";
+import { useTheme }                   from "../contexts/ThemeContext";
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState("utilisateurs");
@@ -24,7 +24,7 @@ export default function Admin() {
         .map(r => r.replace(/^ROLE_/, "").toUpperCase())
         .includes("ADMINISTRATEUR");
       if (!isAdmin) {
-        alert("Accès refusé : vous n'êtes pas administrateur.");
+        alert("Accès refusé : vous n’êtes pas administrateur.");
         navigate("/");
       }
     } catch {
@@ -37,30 +37,23 @@ export default function Admin() {
     if (!token) return;
     const headers = { Authorization: `Bearer ${token}` };
 
-    // Double-fetch pour enrichir les réservations
     if (activeTab === "reservations") {
       Promise.all([
         api.get("admin/reservations", { headers }),
         api.get("admin/evenements",   { headers })
       ])
       .then(([resRes, evRes]) => {
-        // Map id événement → événement complet
         const eventsMap = new Map(evRes.data.map(ev => [ev.id, ev]));
-        // Enrichir chaque réservation
         const enriched = resRes.data.map(r => ({
           ...r,
-          // adapter selon le champ retourné par ton API
           evenement: eventsMap.get(r.evenementId) ?? { titre: "N/A" }
         }));
         setData(enriched);
       })
-      .catch(err =>
-        console.error("API reservations+events error:", err)
-      );
+      .catch(err => console.error("API reservations+events error:", err));
       return;
     }
 
-    // Fetch standard pour utilisateurs & événements
     const endpoint = {
       utilisateurs: "admin/utilisateurs",
       evenements:   "admin/evenements"
@@ -68,16 +61,16 @@ export default function Admin() {
     if (!endpoint) return;
 
     api.get(endpoint, { headers })
-      .then(res => setData(res.data))
-      .catch(err => console.error("API error:", err));
+       .then(res => setData(res.data))
+       .catch(err => console.error("API error:", err));
   };
   useEffect(fetchData, [activeTab, token]);
 
-  // Désactiver / réactiver
+  // Désactiver / Réactiver
   const toggleItem = (type, id, action) => {
     if (
       window.confirm(
-        `${action === "desactiver" ? "Désactiver" : "Réactiver"} cet ${type} ?`
+        `${action === "desactiver" ? "Désactiver" : "Réactiver"} ce ${type.slice(0, -1)} ?`
       )
     ) {
       api.put(`admin/${type}/${id}/${action}`, {}, {
@@ -86,7 +79,7 @@ export default function Admin() {
     }
   };
 
-  // Thème
+  // Changer de thème
   const toggleTheme = () =>
     setTheme(theme === "dark" ? "light" : "dark");
 
@@ -97,7 +90,7 @@ export default function Admin() {
         Thème : {theme === "dark" ? "Clair" : "Sombre"}
       </button>
 
-      {/* Navigation onglets */}
+      {/* Navigation Onglets */}
       <nav className="admin-nav">
         {["utilisateurs", "evenements", "reservations"].map(tab => (
           <button
@@ -111,6 +104,7 @@ export default function Admin() {
       </nav>
 
       <div className="admin-content">
+        {/* Utilisateurs */}
         {activeTab === "utilisateurs" && (
           <section>
             <div className="section-header">
@@ -146,8 +140,7 @@ export default function Admin() {
                         </button>
                         <button
                           onClick={() =>
-                            window
-                              .confirm("Supprimer cet utilisateur ?") &&
+                            window.confirm("Supprimer cet utilisateur ?") &&
                             api
                               .delete(`admin/utilisateurs/${u.id}`, {
                                 headers: { Authorization: `Bearer ${token}` }
@@ -168,6 +161,7 @@ export default function Admin() {
           </section>
         )}
 
+        {/* Événements */}
         {activeTab === "evenements" && (
           <section>
             <div className="section-header">
@@ -193,9 +187,7 @@ export default function Admin() {
                   {data.map(ev => (
                     <tr key={ev.id}>
                       <td>{ev.titre}</td>
-                      <td>
-                        {new Date(ev.dateEvenement).toLocaleString()}
-                      </td>
+                      <td>{new Date(ev.dateEvenement).toLocaleString()}</td>
                       <td>
                         <span
                           className={`status ${
@@ -208,9 +200,7 @@ export default function Admin() {
                       <td className="actions">
                         <button
                           onClick={() =>
-                            navigate(
-                              `/admin/evenements/modifier/${ev.id}`
-                            )
+                            navigate(`/admin/evenements/modifier/${ev.id}`)
                           }
                         >
                           Modifier
@@ -243,6 +233,7 @@ export default function Admin() {
           </section>
         )}
 
+        {/* Réservations (boutons Modifier retirés) */}
         {activeTab === "reservations" && (
           <section>
             <div className="section-header">
@@ -273,23 +264,10 @@ export default function Admin() {
                         </span>
                       </td>
                       <td className="actions">
-                        <button
-                          onClick={() =>
-                            navigate(
-                              `/admin/reservations/modifier/${r.id}`
-                            )
-                          }
-                        >
-                          Modifier
-                        </button>
                         {r.actif ? (
                           <button
                             onClick={() =>
-                              toggleItem(
-                                "reservations",
-                                r.id,
-                                "desactiver"
-                              )
+                              toggleItem("reservations", r.id, "desactiver")
                             }
                           >
                             Désactiver
@@ -297,11 +275,7 @@ export default function Admin() {
                         ) : (
                           <button
                             onClick={() =>
-                              toggleItem(
-                                "reservations",
-                                r.id,
-                                "reactiver"
-                              )
+                              toggleItem("reservations", r.id, "reactiver")
                             }
                           >
                             Réactiver
