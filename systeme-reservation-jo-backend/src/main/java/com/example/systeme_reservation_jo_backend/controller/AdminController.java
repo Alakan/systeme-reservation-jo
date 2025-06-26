@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -47,19 +48,18 @@ public class AdminController {
     // --- UTILISATEURS ----------------------------------------------------
 
     @GetMapping("/utilisateurs")
-    public ResponseEntity<?> getAllUtilisateurs() {
+    public ResponseEntity<List<Utilisateur>> getAllUtilisateurs() {
         return ResponseEntity.ok(utilisateurService.getAllUtilisateurs());
     }
 
     @GetMapping("/utilisateurs/{id}")
-    public ResponseEntity<?> getUtilisateurById(@PathVariable Long id) {
+    public ResponseEntity<UtilisateurDTO> getUtilisateurById(@PathVariable Long id) {
         return utilisateurService.getUtilisateurById(id)
                 .map(u -> {
                     UtilisateurDTO dto = new UtilisateurDTO();
                     dto.setId(u.getId());
                     dto.setUsername(u.getUsername());
                     dto.setEmail(u.getEmail());
-                    // ne pas renvoyer le password
                     dto.setRoles(
                             u.getRoles().stream()
                                     .map(Role::getName)
@@ -78,7 +78,7 @@ public class AdminController {
             u.setEmail(dto.getEmail());
             u.setPassword(dto.getPassword());
 
-            // récupération et association des rôles
+            // associer les rôles sélectionnés
             Set<Role> roles = dto.getRoles().stream()
                     .map(name -> roleRepository.findByName(name)
                             .orElseThrow(() ->
@@ -102,21 +102,32 @@ public class AdminController {
             @PathVariable Long id,
             @Valid @RequestBody UtilisateurDTO dto) {
         try {
-            Utilisateur u = new Utilisateur();
-            u.setUsername(dto.getUsername());
-            u.setEmail(dto.getEmail());
-            u.setPassword(dto.getPassword());
+            // charger l'utilisateur existant
+            Utilisateur existing = utilisateurService
+                    .getUtilisateurById(id)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-            // mise à jour des rôles
-            Set<Role> roles = dto.getRoles().stream()
-                    .map(name -> roleRepository.findByName(name)
-                            .orElseThrow(() ->
-                                    new RuntimeException("Rôle introuvable : " + name)))
-                    .collect(Collectors.toSet());
-            u.setRoles(roles);
+            // mettre à jour les champs simples
+            existing.setUsername(dto.getUsername());
+            existing.setEmail(dto.getEmail());
+            if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+                existing.setPassword(dto.getPassword());
+            }
 
-            Utilisateur updated = utilisateurService.updateUtilisateur(id, u);
+            // ne toucher aux rôles que si l'admin en a fourni dans le DTO
+            if (dto.getRoles() != null && !dto.getRoles().isEmpty()) {
+                Set<Role> roles = dto.getRoles().stream()
+                        .map(name -> roleRepository.findByName(name)
+                                .orElseThrow(() ->
+                                        new RuntimeException("Rôle introuvable : " + name)))
+                        .collect(Collectors.toSet());
+                existing.setRoles(roles);
+            }
+
+            // sauvegarde (encode password en service)
+            Utilisateur updated = utilisateurService.saveUtilisateur(existing);
             return ResponseEntity.ok(updated);
+
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
@@ -125,7 +136,7 @@ public class AdminController {
     }
 
     @DeleteMapping("/utilisateurs/{id}")
-    public ResponseEntity<?> deleteUtilisateur(@PathVariable Long id) {
+    public ResponseEntity<String> deleteUtilisateur(@PathVariable Long id) {
         utilisateurService.deleteUtilisateur(id);
         return ResponseEntity.ok("Utilisateur supprimé avec succès.");
     }
@@ -133,12 +144,12 @@ public class AdminController {
     // --- EVENEMENTS ------------------------------------------------------
 
     @GetMapping("/evenements")
-    public ResponseEntity<?> getAllEvenements() {
+    public ResponseEntity<List<Evenement>> getAllEvenements() {
         return ResponseEntity.ok(evenementService.getAllEvenements());
     }
 
     @GetMapping("/evenements/{id}")
-    public ResponseEntity<?> getEvenementById(@PathVariable Long id) {
+    public ResponseEntity<EvenementDTO> getEvenementById(@PathVariable Long id) {
         return evenementService.getEvenementById(id)
                 .map(ev -> {
                     EvenementDTO dto = new EvenementDTO();
@@ -224,7 +235,7 @@ public class AdminController {
     // --- RESERVATIONS ----------------------------------------------------
 
     @GetMapping("/reservations")
-    public ResponseEntity<?> getAllReservations() {
+    public ResponseEntity<List<Reservation>> getAllReservations() {
         return ResponseEntity.ok(reservationService.getAllReservations());
     }
 
