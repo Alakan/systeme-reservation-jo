@@ -1,11 +1,10 @@
+// src/main/java/com/example/systeme_reservation_jo_backend/controller/ReservationController.java
 package com.example.systeme_reservation_jo_backend.controller;
 
 import com.example.systeme_reservation_jo_backend.dto.ReservationDTO;
 import com.example.systeme_reservation_jo_backend.dto.ReservationMapper;
 import com.example.systeme_reservation_jo_backend.model.Evenement;
-import com.example.systeme_reservation_jo_backend.model.ModePaiement;
 import com.example.systeme_reservation_jo_backend.model.Reservation;
-import com.example.systeme_reservation_jo_backend.model.StatutReservation;
 import com.example.systeme_reservation_jo_backend.model.Utilisateur;
 import com.example.systeme_reservation_jo_backend.service.EvenementService;
 import com.example.systeme_reservation_jo_backend.service.ReservationService;
@@ -20,167 +19,145 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/reservations")
-@CrossOrigin(origins = {"http://localhost:3000",
-        "https://front-systeme-reservation-jo-be1e62ad3714.herokuapp.com"})
+@CrossOrigin(origins = {
+        "http://localhost:3000",
+        "https://front-systeme-reservation-jo-be1e62ad3714.herokuapp.com"
+})
 public class ReservationController {
 
     private final ReservationService reservationService;
     private final UtilisateurService utilisateurService;
-    private final EvenementService evenementService;
+    private final EvenementService   evenementService;
 
     public ReservationController(ReservationService reservationService,
                                  UtilisateurService utilisateurService,
                                  EvenementService evenementService) {
         this.reservationService = reservationService;
         this.utilisateurService = utilisateurService;
-        this.evenementService = evenementService;
+        this.evenementService   = evenementService;
     }
 
-    // Accessible uniquement aux administrateurs pour récupérer toutes les réservations (actives et inactives)
     @GetMapping
     @PreAuthorize("hasRole('ADMINISTRATEUR')")
     public ResponseEntity<List<ReservationDTO>> getAllReservations() {
-        List<Reservation> reservations = reservationService.getAllReservations();
-        List<ReservationDTO> dtos = reservations.stream()
+        List<ReservationDTO> dtos = reservationService.getAllReservations()
+                .stream()
                 .map(ReservationMapper::toDTO)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
 
-    // Récupération d'une réservation par son identifiant
-    // Pour les utilisateurs non admin, on ne renvoie que si la réservation est active
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getReservationById(@PathVariable Long id) {
-        Optional<Reservation> reservationOpt = reservationService.getReservationById(id);
-        if (reservationOpt.isPresent()) {
-            Reservation reservation = reservationOpt.get();
-
-            // Vérifier si l'utilisateur authentifié est administrateur
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            boolean isAdmin = auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equalsIgnoreCase("ROLE_ADMINISTRATEUR") ||
-                            a.getAuthority().equalsIgnoreCase("ROLE_ADMIN"));
-
-            // Si l'utilisateur n'est pas admin et si la réservation est désactivée, retourner 404.
-            if (!isAdmin && !reservation.isActif()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Réservation introuvable.");
-            }
-
-            ReservationDTO dto = ReservationMapper.toDTO(reservation);
-            return ResponseEntity.ok(dto);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Réservation introuvable.");
-        }
+        return reservationService.getReservationById(id)
+                .map(res -> {
+                    // Si l'utilisateur n'est pas admin et réservation désactivée → 404
+                    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                    boolean isAdmin = auth.getAuthorities().stream()
+                            .anyMatch(a -> a.getAuthority().equalsIgnoreCase("ROLE_ADMINISTRATEUR"));
+                    if (!isAdmin && !res.isActif()) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Réservation introuvable.");
+                    }
+                    return ResponseEntity.ok(ReservationMapper.toDTO(res));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Réservation introuvable."));
     }
 
-    // Récupération des réservations de l'utilisateur authentifié, seules les réservations actives sont renvoyées
     @GetMapping("/utilisateur")
     @PreAuthorize("hasRole('UTILISATEUR') or hasRole('ADMINISTRATEUR')")
-    public ResponseEntity<Object> getReservationsByUserEmail() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userEmail = authentication.getName();
-        System.out.println("🔍 Email de l'utilisateur authentifié : " + userEmail);
-
-        Optional<Utilisateur> utilisateurOpt = utilisateurService.findByEmail(userEmail);
-        if (utilisateurOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Utilisateur introuvable.");
-        }
-
-        List<Reservation> reservations = reservationService.getReservationsByUtilisateur(utilisateurOpt.get().getId());
-
-        // Pour la vue utilisateur, ne renvoyer que les réservations actives
-        List<ReservationDTO> reservationDTOs = reservations.stream()
+    public ResponseEntity<?> getReservationsByUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        List<ReservationDTO> list = utilisateurService.findByEmail(email)
+                .map(u -> reservationService.getReservationsByUtilisateur(u.getId()))
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"))
+                .stream()
                 .filter(Reservation::isActif)
                 .map(ReservationMapper::toDTO)
                 .collect(Collectors.toList());
-
-        if (reservationDTOs.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Vous n'avez aucune réservation.");
+        if (list.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Aucune réservation active.");
         }
-
-        return ResponseEntity.ok(reservationDTOs);
+        return ResponseEntity.ok(list);
     }
 
-    // Création d'une réservation (retourne un DTO)
     @PostMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Object> createReservation(@Valid @RequestBody Reservation reservation) {
+    public ResponseEntity<?> createReservation(@Valid @RequestBody ReservationDTO dto) {
         try {
-            if (reservation.getEvenement() == null || reservation.getUtilisateur() == null) {
-                return ResponseEntity.badRequest().body("L'événement et l'utilisateur sont obligatoires.");
-            }
-            if (reservation.getDateReservation() == null) {
-                reservation.setDateReservation(LocalDateTime.now());
-            }
-            if (reservation.getNombreBillets() <= 0) {
-                return ResponseEntity.badRequest().body("Le nombre de billets doit être supérieur à zéro.");
-            }
+            // 1) Récupérer utilisateur connecté
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Utilisateur user = utilisateurService.findByEmail(auth.getName())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
-            // Vérification et récupération de l'utilisateur complet via son email
-            Optional<Utilisateur> utilisateurOpt = utilisateurService.findByEmail(reservation.getUtilisateur().getEmail());
-            if (utilisateurOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body("Utilisateur non trouvé.");
-            }
+            // 2) Charger l'événement
+            Evenement ev = evenementService.getEvenementById(dto.getEvenement().getId())
+                    .orElseThrow(() -> new RuntimeException("Événement introuvable"));
 
-            // Récupération de l'objet Evenement complet à partir de son identifiant
-            Long evenementId = reservation.getEvenement().getId();
-            Optional<Evenement> evenementOpt = evenementService.getEvenementById(evenementId);
-            if (evenementOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body("Événement non trouvé.");
-            }
-            reservation.setEvenement(evenementOpt.get());
-            reservation.setUtilisateur(utilisateurOpt.get());
-            reservation.setStatut(StatutReservation.EN_ATTENTE);
+            // 3) Construire la réservation
+            Reservation r = new Reservation();
+            r.setUtilisateur(user);
+            r.setEvenement(ev);
+            r.setNombreBillets(dto.getNombreBillets());
+            r.setDateReservation(
+                    dto.getDateReservation() != null
+                            ? dto.getDateReservation()
+                            : LocalDateTime.now()
+            );
 
-            Reservation savedReservation = reservationService.createReservation(reservation);
-            return ResponseEntity.status(HttpStatus.CREATED).body(ReservationMapper.toDTO(savedReservation));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Erreur lors de la création de la réservation : " + e.getMessage());
+            // 4) Persister et renvoyer le DTO
+            Reservation saved = reservationService.createReservation(r);
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(ReservationMapper.toDTO(saved));
+
+        } catch (RuntimeException ex) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Erreur création réservation : " + ex.getMessage());
         }
     }
 
-    // Mise à jour d'une réservation existante (retourne un DTO)
     @PutMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Object> updateReservation(@PathVariable Long id, @Valid @RequestBody Reservation reservationDetails) {
+    public ResponseEntity<?> updateReservation(@PathVariable Long id,
+                                               @Valid @RequestBody ReservationDTO dto) {
         try {
-            Reservation updatedReservation = reservationService.updateReservation(id, reservationDetails);
-            return ResponseEntity.ok(ReservationMapper.toDTO(updatedReservation));
-        } catch (Exception e) {
+            Reservation updated = reservationService.updateReservation(id, ReservationMapper.fromDTO(dto));
+            return ResponseEntity.ok(ReservationMapper.toDTO(updated));
+        } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Erreur lors de la mise à jour de la réservation : " + e.getMessage());
+                    .body("Erreur mise à jour : " + ex.getMessage());
         }
     }
 
-    // Suppression d'une réservation (opération de suppression définitive)
     @DeleteMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Object> deleteReservation(@PathVariable Long id) {
+    public ResponseEntity<?> deleteReservation(@PathVariable Long id) {
         try {
             reservationService.deleteReservation(id);
-            return ResponseEntity.ok("Réservation supprimée avec succès.");
-        } catch (Exception e) {
+            return ResponseEntity.ok("Réservation supprimée.");
+        } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Erreur lors de la suppression de la réservation : " + e.getMessage());
+                    .body("Erreur suppression : " + ex.getMessage());
         }
     }
 
-    // Effectuer le paiement d'une réservation en appelant le service dédié
     @PutMapping("/{id}/paiement")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Object> effectuerPaiement(@PathVariable Long id, @RequestBody ModePaiement modePaiement) {
+    public ResponseEntity<?> payerReservation(@PathVariable Long id,
+                                              @RequestBody String modePaiement) {
         try {
-            Reservation updatedReservation = reservationService.effectuerPaiement(id, modePaiement);
-            return ResponseEntity.ok("Paiement effectué avec succès !");
-        } catch (Exception e) {
+            Reservation paid = reservationService.effectuerPaiement(id, null);
+            return ResponseEntity.ok(ReservationMapper.toDTO(paid));
+        } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erreur lors du paiement : " + e.getMessage());
+                    .body("Erreur paiement : " + ex.getMessage());
         }
     }
 }
