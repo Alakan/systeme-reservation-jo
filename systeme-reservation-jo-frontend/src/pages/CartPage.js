@@ -24,7 +24,7 @@ function CartPage() {
       return;
     }
 
-    // Décodage pour récupérer l'email
+    // Décodage du token pour récupérer l'email (nécessaire côté backend on récupère l'utilisateur)
     let payload;
     try {
       payload = JSON.parse(atob(token.split('.')[1]));
@@ -34,7 +34,7 @@ function CartPage() {
     }
     const userEmail = payload.sub;
 
-    // Mode de paiement
+    // Choix du mode de paiement
     const modeInput = window.prompt('Mode de paiement : CARTE, PAYPAL ou VIREMENT');
     const mode      = modeInput ? modeInput.toUpperCase() : '';
     if (!['CARTE','PAYPAL','VIREMENT'].includes(mode)) {
@@ -44,40 +44,39 @@ function CartPage() {
     setIsLoading(true);
 
     try {
-      // Pour chaque ligne du panier, on crée + paie
       for (const item of cart) {
-        // 1️⃣ Création
+        // 1️⃣ Création de la réservation
+        // On n’envoie plus l’utilisateur : le back utilise le token pour l’identifier
         const res = await api.post(
           'reservations',
           {
-            utilisateur:     { email: userEmail },
             evenement:       { id: item.id },
             dateReservation: new Date().toISOString(),
             nombreBillets:   item.quantity
           },
           {
             headers: {
-              Authorization: 'Bearer ' + token,
+              Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           }
         );
         const reservationId = res.data.id;
 
-        // 2️⃣ Paiement -> mettra à jour le statut en confirmed
+        // 2️⃣ Paiement via le nouvel endpoint qui attend { methodePaiement }
         await api.put(
           `reservations/${reservationId}/paiement`,
-          JSON.stringify(mode),
+          { methodePaiement: mode },
           {
             headers: {
-              Authorization: 'Bearer ' + token,
+              Authorization: `Bearer ${token}`,
               'Content-Type':  'application/json'
             }
           }
         );
       }
 
-      alert('Réservation(s) confirmée(s) !');      
+      alert('Réservation(s) confirmée(s) !');
       clearCart();
       navigate('/mes-reservations');
     } catch (err) {

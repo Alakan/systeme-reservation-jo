@@ -1,26 +1,23 @@
 // src/pages/MesReservations.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate }                     from 'react-router-dom';
-import api                                        from '../services/api';
+import { Link, useNavigate } from 'react-router-dom';
+import api                  from '../services/api';
 import '../styles/MesReservations.css';
 
 export default function MesReservations() {
   const [reservations, setReservations] = useState([]);
-  const [isPaying, setIsPaying]         = useState(null); // id de la résa en cours de paiement
+  const [isPaying, setIsPaying]         = useState(null);
   const navigate                        = useNavigate();
   const token                           = localStorage.getItem('token');
 
-  // formatage d’un montant
   const formatPrice = price =>
     new Intl.NumberFormat('fr-FR', {
       style:    'currency',
       currency: 'EUR',
     }).format(price);
 
-  // fetch des réservations
   const fetchReservations = useCallback(async () => {
     if (!token) return navigate('/login');
-
     try {
       const { data } = await api.get('reservations/utilisateur', {
         headers: { Authorization: `Bearer ${token}` },
@@ -57,10 +54,10 @@ export default function MesReservations() {
 
     setIsPaying(reservationId);
     try {
-      // on envoie le mode PUR (string), comme dans CartPage.js
+      // on envoie désormais un objet { methodePaiement: choice }
       await api.put(
         `reservations/${reservationId}/paiement`,
-        JSON.stringify(choice),
+        { methodePaiement: choice },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -95,16 +92,13 @@ export default function MesReservations() {
       ) : (
         <ul className="reservations-list">
           {reservations.map(r => {
-            // si le backend ne fournit pas prixTotal, on le calcule ici
             const total = r.prixTotal
               ?? r.evenement.prix * r.nombreBillets;
 
             return (
               <li key={r.id} className="reservation-item">
                 <div className="reservation-details">
-                  <strong className="event-title">
-                    {r.evenement.titre}
-                  </strong>
+                  <strong className="event-title">{r.evenement.titre}</strong>
                   <div><span>Numéro :</span> {r.id}</div>
                   <div>
                     <span>Date réservation :</span>{' '}
@@ -112,7 +106,8 @@ export default function MesReservations() {
                   </div>
                   <div>
                     <span>Date événement :</span>{' '}
-                    {new Date(r.evenement.dateEvenement).toLocaleDateString('fr-FR')}
+                    {new Date(r.evenement.dateEvenement)
+                      .toLocaleDateString('fr-FR')}
                   </div>
                   <div><span>Billets :</span> {r.nombreBillets}</div>
                   <div><span>Prix total :</span> {formatPrice(total)}</div>

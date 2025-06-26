@@ -3,6 +3,7 @@ package com.example.systeme_reservation_jo_backend.controller;
 
 import com.example.systeme_reservation_jo_backend.dto.ReservationDTO;
 import com.example.systeme_reservation_jo_backend.dto.ReservationMapper;
+import com.example.systeme_reservation_jo_backend.dto.ReservationPaiementDTO;
 import com.example.systeme_reservation_jo_backend.model.Evenement;
 import com.example.systeme_reservation_jo_backend.model.Reservation;
 import com.example.systeme_reservation_jo_backend.model.Utilisateur;
@@ -148,12 +149,17 @@ public class ReservationController {
         }
     }
 
+    /**
+     * Paiement d'une réservation : on reçoit un JSON { "methodePaiement": "CARTE" }
+     */
     @PutMapping("/{id}/paiement")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> payerReservation(@PathVariable Long id,
-                                              @RequestBody String modePaiement) {
+    public ResponseEntity<?> payerReservation(
+            @PathVariable Long id,
+            @Valid @RequestBody ReservationPaiementDTO dto
+    ) {
         try {
-            Reservation paid = reservationService.effectuerPaiement(id, null);
+            Reservation paid = reservationService.effectuerPaiement(id, dto.getMethodePaiement());
             return ResponseEntity.ok(ReservationMapper.toDTO(paid));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
