@@ -5,13 +5,29 @@ import api                  from "../services/api";
 import "../styles/AjouterUtilisateur.css";
 
 export default function AjouterUtilisateur() {
-  const [form, setForm] = useState({ username: "", email: "", password: "" });
-  const [error, setError] = useState("");
+  const [form, setForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    roles: []      // ← on ajoute ce champ
+  });
+  const [error, setError]           = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
+  // Liste possible des rôles
+  const allRoles = [
+    { value: "ROLE_UTILISATEUR",    label: "Utilisateur" },
+    { value: "ROLE_ADMINISTRATEUR", label: "Administrateur" }
+  ];
+
   const handleChange = e => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    if (name === "role") {
+      setForm(prev => ({ ...prev, roles: [value] }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: value }));
+    }
     setError("");
   };
 
@@ -20,7 +36,7 @@ export default function AjouterUtilisateur() {
 
     // validations front-end
     if (form.username.trim().length < 3) {
-      return setError("Le nom d'utilisateur doit contenir au moins 3 caractères.");
+      return setError("Le nom d’utilisateur doit contenir au moins 3 caractères.");
     }
     if (!/^\S+@\S+\.\S+$/.test(form.email)) {
       return setError("Merci de saisir un email valide.");
@@ -28,19 +44,29 @@ export default function AjouterUtilisateur() {
     if (form.password.length < 6) {
       return setError("Le mot de passe doit contenir au moins 6 caractères.");
     }
+    if (form.roles.length === 0) {
+      return setError("Veuillez choisir un rôle pour l’utilisateur.");
+    }
 
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem("token");
-      await api.post("/admin/utilisateurs", form, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
+      await api.post(
+        "/admin/utilisateurs",
+        form,  // username, email, password, roles
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
         }
-      });
+      );
       navigate("/admin");
     } catch (err) {
-      setError(err.response?.data?.message || "Erreur lors de l'ajout de l'utilisateur.");
+      setError(
+        err.response?.data ||
+        "Erreur lors de l'ajout de l'utilisateur."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -81,6 +107,22 @@ export default function AjouterUtilisateur() {
           placeholder="••••••••"
           required
         />
+
+        <label htmlFor="role">Rôle</label>
+        <select
+          id="role"
+          name="role"
+          value={form.roles[0] || ""}
+          onChange={handleChange}
+          required
+        >
+          <option value="">-- Choisir un rôle --</option>
+          {allRoles.map(r => (
+            <option key={r.value} value={r.value}>
+              {r.label}
+            </option>
+          ))}
+        </select>
 
         {error && <p className="error-msg">{error}</p>}
 

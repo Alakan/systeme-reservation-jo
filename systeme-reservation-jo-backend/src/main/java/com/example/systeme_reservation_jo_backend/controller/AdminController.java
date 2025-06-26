@@ -1,10 +1,13 @@
+// src/main/java/com/example/systeme_reservation_jo_backend/controller/AdminController.java
 package com.example.systeme_reservation_jo_backend.controller;
 
 import com.example.systeme_reservation_jo_backend.dto.EvenementDTO;
 import com.example.systeme_reservation_jo_backend.dto.UtilisateurDTO;
 import com.example.systeme_reservation_jo_backend.model.Evenement;
 import com.example.systeme_reservation_jo_backend.model.Reservation;
+import com.example.systeme_reservation_jo_backend.model.Role;
 import com.example.systeme_reservation_jo_backend.model.Utilisateur;
+import com.example.systeme_reservation_jo_backend.repository.RoleRepository;
 import com.example.systeme_reservation_jo_backend.service.EvenementService;
 import com.example.systeme_reservation_jo_backend.service.ReservationService;
 import com.example.systeme_reservation_jo_backend.service.UtilisateurService;
@@ -14,7 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -26,13 +30,16 @@ import java.util.List;
 public class AdminController {
 
     private final UtilisateurService utilisateurService;
-    private final EvenementService   evenementService;
+    private final RoleRepository      roleRepository;
+    private final EvenementService    evenementService;
     private final ReservationService  reservationService;
 
     public AdminController(UtilisateurService utilisateurService,
-                           EvenementService   evenementService,
+                           RoleRepository      roleRepository,
+                           EvenementService    evenementService,
                            ReservationService  reservationService) {
         this.utilisateurService = utilisateurService;
+        this.roleRepository     = roleRepository;
         this.evenementService   = evenementService;
         this.reservationService  = reservationService;
     }
@@ -40,19 +47,24 @@ public class AdminController {
     // --- UTILISATEURS ----------------------------------------------------
 
     @GetMapping("/utilisateurs")
-    public ResponseEntity<List<Utilisateur>> getAllUtilisateurs() {
+    public ResponseEntity<?> getAllUtilisateurs() {
         return ResponseEntity.ok(utilisateurService.getAllUtilisateurs());
     }
 
     @GetMapping("/utilisateurs/{id}")
-    public ResponseEntity<UtilisateurDTO> getUtilisateurById(@PathVariable Long id) {
+    public ResponseEntity<?> getUtilisateurById(@PathVariable Long id) {
         return utilisateurService.getUtilisateurById(id)
                 .map(u -> {
                     UtilisateurDTO dto = new UtilisateurDTO();
                     dto.setId(u.getId());
                     dto.setUsername(u.getUsername());
                     dto.setEmail(u.getEmail());
-                    // Le mot de passe reste write-only
+                    // ne pas renvoyer le password
+                    dto.setRoles(
+                            u.getRoles().stream()
+                                    .map(Role::getName)
+                                    .collect(Collectors.toSet())
+                    );
                     return ResponseEntity.ok(dto);
                 })
                 .orElse(ResponseEntity.notFound().build());
@@ -65,10 +77,22 @@ public class AdminController {
             u.setUsername(dto.getUsername());
             u.setEmail(dto.getEmail());
             u.setPassword(dto.getPassword());
+
+            // récupération et association des rôles
+            Set<Role> roles = dto.getRoles().stream()
+                    .map(name -> roleRepository.findByName(name)
+                            .orElseThrow(() ->
+                                    new RuntimeException("Rôle introuvable : " + name)))
+                    .collect(Collectors.toSet());
+            u.setRoles(roles);
+
             Utilisateur created = utilisateurService.saveUtilisateur(u);
-            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(created);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
                     .body("Erreur création utilisateur : " + e.getMessage());
         }
     }
@@ -82,16 +106,26 @@ public class AdminController {
             u.setUsername(dto.getUsername());
             u.setEmail(dto.getEmail());
             u.setPassword(dto.getPassword());
+
+            // mise à jour des rôles
+            Set<Role> roles = dto.getRoles().stream()
+                    .map(name -> roleRepository.findByName(name)
+                            .orElseThrow(() ->
+                                    new RuntimeException("Rôle introuvable : " + name)))
+                    .collect(Collectors.toSet());
+            u.setRoles(roles);
+
             Utilisateur updated = utilisateurService.updateUtilisateur(id, u);
             return ResponseEntity.ok(updated);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
                     .body("Erreur mise à jour utilisateur : " + e.getMessage());
         }
     }
 
     @DeleteMapping("/utilisateurs/{id}")
-    public ResponseEntity<String> deleteUtilisateur(@PathVariable Long id) {
+    public ResponseEntity<?> deleteUtilisateur(@PathVariable Long id) {
         utilisateurService.deleteUtilisateur(id);
         return ResponseEntity.ok("Utilisateur supprimé avec succès.");
     }
@@ -99,12 +133,12 @@ public class AdminController {
     // --- EVENEMENTS ------------------------------------------------------
 
     @GetMapping("/evenements")
-    public ResponseEntity<List<Evenement>> getAllEvenements() {
+    public ResponseEntity<?> getAllEvenements() {
         return ResponseEntity.ok(evenementService.getAllEvenements());
     }
 
     @GetMapping("/evenements/{id}")
-    public ResponseEntity<EvenementDTO> getEvenementById(@PathVariable Long id) {
+    public ResponseEntity<?> getEvenementById(@PathVariable Long id) {
         return evenementService.getEvenementById(id)
                 .map(ev -> {
                     EvenementDTO dto = new EvenementDTO();
@@ -132,9 +166,12 @@ public class AdminController {
             ev.setPrix(dto.getPrix());
             ev.setCapaciteTotale(dto.getCapaciteTotale());
             Evenement created = evenementService.createEvenement(ev);
-            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(created);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
                     .body("Erreur création événement : " + e.getMessage());
         }
     }
@@ -154,7 +191,8 @@ public class AdminController {
             Evenement updated = evenementService.updateEvenement(id, ev);
             return ResponseEntity.ok(updated);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
                     .body("Erreur mise à jour événement : " + e.getMessage());
         }
     }
@@ -165,7 +203,8 @@ public class AdminController {
             Evenement ev = evenementService.desactiverEvenement(id);
             return ResponseEntity.ok(ev);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
                     .body("Erreur désactivation événement : " + e.getMessage());
         }
     }
@@ -176,7 +215,8 @@ public class AdminController {
             Evenement ev = evenementService.reactiverEvenement(id);
             return ResponseEntity.ok(ev);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
                     .body("Erreur réactivation événement : " + e.getMessage());
         }
     }
@@ -184,7 +224,7 @@ public class AdminController {
     // --- RESERVATIONS ----------------------------------------------------
 
     @GetMapping("/reservations")
-    public ResponseEntity<List<Reservation>> getAllReservations() {
+    public ResponseEntity<?> getAllReservations() {
         return ResponseEntity.ok(reservationService.getAllReservations());
     }
 
@@ -193,9 +233,12 @@ public class AdminController {
             @Valid @RequestBody Reservation reservation) {
         try {
             Reservation created = reservationService.createReservation(reservation);
-            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(created);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
                     .body("Erreur création réservation : " + e.getMessage());
         }
     }
@@ -206,7 +249,8 @@ public class AdminController {
             Reservation r = reservationService.desactiverReservation(id);
             return ResponseEntity.ok(r);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
                     .body("Erreur désactivation réservation : " + e.getMessage());
         }
     }
@@ -217,7 +261,8 @@ public class AdminController {
             Reservation r = reservationService.reactiverReservation(id);
             return ResponseEntity.ok(r);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
                     .body("Erreur réactivation réservation : " + e.getMessage());
         }
     }
