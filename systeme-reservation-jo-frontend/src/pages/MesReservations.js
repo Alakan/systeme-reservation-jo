@@ -54,10 +54,12 @@ export default function MesReservations() {
 
     setIsPaying(reservationId);
     try {
-      // on envoie désormais un objet { methodePaiement: choice }
+      const payload = { methodePaiement: choice };
+      console.log('MesReservations → payload paiement', payload);
+
       await api.put(
         `reservations/${reservationId}/paiement`,
-        { methodePaiement: choice },
+        payload,
         {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -24,15 +24,13 @@ function CartPage() {
       return;
     }
 
-    // Décodage du token pour récupérer l'email (nécessaire côté backend on récupère l'utilisateur)
-    let payload;
+    let payloadToken;
     try {
-      payload = JSON.parse(atob(token.split('.')[1]));
+      payloadToken = JSON.parse(atob(token.split('.')[1]));
     } catch {
       alert('Token invalide, reconnectez-vous.');
       return navigate('/login');
     }
-    const userEmail = payload.sub;
 
     // Choix du mode de paiement
     const modeInput = window.prompt('Mode de paiement : CARTE, PAYPAL ou VIREMENT');
@@ -45,8 +43,6 @@ function CartPage() {
 
     try {
       for (const item of cart) {
-        // 1️⃣ Création de la réservation
-        // On n’envoie plus l’utilisateur : le back utilise le token pour l’identifier
         const res = await api.post(
           'reservations',
           {
@@ -63,10 +59,12 @@ function CartPage() {
         );
         const reservationId = res.data.id;
 
-        // 2️⃣ Paiement via le nouvel endpoint qui attend { methodePaiement }
+        const payloadPayment = { methodePaiement: mode };
+        console.log('CartPage → payload paiement', payloadPayment);
+
         await api.put(
           `reservations/${reservationId}/paiement`,
-          { methodePaiement: mode },
+          payloadPayment,
           {
             headers: {
               Authorization: `Bearer ${token}`,
