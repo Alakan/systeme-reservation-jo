@@ -57,7 +57,6 @@ public class ReservationController {
     public ResponseEntity<?> getReservationById(@PathVariable Long id) {
         return reservationService.getReservationById(id)
                 .map(res -> {
-                    // Si l'utilisateur n'est pas admin et réservation désactivée → 404
                     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
                     boolean isAdmin = auth.getAuthorities().stream()
                             .anyMatch(a -> a.getAuthority().equalsIgnoreCase("ROLE_ADMINISTRATEUR"));
@@ -72,8 +71,7 @@ public class ReservationController {
     @GetMapping("/utilisateur")
     @PreAuthorize("hasRole('UTILISATEUR') or hasRole('ADMINISTRATEUR')")
     public ResponseEntity<?> getReservationsByUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
         List<ReservationDTO> list = utilisateurService.findByEmail(email)
                 .map(u -> reservationService.getReservationsByUtilisateur(u.getId()))
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"))
@@ -91,16 +89,13 @@ public class ReservationController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> createReservation(@Valid @RequestBody ReservationDTO dto) {
         try {
-            // 1) Récupérer utilisateur connecté
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            Utilisateur user = utilisateurService.findByEmail(auth.getName())
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            Utilisateur user = utilisateurService.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
-            // 2) Charger l'événement
             Evenement ev = evenementService.getEvenementById(dto.getEvenement().getId())
                     .orElseThrow(() -> new RuntimeException("Événement introuvable"));
 
-            // 3) Construire la réservation
             Reservation r = new Reservation();
             r.setUtilisateur(user);
             r.setEvenement(ev);
@@ -111,7 +106,6 @@ public class ReservationController {
                             : LocalDateTime.now()
             );
 
-            // 4) Persister et renvoyer le DTO
             Reservation saved = reservationService.createReservation(r);
             return ResponseEntity
                     .status(HttpStatus.CREATED)
