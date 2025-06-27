@@ -1,10 +1,12 @@
+// src/main/java/com/example/systeme_reservation_jo_backend/service/UtilisateurServiceImpl.java
 package com.example.systeme_reservation_jo_backend.service;
 
-import com.example.systeme_reservation_jo_backend.dto.UtilisateurDTO;
 import com.example.systeme_reservation_jo_backend.model.Utilisateur;
 import com.example.systeme_reservation_jo_backend.repository.UtilisateurRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -12,11 +14,12 @@ import java.util.Optional;
 public class UtilisateurServiceImpl implements UtilisateurService {
 
     private final UtilisateurRepository utilisateurRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordEncoder      passwordEncoder;
 
-    public UtilisateurServiceImpl(UtilisateurRepository utilisateurRepository, PasswordEncoder passwordEncoder) {
+    public UtilisateurServiceImpl(UtilisateurRepository utilisateurRepository,
+                                  PasswordEncoder passwordEncoder) {
         this.utilisateurRepository = utilisateurRepository;
-        this.passwordEncoder = passwordEncoder;
+        this.passwordEncoder       = passwordEncoder;
     }
 
     // Retourne la liste complète des utilisateurs
@@ -55,20 +58,18 @@ public class UtilisateurServiceImpl implements UtilisateurService {
     }
 
     // Mise à jour des informations d'un utilisateur existant identifié par son id
-    // Ici, on met à jour le nom d'utilisateur, l'email, et on encode le mot de passe s'il est fourni.
     @Override
     public Utilisateur updateUtilisateur(Long id, Utilisateur utilisateurDetails) {
-        Optional<Utilisateur> utilisateurOpt = utilisateurRepository.findById(id);
-        if (utilisateurOpt.isEmpty()) {
+        Optional<Utilisateur> opt = utilisateurRepository.findById(id);
+        if (opt.isEmpty()) {
             throw new RuntimeException("Utilisateur non trouvé");
         }
 
-        Utilisateur utilisateur = utilisateurOpt.get();
+        Utilisateur utilisateur = opt.get();
         utilisateur.setUsername(utilisateurDetails.getUsername());
         utilisateur.setEmail(utilisateurDetails.getEmail());
 
         if (utilisateurDetails.getPassword() != null && !utilisateurDetails.getPassword().isBlank()) {
-            // Si le mot de passe n'est pas déjà encodé, on l'encode
             if (!utilisateurDetails.getPassword().startsWith("$2a$")) {
                 utilisateur.setPassword(passwordEncoder.encode(utilisateurDetails.getPassword()));
             } else {
@@ -76,15 +77,22 @@ public class UtilisateurServiceImpl implements UtilisateurService {
             }
         }
 
-        // Mise à jour éventuelle des rôles (si nécessaire)
-        utilisateur.setRoles(utilisateurDetails.getRoles());
         return utilisateurRepository.save(utilisateur);
     }
 
-    // Supprime un utilisateur par son identifiant
+    // Supprime un utilisateur : on purge d'abord la jointure utilisateur_roles, puis on supprime la ligne
     @Override
+    @Transactional
     public void deleteUtilisateur(Long id) {
-        utilisateurRepository.deleteById(id);
+        Utilisateur utilisateur = utilisateurRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        // 1) purge les rôles liés à l’utilisateur
+        utilisateur.getRoles().clear();
+        utilisateurRepository.save(utilisateur);
+
+        // 2) suppression de l’utilisateur
+        utilisateurRepository.delete(utilisateur);
     }
 
     // Récupère un utilisateur par son id

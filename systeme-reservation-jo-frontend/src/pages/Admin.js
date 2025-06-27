@@ -1,286 +1,295 @@
 // src/pages/Admin.js
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../services/api";
+import React, { useState, useEffect } from "react";
+import { useNavigate }                from "react-router-dom";
+import api                            from "../services/api";
 import "../styles/Admin.css";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme }                   from "../contexts/ThemeContext";
 
-function Admin() {
+export default function Admin() {
   const [activeTab, setActiveTab] = useState("utilisateurs");
-  const [data, setData] = useState([]);
-  const { theme, setTheme } = useTheme();
-  const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const [data, setData]           = useState([]);
+  const { theme, setTheme }       = useTheme();
+  const navigate                  = useNavigate();
+  const token                     = localStorage.getItem("token");
 
-  // 1) Vérifier que l'utilisateur est admin
+  // Vérification du rôle ADMIN
   useEffect(() => {
-    if (!token) {
-      navigate("/login");
-      return;
-    }
+    if (!token) return navigate("/login");
     try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const roles = payload.roles;
-      const isAdmin =
-        Array.isArray(roles)
-          ? roles.some((r) =>
-              ["ADMIN", "ROLE_ADMIN", "ROLE_ADMINISTRATEUR"].includes(r.toString().toUpperCase())
-            )
-          : ["ADMIN", "ROLE_ADMIN", "ROLE_ADMINISTRATEUR"].includes((roles || "").toString().toUpperCase());
-
+      const payload  = JSON.parse(atob(token.split(".")[1]));
+      const roles    = Array.isArray(payload.roles)
+        ? payload.roles
+        : [payload.roles];
+      const isAdmin  = roles
+        .map(r => r.replace(/^ROLE_/, "").toUpperCase())
+        .includes("ADMINISTRATEUR");
       if (!isAdmin) {
-        alert("Accès refusé : vous n'êtes pas administrateur.");
+        alert("Accès refusé : vous n’êtes pas administrateur.");
         navigate("/");
       }
-    } catch (err) {
-      console.error("Décodage token admin échoué :", err);
+    } catch {
       navigate("/login");
     }
   }, [navigate, token]);
 
-  // 2) fetchData encapsulé pour gérer les deps ESLint
-  const fetchData = useCallback(async () => {
+  // Chargement des données
+  const fetchData = () => {
     if (!token) return;
+    const headers = { Authorization: `Bearer ${token}` };
 
-    let endpoint = "";
-    if (activeTab === "utilisateurs") endpoint = "admin/utilisateurs";
-    else if (activeTab === "evenements") endpoint = "admin/evenements";
-    else if (activeTab === "reservations") endpoint = "admin/reservations";
+    if (activeTab === "reservations") {
+      Promise.all([
+        api.get("admin/reservations", { headers }),
+        api.get("admin/evenements",   { headers })
+      ])
+      .then(([resRes, evRes]) => {
+        const eventsMap = new Map(evRes.data.map(ev => [ev.id, ev]));
+        const enriched = resRes.data.map(r => ({
+          ...r,
+          evenement: eventsMap.get(r.evenementId) ?? { titre: "N/A" }
+        }));
+        setData(enriched);
+      })
+      .catch(err => console.error("API reservations+events error:", err));
+      return;
+    }
 
+    const endpoint = {
+      utilisateurs: "admin/utilisateurs",
+      evenements:   "admin/evenements"
+    }[activeTab];
     if (!endpoint) return;
 
-    try {
-      const res = await api.get(endpoint, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setData(res.data);
-    } catch (err) {
-      console.error("Erreur chargement données admin :", err);
-    }
-  }, [activeTab, token]);
+    api.get(endpoint, { headers })
+       .then(res => setData(res.data))
+       .catch(err => console.error("API error:", err));
+  };
+  useEffect(fetchData, [activeTab, token]);
 
-  // 3) Lancer fetchData quand activeTab (via fetchData) change
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  // 4) Handlers pour activer/désactiver entités
-  const handleDesactiverEvenement = async (id) => {
-    if (!window.confirm("Désactiver cet événement ?")) return;
-    try {
-      await api.put(`admin/evenements/${id}/desactiver`, null, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      fetchData();
-    } catch (err) {
-      console.error("Désactivation événement échouée :", err);
+  // Désactiver / Réactiver
+  const toggleItem = (type, id, action) => {
+    if (
+      window.confirm(
+        `${action === "desactiver" ? "Désactiver" : "Réactiver"} ce ${type.slice(0, -1)} ?`
+      )
+    ) {
+      api.put(`admin/${type}/${id}/${action}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(fetchData);
     }
   };
 
-  const handleReactiverEvenement = async (id) => {
-    if (!window.confirm("Réactiver cet événement ?")) return;
-    try {
-      await api.put(`admin/evenements/${id}/reactiver`, null, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      fetchData();
-    } catch (err) {
-      console.error("Réactivation événement échouée :", err);
-    }
-  };
-
-  const handleDesactiverReservation = async (id) => {
-    if (!window.confirm("Désactiver cette réservation ?")) return;
-    try {
-      await api.put(`admin/reservations/${id}/desactiver`, null, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      fetchData();
-    } catch (err) {
-      console.error("Désactivation réservation échouée :", err);
-    }
-  };
-
-  const handleReactiverReservation = async (id) => {
-    if (!window.confirm("Réactiver cette réservation ?")) return;
-    try {
-      await api.put(`admin/reservations/${id}/reactiver`, null, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      fetchData();
-    } catch (err) {
-      console.error("Réactivation réservation échouée :", err);
-    }
-  };
-
-  // 5) Gestion du thème
-  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
+  // Changer de thème
+  const toggleTheme = () =>
+    setTheme(theme === "dark" ? "light" : "dark");
 
   return (
-    <div className={`admin-container ${theme}`}>
+    <div className="admin-container" data-theme={theme}>
       <h1>Tableau de bord Administrateur</h1>
-      <button onClick={toggleTheme} className="toggle-theme">
-        Bascule thème ({theme === "dark" ? "Clair" : "Sombre"})
-      </button>
+    
 
+      {/* Navigation Onglets */}
       <nav className="admin-nav">
-        {["utilisateurs", "evenements", "reservations"].map((tab) => (
+        {["utilisateurs", "evenements", "reservations"].map(tab => (
           <button
             key={tab}
-            className={activeTab === tab ? "active" : ""}
             onClick={() => setActiveTab(tab)}
+            className={activeTab === tab ? "active" : ""}
           >
-            {tab === "utilisateurs"
-              ? "Utilisateurs"
-              : tab === "evenements"
-              ? "Évènements"
-              : "Réservations"}
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </nav>
 
       <div className="admin-content">
-        {/* Gestion des Utilisateurs */}
+        {/* Utilisateurs */}
         {activeTab === "utilisateurs" && (
-          <div>
-            <h2>Gestion des Utilisateurs</h2>
-            <button onClick={() => navigate("/admin/ajouter-utilisateur")}>
-              Ajouter un utilisateur
-            </button>
-            {Array.isArray(data) && data.length > 0 ? (
-              <ul>
-                {data.map((u) => (
-                  <li key={u.id}>
-                    {u.username} – {u.email}
-                    <button
-                      onClick={() =>
-                        navigate(`/admin/modifier-utilisateur/${u.id}`)
-                      }
-                    >
-                      Modifier
-                    </button>
-                    <button
-                      onClick={async () => {
-                        if (!window.confirm("Supprimer cet utilisateur ?"))
-                          return;
-                        try {
-                          await api.delete(`admin/utilisateurs/${u.id}`, {
-                            headers: { Authorization: `Bearer ${token}` },
-                          });
-                          fetchData();
-                        } catch (err) {
-                          console.error("Suppression utilisateur échouée :", err);
-                        }
-                      }}
-                    >
-                      Supprimer
-                    </button>
-                  </li>
-                ))}
-              </ul>
+          <section>
+            <div className="section-header">
+              <h2>Utilisateurs</h2>
+              <button
+                className="btn-add"
+                onClick={() => navigate("/admin/utilisateurs/ajouter")}
+              >
+                + Ajouter
+              </button>
+            </div>
+            {data.length > 0 ? (
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Utilisateur</th>
+                    <th>Email</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map(u => (
+                    <tr key={u.id}>
+                      <td>{u.username}</td>
+                      <td>{u.email}</td>
+                      <td className="actions">
+                        <button
+                          onClick={() =>
+                            navigate(`/admin/utilisateurs/modifier/${u.id}`)
+                          }
+                        >
+                          Modifier
+                        </button>
+                        <button
+                          onClick={() =>
+                            window.confirm("Supprimer cet utilisateur ?") &&
+                            api
+                              .delete(`admin/utilisateurs/${u.id}`, {
+                                headers: { Authorization: `Bearer ${token}` }
+                              })
+                              .then(fetchData)
+                          }
+                        >
+                          Supprimer
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             ) : (
               <p>Aucun utilisateur trouvé.</p>
             )}
-          </div>
+          </section>
         )}
 
-        {/* Gestion des Évènements */}
+        {/* Événements */}
         {activeTab === "evenements" && (
-          <div>
-            <h2>Gestion des Évènements</h2>
-            <button onClick={() => navigate("/admin/ajouter-evenement")}>
-              Ajouter un événement
-            </button>
-            {Array.isArray(data) && data.length > 0 ? (
-              <ul>
-                {data.map((e) => (
-                  <li key={e.id}>
-                    {e.titre} – {new Date(e.dateEvenement).toLocaleString()}{" "}
-                    {e.actif ? (
-                      <span style={{ color: "green", fontWeight: "bold" }}>
-                        [Actif]
-                      </span>
-                    ) : (
-                      <span style={{ color: "red", fontWeight: "bold" }}>
-                        [Désactivé]
-                      </span>
-                    )}
-                    <button
-                      onClick={() =>
-                        navigate(`/admin/modifier-evenement/${e.id}`)
-                      }
-                    >
-                      Modifier
-                    </button>
-                    {e.actif ? (
-                      <button onClick={() => handleDesactiverEvenement(e.id)}>
-                        Désactiver
-                      </button>
-                    ) : (
-                      <button onClick={() => handleReactiverEvenement(e.id)}>
-                        Réactiver
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
+          <section>
+            <div className="section-header">
+              <h2>Évènements</h2>
+              <button
+                className="btn-add"
+                onClick={() => navigate("/admin/evenements/ajouter")}
+              >
+                + Ajouter
+              </button>
+            </div>
+            {data.length > 0 ? (
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Titre</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map(ev => (
+                    <tr key={ev.id}>
+                      <td>{ev.titre}</td>
+                      <td>{new Date(ev.dateEvenement).toLocaleString()}</td>
+                      <td>
+                        <span
+                          className={`status ${
+                            ev.actif ? "active" : "disabled"
+                          }`}
+                        >
+                          {ev.actif ? "Actif" : "Désactivé"}
+                        </span>
+                      </td>
+                      <td className="actions">
+                        <button
+                          onClick={() =>
+                            navigate(`/admin/evenements/modifier/${ev.id}`)
+                          }
+                        >
+                          Modifier
+                        </button>
+                        {ev.actif ? (
+                          <button
+                            onClick={() =>
+                              toggleItem("evenements", ev.id, "desactiver")
+                            }
+                          >
+                            Désactiver
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              toggleItem("evenements", ev.id, "reactiver")
+                            }
+                          >
+                            Réactiver
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             ) : (
               <p>Aucun événement trouvé.</p>
             )}
-          </div>
+          </section>
         )}
 
-        {/* Gestion des Réservations */}
+        {/* Réservations (boutons Modifier retirés) */}
         {activeTab === "reservations" && (
-          <div>
-            <h2>Gestion des Réservations</h2>
-            {Array.isArray(data) && data.length > 0 ? (
-              <ul>
-                {data.map((res) => (
-                  <li key={res.id}>
-                    Réservation #{res.id} pour{" "}
-                    {res.evenement?.titre || "Événement inconnu"} – Statut :{" "}
-                    {res.statut}{" "}
-                    {res.actif ? (
-                      <span style={{ color: "green", fontWeight: "bold" }}>
-                        [Actif]
-                      </span>
-                    ) : (
-                      <span style={{ color: "red", fontWeight: "bold" }}>
-                        [Désactivé]
-                      </span>
-                    )}
-                    <button
-                      onClick={() =>
-                        navigate(`/admin/modifier-reservation/${res.id}`)
-                      }
-                    >
-                      Modifier
-                    </button>
-                    {res.actif ? (
-                      <button
-                        onClick={() => handleDesactiverReservation(res.id)}
-                      >
-                        Désactiver
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleReactiverReservation(res.id)}
-                      >
-                        Réactiver
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
+          <section>
+            <div className="section-header">
+              <h2>Réservations</h2>
+            </div>
+            {data.length > 0 ? (
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Événement</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map(r => (
+                    <tr key={r.id}>
+                      <td>#{r.id}</td>
+                      <td>{r.evenement?.titre}</td>
+                      <td>
+                        <span
+                          className={`status ${
+                            r.actif ? "active" : "disabled"
+                          }`}
+                        >
+                          {r.actif ? "Actif" : "Désactivé"}
+                        </span>
+                      </td>
+                      <td className="actions">
+                        {r.actif ? (
+                          <button
+                            onClick={() =>
+                              toggleItem("reservations", r.id, "desactiver")
+                            }
+                          >
+                            Désactiver
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              toggleItem("reservations", r.id, "reactiver")
+                            }
+                          >
+                            Réactiver
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             ) : (
               <p>Aucune réservation trouvée.</p>
             )}
-          </div>
+          </section>
         )}
       </div>
     </div>
   );
 }
-
-export default Admin;

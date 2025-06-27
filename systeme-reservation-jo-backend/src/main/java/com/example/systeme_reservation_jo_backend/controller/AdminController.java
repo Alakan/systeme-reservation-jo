@@ -1,12 +1,16 @@
+// src/main/java/com/example/systeme_reservation_jo_backend/controller/AdminController.java
 package com.example.systeme_reservation_jo_backend.controller;
 
+import com.example.systeme_reservation_jo_backend.dto.EvenementDTO;
 import com.example.systeme_reservation_jo_backend.dto.UtilisateurDTO;
-import com.example.systeme_reservation_jo_backend.model.Utilisateur;
 import com.example.systeme_reservation_jo_backend.model.Evenement;
 import com.example.systeme_reservation_jo_backend.model.Reservation;
-import com.example.systeme_reservation_jo_backend.service.UtilisateurService;
+import com.example.systeme_reservation_jo_backend.model.Role;
+import com.example.systeme_reservation_jo_backend.model.Utilisateur;
+import com.example.systeme_reservation_jo_backend.repository.RoleRepository;
 import com.example.systeme_reservation_jo_backend.service.EvenementService;
 import com.example.systeme_reservation_jo_backend.service.ReservationService;
+import com.example.systeme_reservation_jo_backend.service.UtilisateurService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,151 +18,263 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
 @PreAuthorize("hasRole('ADMINISTRATEUR')")
-@CrossOrigin(origins = {"http://localhost:3000", "https://front-systeme-reservation-jo-be1e62ad3714.herokuapp.com"})
+@CrossOrigin(origins = {
+        "http://localhost:3000",
+        "https://front-systeme-reservation-jo-be1e62ad3714.herokuapp.com"
+})
 public class AdminController {
 
     private final UtilisateurService utilisateurService;
-    private final EvenementService evenementService;
-    private final ReservationService reservationService;
+    private final RoleRepository      roleRepository;
+    private final EvenementService    evenementService;
+    private final ReservationService  reservationService;
 
     public AdminController(UtilisateurService utilisateurService,
-                           EvenementService evenementService,
-                           ReservationService reservationService) {
+                           RoleRepository      roleRepository,
+                           EvenementService    evenementService,
+                           ReservationService  reservationService) {
         this.utilisateurService = utilisateurService;
-        this.evenementService = evenementService;
-        this.reservationService = reservationService;
+        this.roleRepository     = roleRepository;
+        this.evenementService   = evenementService;
+        this.reservationService  = reservationService;
     }
 
-    // Récupérer tous les utilisateurs (y compris les administrateurs)
+    // --- UTILISATEURS ----------------------------------------------------
+
     @GetMapping("/utilisateurs")
     public ResponseEntity<List<Utilisateur>> getAllUtilisateurs() {
-        List<Utilisateur> utilisateurs = utilisateurService.getAllUtilisateurs();
-        return ResponseEntity.ok(utilisateurs);
+        return ResponseEntity.ok(utilisateurService.getAllUtilisateurs());
     }
 
-    // Création d'un utilisateur par l'administrateur
+    @GetMapping("/utilisateurs/{id}")
+    public ResponseEntity<UtilisateurDTO> getUtilisateurById(@PathVariable Long id) {
+        return utilisateurService.getUtilisateurById(id)
+                .map(u -> {
+                    UtilisateurDTO dto = new UtilisateurDTO();
+                    dto.setId(u.getId());
+                    dto.setUsername(u.getUsername());
+                    dto.setEmail(u.getEmail());
+                    dto.setRoles(
+                            u.getRoles().stream()
+                                    .map(Role::getName)
+                                    .collect(Collectors.toSet())
+                    );
+                    return ResponseEntity.ok(dto);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping("/utilisateurs")
-    public ResponseEntity<?> createUtilisateur(@Valid @RequestBody UtilisateurDTO utilisateurDTO) {
+    public ResponseEntity<?> createUtilisateur(@Valid @RequestBody UtilisateurDTO dto) {
         try {
-            // Convertir le DTO en entité Utilisateur
-            Utilisateur newUser = dtoToEntity(utilisateurDTO);
-            // Utiliser la méthode saveUtilisateur pour enregistrer le nouvel utilisateur
-            Utilisateur createdUser = utilisateurService.saveUtilisateur(newUser);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+            Utilisateur u = new Utilisateur();
+            u.setUsername(dto.getUsername());
+            u.setEmail(dto.getEmail());
+            u.setPassword(dto.getPassword());
+
+            // associer les rôles sélectionnés
+            Set<Role> roles = dto.getRoles().stream()
+                    .map(name -> roleRepository.findByName(name)
+                            .orElseThrow(() ->
+                                    new RuntimeException("Rôle introuvable : " + name)))
+                    .collect(Collectors.toSet());
+            u.setRoles(roles);
+
+            Utilisateur created = utilisateurService.saveUtilisateur(u);
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(created);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erreur lors de la création de l'utilisateur : " + e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Erreur création utilisateur : " + e.getMessage());
         }
     }
 
-
-    // Modification d'un utilisateur par l'admin
     @PutMapping("/utilisateurs/{id}")
-    public ResponseEntity<?> updateUtilisateur(@PathVariable Long id,
-                                               @Valid @RequestBody UtilisateurDTO utilisateurDTO) {
+    public ResponseEntity<?> updateUtilisateur(
+            @PathVariable Long id,
+            @Valid @RequestBody UtilisateurDTO dto) {
         try {
-            Utilisateur utilisateurToUpdate = dtoToEntity(utilisateurDTO);
-            Utilisateur updatedUtilisateur = utilisateurService.updateUtilisateur(id, utilisateurToUpdate);
-            return ResponseEntity.ok(updatedUtilisateur);
+            // charger l'utilisateur existant
+            Utilisateur existing = utilisateurService
+                    .getUtilisateurById(id)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            // mettre à jour les champs simples
+            existing.setUsername(dto.getUsername());
+            existing.setEmail(dto.getEmail());
+            if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+                existing.setPassword(dto.getPassword());
+            }
+
+            // ne toucher aux rôles que si l'admin en a fourni dans le DTO
+            if (dto.getRoles() != null && !dto.getRoles().isEmpty()) {
+                Set<Role> roles = dto.getRoles().stream()
+                        .map(name -> roleRepository.findByName(name)
+                                .orElseThrow(() ->
+                                        new RuntimeException("Rôle introuvable : " + name)))
+                        .collect(Collectors.toSet());
+                existing.setRoles(roles);
+            }
+
+            // sauvegarde (encode password en service)
+            Utilisateur updated = utilisateurService.saveUtilisateur(existing);
+            return ResponseEntity.ok(updated);
+
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Erreur lors de la mise à jour de l'utilisateur : " + e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("Erreur mise à jour utilisateur : " + e.getMessage());
         }
     }
 
-    // Suppression d'un utilisateur (suppression physique)
     @DeleteMapping("/utilisateurs/{id}")
     public ResponseEntity<String> deleteUtilisateur(@PathVariable Long id) {
         utilisateurService.deleteUtilisateur(id);
         return ResponseEntity.ok("Utilisateur supprimé avec succès.");
     }
 
-    // Récupérer tous les événements
+    // --- EVENEMENTS ------------------------------------------------------
+
     @GetMapping("/evenements")
     public ResponseEntity<List<Evenement>> getAllEvenements() {
-        List<Evenement> evenements = evenementService.getAllEvenements();
-        return ResponseEntity.ok(evenements);
+        return ResponseEntity.ok(evenementService.getAllEvenements());
     }
 
-    // Désactivation d'un événement (mise à jour du champ actif à false)
+    @GetMapping("/evenements/{id}")
+    public ResponseEntity<EvenementDTO> getEvenementById(@PathVariable Long id) {
+        return evenementService.getEvenementById(id)
+                .map(ev -> {
+                    EvenementDTO dto = new EvenementDTO();
+                    dto.setId(ev.getId());
+                    dto.setTitre(ev.getTitre());
+                    dto.setDescription(ev.getDescription());
+                    dto.setDateEvenement(ev.getDateEvenement());
+                    dto.setLieu(ev.getLieu());
+                    dto.setPrix(ev.getPrix());
+                    dto.setCapaciteTotale(ev.getCapaciteTotale());
+                    return ResponseEntity.ok(dto);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/evenements")
+    public ResponseEntity<?> createEvenementAdmin(
+            @Valid @RequestBody EvenementDTO dto) {
+        try {
+            Evenement ev = new Evenement();
+            ev.setTitre(dto.getTitre());
+            ev.setDescription(dto.getDescription());
+            ev.setDateEvenement(dto.getDateEvenement());
+            ev.setLieu(dto.getLieu());
+            ev.setPrix(dto.getPrix());
+            ev.setCapaciteTotale(dto.getCapaciteTotale());
+            Evenement created = evenementService.createEvenement(ev);
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(created);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Erreur création événement : " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/evenements/{id}")
+    public ResponseEntity<?> updateEvenementAdmin(
+            @PathVariable Long id,
+            @Valid @RequestBody EvenementDTO dto) {
+        try {
+            Evenement ev = new Evenement();
+            ev.setTitre(dto.getTitre());
+            ev.setDescription(dto.getDescription());
+            ev.setDateEvenement(dto.getDateEvenement());
+            ev.setLieu(dto.getLieu());
+            ev.setPrix(dto.getPrix());
+            ev.setCapaciteTotale(dto.getCapaciteTotale());
+            Evenement updated = evenementService.updateEvenement(id, ev);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("Erreur mise à jour événement : " + e.getMessage());
+        }
+    }
+
     @PutMapping("/evenements/{id}/desactiver")
     public ResponseEntity<?> desactiverEvenement(@PathVariable Long id) {
         try {
-            Evenement evenementDesactive = evenementService.desactiverEvenement(id);
-            return ResponseEntity.ok(evenementDesactive);
+            Evenement ev = evenementService.desactiverEvenement(id);
+            return ResponseEntity.ok(ev);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Erreur lors de la désactivation de l'événement : " + e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("Erreur désactivation événement : " + e.getMessage());
         }
     }
 
-    // Réactivation d'un événement (champ actif à true)
     @PutMapping("/evenements/{id}/reactiver")
     public ResponseEntity<?> reactiverEvenement(@PathVariable Long id) {
         try {
-            Evenement evenementActive = evenementService.reactiverEvenement(id);
-            return ResponseEntity.ok(evenementActive);
+            Evenement ev = evenementService.reactiverEvenement(id);
+            return ResponseEntity.ok(ev);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Erreur lors de la réactivation de l'événement : " + e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("Erreur réactivation événement : " + e.getMessage());
         }
     }
 
-    // Récupérer toutes les réservations
+    // --- RESERVATIONS ----------------------------------------------------
+
     @GetMapping("/reservations")
     public ResponseEntity<List<Reservation>> getAllReservations() {
-        List<Reservation> reservations = reservationService.getAllReservations();
-        return ResponseEntity.ok(reservations);
+        return ResponseEntity.ok(reservationService.getAllReservations());
     }
 
-    // Création d'une réservation via l'administration (si nécessaire)
     @PostMapping("/reservations")
-    public ResponseEntity<?> createReservation(@Valid @RequestBody Reservation reservation) {
+    public ResponseEntity<?> createReservationAdmin(
+            @Valid @RequestBody Reservation reservation) {
         try {
-            Reservation createdReservation = reservationService.createReservation(reservation);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdReservation);
+            Reservation created = reservationService.createReservation(reservation);
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(created);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erreur lors de la création de la réservation : " + e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Erreur création réservation : " + e.getMessage());
         }
     }
 
-    // Désactivation d'une réservation (mise à jour du champ actif à false)
     @PutMapping("/reservations/{id}/desactiver")
     public ResponseEntity<?> desactiverReservation(@PathVariable Long id) {
         try {
-            Reservation reservationDesactive = reservationService.desactiverReservation(id);
-            return ResponseEntity.ok(reservationDesactive);
+            Reservation r = reservationService.desactiverReservation(id);
+            return ResponseEntity.ok(r);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Erreur lors de la désactivation de la réservation : " + e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("Erreur désactivation réservation : " + e.getMessage());
         }
     }
 
-    // Réactivation d'une réservation (champ actif à true)
     @PutMapping("/reservations/{id}/reactiver")
     public ResponseEntity<?> reactiverReservation(@PathVariable Long id) {
         try {
-            Reservation reservationActive = reservationService.reactiverReservation(id);
-            return ResponseEntity.ok(reservationActive);
+            Reservation r = reservationService.reactiverReservation(id);
+            return ResponseEntity.ok(r);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Erreur lors de la réactivation de la réservation : " + e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("Erreur réactivation réservation : " + e.getMessage());
         }
-    }
-
-    /**
-     * Méthode utilitaire pour convertir un UtilisateurDTO en Utilisateur.
-     */
-    private Utilisateur dtoToEntity(UtilisateurDTO dto) {
-        Utilisateur user = new Utilisateur();
-        user.setUsername(dto.getUsername());
-        user.setEmail(dto.getEmail());
-        user.setPassword(dto.getPassword());
-        return user;
     }
 }

@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate }                from 'react-router-dom';
-import api                             from '../services/api';
-import Footer                          from '../components/Footer';
+// src/pages/Home.js
+import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate }                         from 'react-router-dom';
+import api                                     from '../services/api';
+import Footer                                  from '../components/Footer';
+import { UserContext }                         from '../contexts/UserContext';
 import '../styles/Home.css';
 
 export default function Home() {
   const navigate = useNavigate();
+  const { user, roles } = useContext(UserContext);
 
-  // 1) COMPTE À REBOURS (targetDate DANS l’effet pour éviter la dépendance manquante)
+  // 1) COMPTE À REBOURS
   const [countdown, setCountdown] = useState({ d: 0, h: 0, m: 0, s: 0 });
   useEffect(() => {
     const targetDate = new Date('2025-07-26T20:00:00');
@@ -45,11 +48,25 @@ export default function Home() {
     setEmail('');
   };
 
+  // 4) Accès au compte selon rôle
+  const handleAccountAccess = () => {
+    if (!user) {
+      navigate('/login');
+    } else if (roles.includes('ADMINISTRATEUR')) {
+      navigate('/admin');
+    } else {
+      navigate('/dashboard');
+    }
+  };
+
   return (
     <>
       <header className="hero">
         <h1>Bienvenue aux Jeux Olympiques 2025 ! 🎉</h1>
-        <p>Ne manquez pas les grands événements ! Réservez votre place dès maintenant.</p>
+        <p>
+          Ne manquez pas les grands événements ! Réservez votre place dès
+          maintenant.
+        </p>
         <div className="hero-buttons">
           <button
             className="btn-primary"
@@ -57,10 +74,7 @@ export default function Home() {
           >
             Voir les événements
           </button>
-          <button
-            className="btn-access"
-            onClick={() => navigate('/login')}
-          >
+          <button className="btn-access" onClick={handleAccountAccess}>
             Accéder à mon compte
           </button>
         </div>
@@ -99,8 +113,14 @@ export default function Home() {
               <div key={ev.id} className="card">
                 <img src={ev.imageUrl} alt={ev.titre} />
                 <h3>{ev.titre}</h3>
-                <p>{new Date(ev.dateEvenement).toLocaleDateString('fr-FR')}</p>
-                <button onClick={() => navigate(`/reservation?event=${ev.id}`)}>
+                <p>
+                  {new Date(ev.dateEvenement).toLocaleDateString('fr-FR')}
+                </p>
+                <button
+                  onClick={() =>
+                    navigate(`/reservation?event=${ev.id}`)
+                  }
+                >
                   Réserver
                 </button>
               </div>
