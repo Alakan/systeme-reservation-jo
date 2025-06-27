@@ -1,6 +1,14 @@
 Système de Réservation de Billets – Jeux Olympiques 2024
 Un projet full-stack (Spring Boot + React) qui permet aux utilisateurs de réserver et payer leurs billets pour les événements des JO 2024, avec un espace administrateur pour piloter les événements, les utilisateurs et les réservations.
 
+connexion admin : 
+admin@jo.com
+Azerty123456!!
+
+
+
+
+
 Table des matières
 Technologies
 
